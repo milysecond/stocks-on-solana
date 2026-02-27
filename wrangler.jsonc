@@ -1,15 +1,10 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "stocks-on-solana",
-  "main": ".open-next/worker.js",
+  "pages_build_output_dir": ".vercel/output/static",
   "compatibility_date": "2025-04-01",
   "compatibility_flags": ["nodejs_compat"],
-  "assets": {
-    "directory": ".open-next/assets",
-    "binding": "ASSETS"
-  },
   "vars": {
-    "NEXT_PUBLIC_JUPITER_REF_ID": "yfgv2ibxy07v",
     "NEXT_PUBLIC_URL": "https://stocksonsolana.com"
   }
 }

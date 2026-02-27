@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ALL_TOKENS } from '@/lib/tokens';
 
+export const runtime = 'edge';
 export const revalidate = 30;
 
 export interface PriceEntry {

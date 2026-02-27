@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Simple cache: mint → icon URL
+export const runtime = 'edge';
+
+// Simple cache: mint → icon URL (edge-compatible)
 const iconCache = new Map<string, string | null>();
 
 function generateSvg(symbol: string, color = '#ff9900'): string {

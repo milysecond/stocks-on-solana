@@ -9,7 +9,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://stocks.sol.new'),
+  metadataBase: new URL('https://stocksonsolana.com'),
   title: {
     default: 'Stocks on Solana — Tokenized Stock Screener',
     template: '%s | Stocks on Solana',
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     'tokenized NASDAQ',
     'tokenized NYSE',
   ],
-  authors: [{ name: 'Stocks on Solana', url: 'https://stocks.sol.new' }],
+  authors: [{ name: 'Stocks on Solana', url: 'https://stocksonsolana.com' }],
   creator: 'Stocks on Solana',
   publisher: 'Stocks on Solana',
   category: 'finance',
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Stocks on Solana — Tokenized Stock Screener',
     description: 'Real-time screener for 251+ tokenized stocks on Solana. Track prices, liquidity, and discount to real-world price.',
-    url: 'https://stocks.sol.new',
+    url: 'https://stocksonsolana.com',
     siteName: 'Stocks on Solana',
     type: 'website',
     locale: 'en_US',
@@ -57,11 +57,11 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Stocks on Solana — Tokenized Stock Screener',
     description: 'Real-time screener for 251+ tokenized stocks on Solana.',
-    site: '@metasolbot',
-    creator: '@metasolbot',
+    site: '@stocksonsolana',
+    creator: '@stocksonsolana',
   },
   alternates: {
-    canonical: 'https://stocks.sol.new',
+    canonical: 'https://stocksonsolana.com',
   },
   robots: {
     index: true,
@@ -83,6 +83,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://api.jup.ag" />
         <link rel="dns-prefetch" href="https://api.jup.ag" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Google Analytics */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-79CB6BK271" />
+        <script dangerouslySetInnerHTML={{ __html: `
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-79CB6BK271');
+        `}} />
       </head>
       <body style={{ fontFamily: 'var(--font-mono), "JetBrains Mono", monospace' }}>{children}</body>
     </html>

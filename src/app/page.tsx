@@ -90,8 +90,12 @@ function TokenIcon({ symbol, mint, size = 28 }: { symbol: string; mint: string; 
   const hue = symbol.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
 
   useEffect(() => {
-    // Only fetch for non-Ondo tokens (Ondo mints end in "ondo" — no real icon)
-    if (!mint.endsWith('ondo')) {
+    if (mint.endsWith('ondo')) return; // Ondo has no icons — use SVG fallback
+    // Local static file for xStocks (instant, no API call)
+    if (symbol.endsWith('x') || symbol.includes('.Bx')) {
+      setImgSrc(`/icons/${symbol}.png`);
+    } else {
+      // Other tokens: hit API route (Helius DAS lookup)
       setImgSrc(`/api/token-icon?mint=${encodeURIComponent(mint)}&symbol=${encodeURIComponent(symbol)}`);
     }
   }, [mint, symbol]);

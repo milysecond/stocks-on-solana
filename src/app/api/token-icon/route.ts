@@ -2,20 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
-// Known icon URL patterns — fast path, no API call needed
-function getKnownIconUrl(mint: string, symbol: string): string | null {
-  // xStocks: all have icons at xstocks-metadata.backed.fi
-  if (mint.startsWith('Xs') || symbol.endsWith('x') || symbol.endsWith('.Bx')) {
-    const base = symbol.replace(/x$/, '').replace(/\.B$/, '');
+// Locally stored icons (public/icons/{symbol}.png) — served as static files
+// These are pre-downloaded at build time, zero latency
+function getLocalIconUrl(symbol: string, baseUrl: string): string | null {
+  // xStocks symbols end in 'x'
+  if (symbol.endsWith('x') || symbol.includes('.Bx')) {
+    return `${baseUrl}/icons/${symbol}.png`;
+  }
+  return null;
+}
+
+// Fallback: remote CDN
+function getRemoteIconUrl(symbol: string): string | null {
+  if (symbol.endsWith('x') || symbol.includes('.Bx')) {
     return `https://xstocks-metadata.backed.fi/logos/tokens/${symbol}.png`;
-  }
-  // PreStocks
-  if (mint.startsWith('Pre')) {
-    return null; // no known CDN
-  }
-  // Ondo tokens end in "ondo" — no real icon
-  if (mint.endsWith('ondo')) {
-    return null;
   }
   return null;
 }
@@ -41,11 +41,32 @@ export async function GET(req: NextRequest) {
     headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=86400' },
   });
 
-  // Try known CDN path first (no API call)
-  const knownUrl = getKnownIconUrl(mint, symbol);
-  if (knownUrl) {
+  // Skip Ondo tokens — no icons
+  if (mint.endsWith('ondo') || !mint) return svgResponse();
+
+  // Try local static file first (fastest — no external fetch)
+  const baseUrl = req.nextUrl.origin;
+  const localUrl = getLocalIconUrl(symbol, baseUrl);
+  if (localUrl) {
     try {
-      const res = await fetch(knownUrl, { signal: AbortSignal.timeout(4000) });
+      const res = await fetch(localUrl, { signal: AbortSignal.timeout(2000) });
+      if (res.ok) {
+        const buf = await res.arrayBuffer();
+        return new NextResponse(buf, {
+          headers: {
+            'Content-Type': 'image/png',
+            'Cache-Control': 'public, max-age=2592000, immutable', // 30 days
+          },
+        });
+      }
+    } catch { /* fall through to remote */ }
+  }
+
+  // Fallback: remote CDN
+  const remoteUrl = getRemoteIconUrl(symbol);
+  if (remoteUrl) {
+    try {
+      const res = await fetch(remoteUrl, { signal: AbortSignal.timeout(4000) });
       if (res.ok) {
         const buf = await res.arrayBuffer();
         return new NextResponse(buf, {
@@ -57,9 +78,6 @@ export async function GET(req: NextRequest) {
       }
     } catch { /* fall through */ }
   }
-
-  // Skip Ondo tokens — no icons
-  if (mint.endsWith('ondo') || !mint) return svgResponse();
 
   // Try Helius DAS for unknown tokens
   try {

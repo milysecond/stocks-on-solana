@@ -440,6 +440,20 @@ function HomeInner() {
   const ondoCount = rows.filter(r => r.provider === 'Ondo' && r.price !== null).length;
   const preCount = rows.filter(r => r.provider === 'PreStocks' && r.price !== null).length;
 
+  // Deduplicated total market cap (same mcap = same underlying company)
+  const totalMcap = (() => {
+    const seen = new Set<string>();
+    let total = 0;
+    for (const r of rows) {
+      if (r.mcap === null || r.mcap === undefined) continue;
+      const key = r.mcap.toFixed(0);
+      if (!seen.has(key)) { seen.add(key); total += r.mcap; }
+    }
+    return total;
+  })();
+
+  const totalLiq = rows.reduce((s, r) => s + (r.liquidity ?? 0), 0);
+
   return (
     <>
       <style>{`
@@ -875,6 +889,16 @@ function HomeInner() {
               {i < arr.length - 1 && <span className="sep" style={{ marginLeft: 10 }}>|</span>}
             </span>
           ))}
+          {totalMcap > 0 && <>
+            <span className="sep">|</span>
+            <span style={{ color: 'var(--text-dim)' }}>MCAP </span>
+            <span style={{ color: 'var(--amber)' }}>{fmtVol(totalMcap)}</span>
+          </>}
+          {totalLiq > 0 && <>
+            <span className="sep">|</span>
+            <span style={{ color: 'var(--text-dim)' }}>LIQ </span>
+            <span style={{ color: 'var(--amber)' }}>{fmtVol(totalLiq)}</span>
+          </>}
           <button className="refresh-btn" onClick={fetchPrices}>
             <RefreshCw size={9} className={loading ? 'animate-spin' : ''} style={loading ? { color: '#ff9900' } : {}} />
             REFRESH

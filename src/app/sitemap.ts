@@ -1,8 +1,20 @@
 import { MetadataRoute } from 'next';
+import { ALL_TOKENS } from '@/lib/tokens';
+
+const BASE = 'https://stocks.sol.new';
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const now = new Date();
+
+  const tokenPages: MetadataRoute.Sitemap = ALL_TOKENS.map(t => ({
+    url: `${BASE}/token/${t.symbol.toLowerCase()}`,
+    lastModified: now,
+    changeFrequency: 'hourly',
+    priority: 0.8,
+  }));
+
   return [
-    { url: 'https://stocksonsolana.com', lastModified: new Date(), changeFrequency: 'hourly', priority: 1 },
-    { url: 'https://stocksonsolana.com/dashboard', lastModified: new Date(), changeFrequency: 'weekly', priority: 0.5 },
+    { url: BASE, lastModified: now, changeFrequency: 'hourly', priority: 1.0 },
+    ...tokenPages,
   ];
 }

@@ -40,10 +40,10 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/logo.png', sizes: '192x192', type: 'image/png' },
+      { url: '/logo.png', sizes: '256x256', type: 'image/png' },
     ],
-    shortcut: '/logo.png',
-    apple: '/logo.png',
+    shortcut: '/favicon-32.png',
+    apple: '/apple-touch-icon.png',
   },
   openGraph: {
     title: 'Stocks on Solana — Tokenized Stock Screener',

@@ -38,7 +38,7 @@ export default async function Image() {
           marginBottom: 28,
           letterSpacing: -2,
         }}>
-          S/
+          S$
         </div>
 
         {/* Title */}

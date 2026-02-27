@@ -41,8 +41,37 @@ export async function GET(req: NextRequest) {
     headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=86400' },
   });
 
-  // Skip Ondo tokens — no icons
-  if (mint.endsWith('ondo') || !mint) return svgResponse();
+  if (!mint) return svgResponse();
+
+  // Ondo tokens — CDN: cdn.ondo.finance
+  if (mint.endsWith('ondo')) {
+    try {
+      const url = `https://cdn.ondo.finance/tokens/logos/${symbol.toLowerCase()}_160x160.png`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+      if (res.ok) {
+        const buf = await res.arrayBuffer();
+        return new NextResponse(buf, {
+          headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=604800, immutable' },
+        });
+      }
+    } catch { /* fall through */ }
+    return svgResponse();
+  }
+
+  // PreStocks tokens — CDN: prestocks.com/logos
+  if (mint.startsWith('Pre')) {
+    try {
+      const url = `https://www.prestocks.com/logos/${symbol.toLowerCase()}.png?cachebust=1`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+      if (res.ok) {
+        const buf = await res.arrayBuffer();
+        return new NextResponse(buf, {
+          headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=604800, immutable' },
+        });
+      }
+    } catch { /* fall through */ }
+    return svgResponse();
+  }
 
   // Try local static file first (fastest — no external fetch)
   const baseUrl = req.nextUrl.origin;

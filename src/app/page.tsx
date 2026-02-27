@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, Suspense, useRef } from 'react';
+import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, ExternalLink, Search, X, TrendingUp, TrendingDown, Droplets, BarChart2 } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, ExternalLink, Search, X, TrendingUp, TrendingDown, Droplets, BarChart2, ChevronLeft, ChevronRight, Star, LogOut } from 'lucide-react';
 import { ALL_TOKENS, StockToken } from '@/lib/tokens';
 
 interface PriceEntry {
@@ -60,7 +59,7 @@ function getMarketStatus() {
   let timeLabel = '';
   if (isOpen) {
     const minsLeft = close - mins;
-    timeLabel = `CLOSES IN ${Math.floor(minsLeft / 60)}H ${minsLeft % 60}M`;
+    timeLabel = `CLZ ${Math.floor(minsLeft / 60)}H${minsLeft % 60}M`;
   } else {
     let minsUntil: number;
     if (isWeekday && mins < open) {
@@ -74,9 +73,9 @@ function getMarketStatus() {
     const hLeft = Math.floor((minsUntil % (60 * 24)) / 60);
     const mLeft = minsUntil % 60;
     if (daysLeft > 0) {
-      timeLabel = `OPENS IN ${daysLeft}D ${hLeft}H`;
+      timeLabel = `OPN ${daysLeft}D${hLeft}H`;
     } else {
-      timeLabel = `OPENS IN ${hLeft}H ${mLeft}M`;
+      timeLabel = `OPN ${hLeft}H${mLeft}M`;
     }
   }
   return { isOpen, timeLabel };
@@ -90,12 +89,11 @@ function TokenIcon({ symbol, mint, size = 28 }: { symbol: string; mint: string; 
   const hue = symbol.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
 
   useEffect(() => {
-    if (mint.endsWith('ondo')) return; // Ondo has no icons — use SVG fallback
     // Local static file for xStocks (instant, no API call)
     if (symbol.endsWith('x') || symbol.includes('.Bx')) {
       setImgSrc(`/icons/${symbol}.png`);
     } else {
-      // Other tokens: hit API route (Helius DAS lookup)
+      // Other stocks: hit API route (Helius DAS lookup)
       setImgSrc(`/api/token-icon?mint=${encodeURIComponent(mint)}&symbol=${encodeURIComponent(symbol)}`);
     }
   }, [mint, symbol]);
@@ -129,17 +127,30 @@ function TokenIcon({ symbol, mint, size = 28 }: { symbol: string; mint: string; 
   );
 }
 
-function TokenModal({ row, onClose }: { row: StockRow; onClose: () => void }) {
+function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggleStar }: {
+  row: StockRow;
+  onClose: () => void;
+  onPrev: () => void;
+  onNext: () => void;
+  index: number;
+  total: number;
+  starred: Set<string>;
+  toggleStar: (mint: string) => void;
+}) {
   const change = fmtChange(row.change24h);
   const disc = row.price !== null && row.stockPrice !== null
     ? ((row.price - row.stockPrice) / row.stockPrice) * 100
     : null;
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') onPrev();
+      if (e.key === 'ArrowRight') onNext();
+    };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [onClose]);
+  }, [onClose, onPrev, onNext]);
 
   return (
     <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
@@ -153,7 +164,16 @@ function TokenModal({ row, onClose }: { row: StockRow; onClose: () => void }) {
               <div className="tm-symbol">{row.symbol}</div>
             </div>
           </div>
-          <button className="tm-close" onClick={onClose}><X size={16} /></button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button
+              className={`star-btn star-btn-lg ${starred.has(row.mint) ? 'starred' : ''}`}
+              onClick={() => toggleStar(row.mint)}
+              aria-label={starred.has(row.mint) ? 'Unstar' : 'Star'}
+            >
+              <Star size={16} />
+            </button>
+            <button className="tm-close" onClick={onClose}><X size={16} /></button>
+          </div>
         </div>
 
         {/* Price hero */}
@@ -210,54 +230,43 @@ function TokenModal({ row, onClose }: { row: StockRow; onClose: () => void }) {
         {/* Actions */}
         <div className="tm-actions">
           <a
-            href={`https://jup.ag/swap/USDC-${row.mint}?ref=yfgv2ibxy07v`}
+            href={`https://jup.ag/tokens/${row.mint}?ref=yfgv2ibxy07v`}
             target="_blank"
             rel="noopener noreferrer"
             className="tm-buy-btn"
           >
             BUY ON JUPITER <ExternalLink size={12} />
           </a>
-          <a
-            href={`https://solscan.io/token/${row.mint}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="tm-link-btn"
-          >
-            SOLSCAN <ExternalLink size={11} />
-          </a>
+        </div>
+
+        {/* Nav */}
+        <div className="tm-nav">
+          <button className="tm-nav-btn" onClick={onPrev} aria-label="Previous">
+            <ChevronLeft size={22} />
+            <span>PREV</span>
+          </button>
+          <span className="tm-nav-count">{index + 1} / {total}</span>
+          <button className="tm-nav-btn" onClick={onNext} aria-label="Next">
+            <span>NEXT</span>
+            <ChevronRight size={22} />
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-const ROW_HEIGHT = 46;
-
-function VirtualTable({ sorted, setSelectedToken, SortIcon, toggleSort }: {
+function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred, toggleStar }: {
   sorted: StockRow[];
   setSelectedToken: (r: StockRow) => void;
   SortIcon: ({ col }: { col: SortKey }) => React.ReactElement;
   toggleSort: (k: SortKey) => void;
+  starred: Set<string>;
+  toggleStar: (mint: string) => void;
 }) {
-  const parentRef = useRef<HTMLDivElement>(null);
-  const virtualizer = useVirtualizer({
-    count: sorted.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => ROW_HEIGHT,
-    overscan: 10,
-  });
-
   return (
     <div className="desktop-table">
-      <table style={{ tableLayout: 'fixed', width: '100%' }}>
-        <colgroup>
-          <col style={{ width: '35%' }} />
-          <col style={{ width: '13%' }} />
-          <col style={{ width: '10%' }} />
-          <col style={{ width: '13%' }} />
-          <col style={{ width: '13%' }} />
-          <col style={{ width: '10%' }} />
-        </colgroup>
+      <table>
         <thead>
           <tr>
             <th onClick={() => toggleSort('name')} style={{ paddingLeft: 14 }}>
@@ -276,80 +285,68 @@ function VirtualTable({ sorted, setSelectedToken, SortIcon, toggleSort }: {
             <th></th>
           </tr>
         </thead>
-      </table>
-      {/* Virtualized scroll container */}
-      <div ref={parentRef} style={{ height: 'calc(100vh - 110px)', overflowY: 'auto' }}>
-        <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
-          <table style={{ tableLayout: 'fixed', width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-            <colgroup>
-              <col style={{ width: '35%' }} />
-              <col style={{ width: '13%' }} />
-              <col style={{ width: '10%' }} />
-              <col style={{ width: '13%' }} />
-              <col style={{ width: '13%' }} />
-              <col style={{ width: '10%' }} />
-            </colgroup>
-            <tbody>
-              {virtualizer.getVirtualItems().map(vItem => {
-                const row = sorted[vItem.index];
-                const i = vItem.index;
-                const change = fmtChange(row.change24h);
-                return (
-                  <tr
-                    key={row.mint}
-                    data-index={vItem.index}
-                    ref={virtualizer.measureElement}
-                    className={i % 2 !== 0 ? 'even' : ''}
-                    onClick={() => setSelectedToken(row)}
-                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${vItem.start}px)` }}
+        <tbody>
+          {sorted.map((row, i) => {
+            const change = fmtChange(row.change24h);
+            return (
+              <tr
+                key={row.mint}
+                className={i % 2 !== 0 ? 'even' : ''}
+                onClick={() => setSelectedToken(row)}
+                style={{ contentVisibility: 'auto', containIntrinsicSize: '0 46px' } as React.CSSProperties}
+              >
+                <td style={{ paddingLeft: 14 }}>
+                  <div className="name-cell">
+                    <TokenIcon symbol={row.symbol} mint={row.mint} size={26} />
+                    <div>
+                      <div className="token-name">{row.name}</div>
+                      <div className="token-symbol">{row.symbol}</div>
+                    </div>
+                  </div>
+                </td>
+                <td className="text-right price-val">
+                  {row.price !== null ? fmt(row.price, row.price > 100 ? 2 : 4) : <span className="loading-cell" />}
+                </td>
+                <td className="text-right">
+                  {change
+                    ? <span className={change.positive ? 'change-pos' : 'change-neg'}>{change.value}</span>
+                    : <span className="loading-cell" />}
+                </td>
+                <td className="text-right">
+                  {row.price !== null && row.stockPrice !== null ? (() => {
+                    const disc = ((row.price - row.stockPrice) / row.stockPrice) * 100;
+                    const color = Math.abs(disc) < 0.5 ? 'var(--text-dim)' : disc > 0 ? 'var(--green)' : 'var(--red)';
+                    return <span style={{ color, fontSize: 11 }}>
+                      {disc >= 0 ? '+' : ''}{disc.toFixed(2)}%
+                      <div style={{ fontSize: 9, color: 'var(--text-dim)' }}>{fmt(row.stockPrice, 2)}</div>
+                    </span>;
+                  })() : <span className="loading-cell" />}
+                </td>
+                <td className="text-right dim">
+                  {row.liquidity !== null ? fmtVol(row.liquidity) : <span className="loading-cell" />}
+                </td>
+                <td onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: 6, paddingRight: 8 }}>
+                  <button
+                    className={`star-btn ${starred.has(row.mint) ? 'starred' : ''}`}
+                    onClick={() => toggleStar(row.mint)}
+                    aria-label={starred.has(row.mint) ? 'Unstar' : 'Star'}
                   >
-                    <td style={{ paddingLeft: 14 }}>
-                      <div className="name-cell">
-                        <TokenIcon symbol={row.symbol} mint={row.mint} size={26} />
-                        <div>
-                          <div className="token-name">{row.name}</div>
-                          <div className="token-symbol">{row.symbol}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="text-right price-val">
-                      {row.price !== null ? fmt(row.price, row.price > 100 ? 2 : 4) : <span className="loading-cell" />}
-                    </td>
-                    <td className="text-right">
-                      {change
-                        ? <span className={change.positive ? 'change-pos' : 'change-neg'}>{change.value}</span>
-                        : <span className="loading-cell" />}
-                    </td>
-                    <td className="text-right">
-                      {row.price !== null && row.stockPrice !== null ? (() => {
-                        const disc = ((row.price - row.stockPrice) / row.stockPrice) * 100;
-                        const color = Math.abs(disc) < 0.5 ? 'var(--text-dim)' : disc > 0 ? 'var(--green)' : 'var(--red)';
-                        return <span style={{ color, fontSize: 11 }}>
-                          {disc >= 0 ? '+' : ''}{disc.toFixed(2)}%
-                          <div style={{ fontSize: 9, color: 'var(--text-dim)' }}>{fmt(row.stockPrice, 2)}</div>
-                        </span>;
-                      })() : <span className="loading-cell" />}
-                    </td>
-                    <td className="text-right dim">
-                      {row.liquidity !== null ? fmtVol(row.liquidity) : <span className="loading-cell" />}
-                    </td>
-                    <td onClick={e => e.stopPropagation()}>
-                      <a
-                        href={`https://jup.ag/swap/USDC-${row.mint}?ref=yfgv2ibxy07v`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="buy-btn"
-                      >
-                        BUY <ExternalLink size={9} />
-                      </a>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                    <Star size={12} />
+                  </button>
+                  <a
+                    href={`https://jup.ag/tokens/${row.mint}?ref=yfgv2ibxy07v`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="buy-btn"
+                  >
+                    BUY <ExternalLink size={9} />
+                  </a>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -362,9 +359,63 @@ function HomeInner() {
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [search, setSearch] = useState('');
+  const [providerFilter, setProviderFilter] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedToken, setSelectedToken] = useState<StockRow | null>(null);
+  const [solPrice, setSolPrice] = useState<number | null>(null);
+  const [tickerScrolling, setTickerScrolling] = useState(false);
+  const statusBarRef = React.useRef<HTMLDivElement>(null);
+  const statusInnerRef = React.useRef<HTMLDivElement>(null);
+  const [showSignIn, setShowSignIn] = useState(false);
+  const [signInEmail, setSignInEmail] = useState('');
+  const [signInStatus, setSignInStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
+  const [user, setUser] = useState<{ email: string } | null>(null);
+  const [starred, setStarred] = useState<Set<string>>(new Set());
+
+  // Load session + stars on mount
+  useEffect(() => {
+    fetch('/api/auth/me').then(r => r.json()).then(d => { if (d.user) setUser(d.user); });
+    // Handle magic link redirect
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('auth') === 'success') {
+      window.history.replaceState({}, '', '/');
+      fetch('/api/auth/me').then(r => r.json()).then(d => { if (d.user) setUser(d.user); });
+    }
+    try {
+      const saved = localStorage.getItem('sos-starred');
+      if (saved) setStarred(new Set(JSON.parse(saved)));
+    } catch { /* */ }
+  }, []);
+
+  const toggleStar = useCallback((mint: string) => {
+    setStarred(prev => {
+      const next = new Set(prev);
+      next.has(mint) ? next.delete(mint) : next.add(mint);
+      localStorage.setItem('sos-starred', JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    setUser(null);
+  };
+
+  const handleSignIn = async () => {
+    if (!signInEmail || signInStatus === 'sending') return;
+    setSignInStatus('sending');
+    try {
+      await fetch('/api/auth/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: signInEmail }),
+      });
+      setSignInStatus('sent');
+    } catch {
+      setSignInStatus('idle');
+    }
+  };
 
   const fetchPrices = useCallback(async () => {
     setLoading(true);
@@ -389,11 +440,27 @@ function HomeInner() {
   }, []);
 
   useEffect(() => {
-    // Small delay so page paints first before kicking off price fetch
     const t = setTimeout(fetchPrices, 100);
     const interval = setInterval(fetchPrices, 30000);
     return () => { clearTimeout(t); clearInterval(interval); };
   }, [fetchPrices]);
+
+  // SOL price — fetch once and refresh every 30s
+  useEffect(() => {
+    const fetchSol = async () => {
+      try {
+        const res = await fetch('https://api.jup.ag/price/v3?ids=So11111111111111111111111111111111111111112', {
+          headers: { 'x-api-key': '3309da44-211b-4acb-9d31-c36fb54d9459' }
+        });
+        const d = await res.json();
+        const p = d?.['So11111111111111111111111111111111111111112']?.usdPrice;
+        if (p) setSolPrice(parseFloat(p));
+      } catch { /* silent */ }
+    };
+    fetchSol();
+    const iv = setInterval(fetchSol, 30000);
+    return () => clearInterval(iv);
+  }, []);
 
   // Handle ?t=TICKER query param (from /token/[ticker] redirect)
   useEffect(() => {
@@ -411,11 +478,32 @@ function HomeInner() {
 
   const { isOpen, timeLabel } = getMarketStatus();
 
+  // Detect if status bar overflows → enable marquee
+  useEffect(() => {
+    const check = () => {
+      const bar = statusBarRef.current;
+      const inner = statusInnerRef.current;
+      if (!bar || !inner) return;
+      const overflows = inner.scrollWidth > bar.clientWidth;
+      setTickerScrolling(overflows);
+      if (overflows) {
+        const duration = Math.max(20, inner.scrollWidth / 40);
+        bar.style.setProperty('--ticker-duration', `${duration}s`);
+        bar.style.setProperty('--ticker-offset', `-${inner.scrollWidth / 2}px`);
+      }
+    };
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, [rows, loading, solPrice]);
+
   const sorted = [...rows]
-    .filter(r =>
-      r.name.toLowerCase().includes(search.toLowerCase()) ||
-      r.symbol.toLowerCase().includes(search.toLowerCase())
-    )
+    .filter(r => {
+      const matchesSearch = r.name.toLowerCase().includes(search.toLowerCase()) ||
+        r.symbol.toLowerCase().includes(search.toLowerCase());
+      const matchesProvider = !providerFilter || r.provider === providerFilter;
+      return matchesSearch && matchesProvider;
+    })
     .sort((a, b) => {
       let av: string | number | null, bv: string | number | null;
       if (sortKey === 'name') { av = a.name; bv = b.name; }
@@ -525,20 +613,45 @@ function HomeInner() {
           outline: none;
         }
         .header-search input::placeholder { color: var(--text-dim); }
+        .header-x-link { color: var(--text-dim); display: flex; align-items: center; flex-shrink: 0; transition: color 0.15s; }
+        .header-x-link:hover { color: var(--amber); }
+        .signin-btn { background: none; border: 1px solid #2a2a2a; color: var(--text-dim); font-family: inherit; font-size: 9px; letter-spacing: 2px; padding: 5px 10px; border-radius: 4px; cursor: pointer; flex-shrink: 0; transition: all 0.15s; }
+        .signin-btn:hover { border-color: var(--amber); color: var(--amber); }
+        .star-btn { background: none; border: none; cursor: pointer; color: #333; padding: 2px; display: flex; align-items: center; transition: color 0.15s; flex-shrink: 0; }
+        .star-btn:hover { color: var(--amber); }
+        .star-btn.starred { color: var(--amber); }
+        .star-btn-lg { padding: 4px; }
+        .star-btn-lg svg { width: 16px; height: 16px; }
 
         /* ── Status bar ── */
         .status-bar {
           background: #0d0d0d;
           border-bottom: 1px solid var(--border);
-          padding: 4px 14px;
+          padding: 0 14px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          font-size: 10px;
+          overflow: hidden;
+          white-space: nowrap;
+          position: relative;
+        }
+        .status-bar-inner {
           display: flex;
           align-items: center;
           gap: 10px;
-          font-size: 10px;
-          overflow-x: auto;
           white-space: nowrap;
+          will-change: transform;
         }
-        .status-bar::-webkit-scrollbar { display: none; }
+        .status-bar-inner.scrolling {
+          animation: ticker-scroll var(--ticker-duration, 30s) linear infinite;
+          padding-right: 80px;
+        }
+        .status-bar-inner.scrolling:hover { animation-play-state: paused; }
+        @keyframes ticker-scroll {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(var(--ticker-offset, -50%)); }
+        }
         .sep { color: #2a2a2a; }
         .refresh-btn {
           background: transparent;
@@ -784,6 +897,46 @@ function HomeInner() {
         .tm-mint-label { font-size: 9px; color: var(--text-dim); letter-spacing: 1.5px; flex-shrink: 0; }
         .tm-mint-addr { font-size: 11px; color: var(--text-dim); font-family: monospace; }
         .tm-actions { display: flex; gap: 8px; }
+        .tm-nav {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          margin-top: 10px;
+          padding-top: 10px;
+          border-top: 1px solid var(--border);
+        }
+        .tm-nav-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          background: var(--bg-tertiary);
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          padding: 10px 20px;
+          color: var(--text);
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 1.5px;
+          cursor: pointer;
+          transition: background 0.1s, border-color 0.1s, color 0.1s;
+          flex: 1;
+          justify-content: center;
+        }
+        .tm-nav-btn:hover {
+          background: rgba(255,153,0,0.08);
+          border-color: rgba(255,153,0,0.4);
+          color: var(--amber);
+        }
+        .tm-nav-btn:active { background: rgba(255,153,0,0.15); }
+        .tm-nav-count {
+          font-size: 11px;
+          color: var(--text-dim);
+          letter-spacing: 1px;
+          white-space: nowrap;
+          min-width: 52px;
+          text-align: center;
+        }
         .tm-buy-btn {
           flex: 1;
           display: inline-flex;
@@ -845,7 +998,7 @@ function HomeInner() {
       <main style={{ minHeight: '100vh', background: 'var(--bg)' }}>
         {/* Visually hidden H1 for SEO / heading order */}
         <h1 style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>
-          Stocks on Solana — Real-time Tokenized Stock Screener
+          Stocks on Solana — Real-time Stock Screener
         </h1>
         {/* Header */}
         <header className="header">
@@ -857,15 +1010,59 @@ function HomeInner() {
             <Search size={12} />
             <input
               type="text"
-              placeholder="Search tokens..."
+              placeholder="Search stocks..."
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
           </div>
+          <a href="https://x.com/stocksonsolana" target="_blank" rel="noopener noreferrer" className="header-x-link" aria-label="Follow on X">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          {user ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 9, color: 'var(--text-dim)', letterSpacing: 1 }}>{user.email.split('@')[0].toUpperCase()}</span>
+              <button className="signin-btn" onClick={handleLogout} title="Sign out" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <LogOut size={10} />
+              </button>
+            </div>
+          ) : (
+            <button className="signin-btn" onClick={() => setShowSignIn(true)}>SIGN IN</button>
+          )}
         </header>
 
+        {/* Sign In Modal */}
+        {showSignIn && (
+          <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) { setShowSignIn(false); setSignInStatus('idle'); setSignInEmail(''); } }}>
+            <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: 8, padding: 32, width: '100%', maxWidth: 400, position: 'relative' }}>
+              <button onClick={() => { setShowSignIn(false); setSignInStatus('idle'); setSignInEmail(''); }} style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: 18 }}>✕</button>
+              <div style={{ color: '#ff9900', fontSize: 13, letterSpacing: 3, fontWeight: 700, marginBottom: 8 }}>SIGN IN</div>
+              <div style={{ color: '#555', fontSize: 11, letterSpacing: 1, marginBottom: 24 }}>Get a magic link sent to your email</div>
+              {signInStatus === 'sent' ? (
+                <div style={{ color: '#00c864', fontSize: 13, letterSpacing: 1, textAlign: 'center', padding: '16px 0' }}>
+                  ✓ CHECK YOUR EMAIL
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={signInEmail}
+                    onChange={e => setSignInEmail(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSignIn()}
+                    style={{ width: '100%', boxSizing: 'border-box', background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: 4, padding: '10px 12px', color: '#ccc', fontFamily: 'inherit', fontSize: 16, outline: 'none' }}
+                  />
+                  <button onClick={handleSignIn} disabled={signInStatus === 'sending'} style={{ width: '100%', background: '#ff9900', color: '#000', border: 'none', borderRadius: 4, padding: '12px', fontFamily: 'inherit', fontSize: 12, fontWeight: 700, letterSpacing: 1, cursor: 'pointer' }}>
+                    {signInStatus === 'sending' ? '...' : 'SEND MAGIC LINK'}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Status bar */}
-        <div className="status-bar">
+        <div className="status-bar" ref={statusBarRef}>
+          <div className={`status-bar-inner ${tickerScrolling ? 'scrolling' : ''}`} ref={statusInnerRef}>
           {loading ? (
             <span className="brand-loader-dots">
               LOADING <span>●</span><span>●</span><span>●</span>
@@ -883,16 +1080,30 @@ function HomeInner() {
           <span style={{ color: 'var(--text-dim)' }}>{timeLabel}</span>
           <span className="sep">|</span>
           {[
-            { label: 'X', count: xCount, total: rows.filter(r => r.provider === 'xStocks').length },
-            { label: 'ONDO', count: ondoCount, total: rows.filter(r => r.provider === 'Ondo').length },
-            { label: 'PRE', count: preCount, total: rows.filter(r => r.provider === 'PreStocks').length },
-          ].map(({ label, count, total }, i, arr) => (
-            <span key={label}>
-              <span style={{ color: 'var(--text-dim)' }}>{label} </span>
-              <span style={{ color: 'var(--amber)' }}>{count}/{total}</span>
-              {i < arr.length - 1 && <span className="sep" style={{ marginLeft: 10 }}>|</span>}
-            </span>
-          ))}
+            { label: 'X', provider: 'xStocks', count: xCount, total: rows.filter(r => r.provider === 'xStocks').length },
+            { label: 'ONDO', provider: 'Ondo', count: ondoCount, total: rows.filter(r => r.provider === 'Ondo').length },
+            { label: 'PRE', provider: 'PreStocks', count: preCount, total: rows.filter(r => r.provider === 'PreStocks').length },
+          ].map(({ label, provider, count, total }, i, arr) => {
+            const active = providerFilter === provider;
+            return (
+              <span key={label}>
+                <button
+                  onClick={() => setProviderFilter(active ? null : provider)}
+                  style={{
+                    background: active ? 'rgba(255,153,0,0.12)' : 'transparent',
+                    border: active ? '1px solid rgba(255,153,0,0.4)' : '1px solid transparent',
+                    borderRadius: 3, padding: '1px 5px', cursor: 'pointer',
+                    color: active ? 'var(--amber)' : 'inherit', fontSize: 10,
+                    letterSpacing: 1, fontWeight: active ? 700 : 400,
+                  }}
+                >
+                  <span style={{ color: active ? 'var(--amber)' : 'var(--text-dim)' }}>{label} </span>
+                  <span style={{ color: 'var(--amber)' }}>{count}/{total}</span>
+                </button>
+                {i < arr.length - 1 && <span className="sep" style={{ marginLeft: 6 }}>|</span>}
+              </span>
+            );
+          })}
           {totalMcap > 0 && <>
             <span className="sep">|</span>
             <span style={{ color: 'var(--text-dim)' }}>MCAP </span>
@@ -903,10 +1114,17 @@ function HomeInner() {
             <span style={{ color: 'var(--text-dim)' }}>LIQ </span>
             <span style={{ color: 'var(--amber)' }}>{fmtVol(totalLiq)}</span>
           </>}
+          {solPrice && <>
+            <span className="sep">|</span>
+            <span style={{ color: 'var(--text-dim)' }}>SOL </span>
+            <span style={{ color: 'var(--amber)', fontWeight: 700 }}>${solPrice.toFixed(2)}</span>
+          </>}
           <button className="refresh-btn" onClick={fetchPrices}>
             <RefreshCw size={9} className={loading ? 'animate-spin' : ''} style={loading ? { color: '#ff9900' } : {}} />
             REFRESH
           </button>
+          {/* Duplicate for seamless loop when scrolling */}
+          </div>
         </div>
 
         {/* Sort bar (mobile) */}
@@ -920,8 +1138,8 @@ function HomeInner() {
           ))}
         </div>
 
-        {/* Desktop table — virtualized */}
-        <VirtualTable sorted={sorted} setSelectedToken={setSelectedToken} SortIcon={SortIcon} toggleSort={toggleSort} />
+        {/* Desktop table */}
+        <DesktopTable sorted={sorted} setSelectedToken={setSelectedToken} SortIcon={SortIcon} toggleSort={toggleSort} starred={starred} toggleStar={toggleStar} />
 
         {/* Mobile cards */}
         <div className="mobile-cards">
@@ -962,7 +1180,7 @@ function HomeInner() {
                   </div>
                   <span onClick={e => e.stopPropagation()}>
                     <a
-                      href={`https://jup.ag/swap/USDC-${row.mint}?ref=yfgv2ibxy07v`}
+                      href={`https://jup.ag/tokens/${row.mint}?ref=yfgv2ibxy07v`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="buy-btn"
@@ -978,13 +1196,31 @@ function HomeInner() {
 
         {/* Footer */}
         <footer className="footer">
-          STOCKS ON SOLANA — REAL-TIME TOKENIZED EQUITY SCREENER
+          <span>STOCKS ON SOLANA — REAL-TIME TOKENIZED EQUITY SCREENER</span>
+          <span style={{ margin: '0 10px', color: '#222' }}>|</span>
+          <a href="/privacy" style={{ color: '#444', textDecoration: 'none', letterSpacing: 2 }} onMouseOver={e => (e.currentTarget.style.color='#ff9900')} onMouseOut={e => (e.currentTarget.style.color='#444')}>PRIVACY</a>
+          <span style={{ margin: '0 10px', color: '#222' }}>|</span>
+          <a href="/terms" style={{ color: '#444', textDecoration: 'none', letterSpacing: 2 }} onMouseOver={e => (e.currentTarget.style.color='#ff9900')} onMouseOut={e => (e.currentTarget.style.color='#444')}>TERMS</a>
         </footer>
 
         {/* Token detail modal */}
-        {selectedToken && (
-          <TokenModal row={selectedToken} onClose={() => setSelectedToken(null)} />
-        )}
+        {selectedToken && (() => {
+          const idx = sorted.findIndex(r => r.mint === selectedToken.mint);
+          const prev = () => setSelectedToken(sorted[(idx - 1 + sorted.length) % sorted.length]);
+          const next = () => setSelectedToken(sorted[(idx + 1) % sorted.length]);
+          return (
+            <TokenModal
+              row={selectedToken}
+              onClose={() => setSelectedToken(null)}
+              onPrev={prev}
+              onNext={next}
+              index={idx}
+              total={sorted.length}
+              starred={starred}
+              toggleStar={toggleStar}
+            />
+          );
+        })()}
       </main>
     </>
   );

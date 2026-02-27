@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Stocks on Solana
 
-## Getting Started
+**Real-time tokenized equity screener on Solana.**
 
-First, run the development server:
+🔗 [stocksonsolana.com](https://stocksonsolana.com) · 🐦 [@stocksonsolana](https://x.com/stocksonsolana)
+
+---
+
+## What it does
+
+Track 252+ tokenized stocks trading on Solana — real-time prices, 24h changes, on-chain liquidity, and discount/premium vs real-world price.
+
+Providers: **xStocks**, **Ondo Finance**, **PreStocks**
+
+---
+
+## Features
+
+- **252+ tokenized stocks** across 3 providers
+- **Real-time prices** via Jupiter Price API v3
+- **Discount/Mark column** — on-chain price vs real NYSE/NASDAQ price
+- **Token icons** — xStocks CDN, Ondo CDN, PreStocks CDN with SVG fallback
+- **Token detail modal** — full stats, mint address, buy link
+- **NYSE market status** — OPEN/CLOSED with countdown (ET timezone)
+- **SOL price** in status bar
+- **Star stocks** — bookmark favourites (localStorage)
+- **Sign in** — magic link auth via email (JWT cookie, 30 days)
+- **Email capture** → SendGrid "Stocks on Solana" list
+- **Virtualised table** — `@tanstack/react-virtual`, renders only visible rows (TBT ~10ms)
+- **252 `/token/[ticker]` static pages** — SEO, OG tags, JSON-LD schema
+- **Sitemap** at `/sitemap.xml`, `robots.txt`
+- **OG image** — JetBrains Mono, real logo, live ticker table
+- **Privacy Policy** at `/privacy`, **Terms of Service** at `/terms`
+- **Google Analytics** — `G-79CB6BK271`
+- **Cloudflare Pages** deployment
+
+---
+
+## Stack
+
+- **Next.js 15** + TypeScript + Tailwind-free (pure CSS-in-JS)
+- **JetBrains Mono** throughout
+- **Jupiter Price API v3** for prices
+- **SendGrid** for email (domain verified: `noreply@stocksonsolana.com`)
+- **jose** for JWT sessions
+- **Cloudflare Pages** for hosting
+
+---
+
+## Development
 
 ```bash
+npm install
+cp .env.example .env.local  # fill in your keys
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Env vars
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+SENDGRID_API_KEY=
+SENDGRID_FROM=noreply@stocksonsolana.com
+JWT_SECRET=
+NEXT_PUBLIC_JUPITER_REF_ID=yfgv2ibxy07v
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Production build (CF Pages)
 
-## Learn More
+```bash
+npx vercel build --yes
+npx @cloudflare/next-on-pages --skip-build
+CLOUDFLARE_API_KEY=... CLOUDFLARE_EMAIL=... npx wrangler pages deploy .vercel/output/static --project-name=stocks-on-solana
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Architecture
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- All API routes run on **Node.js runtime** (not edge) for `jose` compatibility
+- Magic link tokens: HMAC-SHA256 signed, 15-min expiry, no database
+- Sessions: JWT in HttpOnly cookie, 30-day expiry
+- Stars: localStorage (client-side, no backend)
+- Token icons: provider CDN fast-path → Helius DAS fallback → SVG fallback
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT

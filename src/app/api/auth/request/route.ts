@@ -50,8 +50,7 @@ export async function POST(req: NextRequest) {
 
   if (!sgRes.ok) {
     const err = await sgRes.text();
-    console.error('SendGrid error:', sgRes.status, err);
-    return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to send email', status: sgRes.status, detail: err, hasKey: !!SENDGRID_API_KEY, keyLen: SENDGRID_API_KEY?.length }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

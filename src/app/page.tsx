@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, ExternalLink, Search, X, TrendingUp, TrendingDown, Droplets, BarChart2, ChevronLeft, ChevronRight, Star, LogOut } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, ExternalLink, Search, X, TrendingUp, TrendingDown, Droplets, BarChart2, ChevronLeft, ChevronRight, Star, LogOut, Shield, FileText } from 'lucide-react';
 import { ALL_TOKENS, StockToken } from '@/lib/tokens';
 
 interface PriceEntry {
@@ -356,10 +356,12 @@ function HomeInner() {
   const [rows, setRows] = useState<StockRow[]>(
     ALL_TOKENS.map(t => ({ ...t, price: null, change24h: null, volume24h: null, liquidity: null, stockPrice: null, mcap: null }))
   );
-  const [sortKey, setSortKey] = useState<SortKey>('name');
-  const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [sortKey, setSortKey] = useState<SortKey>('change24h');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [search, setSearch] = useState('');
   const [providerFilter, setProviderFilter] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedToken, setSelectedToken] = useState<StockRow | null>(null);
@@ -505,6 +507,11 @@ function HomeInner() {
       return matchesSearch && matchesProvider;
     })
     .sort((a, b) => {
+      // Starred always float to top
+      const aStarred = starred.has(a.mint) ? 0 : 1;
+      const bStarred = starred.has(b.mint) ? 0 : 1;
+      if (aStarred !== bStarred) return aStarred - bStarred;
+      // Then apply normal sort
       let av: string | number | null, bv: string | number | null;
       if (sortKey === 'name') { av = a.name; bv = b.name; }
       else if (sortKey === 'provider') { av = a.provider; bv = b.provider; }
@@ -516,9 +523,13 @@ function HomeInner() {
       return sortDir === 'asc' ? (av as number) - (bv as number) : (bv as number) - (av as number);
     });
 
+  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+  const paged = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortKey(key); setSortDir('desc'); }
+    setPage(1);
   }
 
   function SortIcon({ col }: { col: SortKey }) {
@@ -594,7 +605,16 @@ function HomeInner() {
           position: relative;
           max-width: 220px;
           margin-left: auto;
+          margin-right: 0;
         }
+        .header-pbs {
+          display: flex;
+          align-items: center;
+          flex-shrink: 0;
+          opacity: 0.7;
+          transition: opacity 0.15s;
+        }
+        .header-pbs:hover { opacity: 1; }
         .header-search svg {
           position: absolute;
           left: 8px;
@@ -975,27 +995,41 @@ function HomeInner() {
 
         /* ── Footer ── */
         .footer {
-          padding: 16px;
-          text-align: center;
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 16px;
           font-size: 9px;
           color: #333;
           letter-spacing: 2px;
           border-top: 1px solid var(--border);
-          margin-top: 8px;
+          background: var(--bg-secondary);
+          z-index: 40;
+          overflow: hidden;
         }
+        .footer-pbs { opacity: 0.6; transition: opacity 0.15s; display: flex; align-items: center; flex-shrink: 0; }
+        .footer-pbs:hover { opacity: 1; }
+        .footer-link { color: #444; text-decoration: none; letter-spacing: 2px; font-size: 9px; flex-shrink: 0; transition: color 0.15s; }
+        .footer-link:hover { color: var(--amber); }
 
         /* ── Responsive ── */
         @media (max-width: 640px) {
           .desktop-table { display: none; }
           .mobile-cards { display: block; padding-top: 8px; }
           .header-brand span { font-size: 11px; }
+          .header-pbs { display: none; }
         }
         @media (min-width: 641px) {
           .sort-bar { display: none; }
         }
       `}</style>
 
-      <main style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      <main style={{ minHeight: '100vh', background: 'var(--bg)', paddingBottom: 44 }}>
         {/* Visually hidden H1 for SEO / heading order */}
         <h1 style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>
           Stocks on Solana — Real-time Stock Screener
@@ -1012,7 +1046,7 @@ function HomeInner() {
               type="text"
               placeholder="Search stocks..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => { setSearch(e.target.value); setPage(1); }}
             />
           </div>
           <a href="https://x.com/stocksonsolana" target="_blank" rel="noopener noreferrer" className="header-x-link" aria-label="Follow on X">
@@ -1088,7 +1122,7 @@ function HomeInner() {
             return (
               <span key={label}>
                 <button
-                  onClick={() => setProviderFilter(active ? null : provider)}
+                  onClick={() => { setProviderFilter(active ? null : provider); setPage(1); }}
                   style={{
                     background: active ? 'rgba(255,153,0,0.12)' : 'transparent',
                     border: active ? '1px solid rgba(255,153,0,0.4)' : '1px solid transparent',
@@ -1139,11 +1173,11 @@ function HomeInner() {
         </div>
 
         {/* Desktop table */}
-        <DesktopTable sorted={sorted} setSelectedToken={setSelectedToken} SortIcon={SortIcon} toggleSort={toggleSort} starred={starred} toggleStar={toggleStar} />
+        <DesktopTable sorted={paged} setSelectedToken={setSelectedToken} SortIcon={SortIcon} toggleSort={toggleSort} starred={starred} toggleStar={toggleStar} />
 
         {/* Mobile cards */}
         <div className="mobile-cards">
-          {sorted.map(row => {
+          {paged.map(row => {
             const change = fmtChange(row.change24h);
             return (
               <div key={row.mint} className="card" onClick={() => setSelectedToken(row)}>
@@ -1194,13 +1228,22 @@ function HomeInner() {
           })}
         </div>
 
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 0 8px', fontFamily: 'inherit', fontSize: 10, letterSpacing: 1 }}>
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{ background: 'none', border: '1px solid #2a2a2a', color: page === 1 ? '#333' : '#888', fontFamily: 'inherit', fontSize: 10, letterSpacing: 1, padding: '4px 10px', borderRadius: 3, cursor: page === 1 ? 'default' : 'pointer' }}>PREV</button>
+            <span style={{ color: '#555' }}>{page} / {totalPages}</span>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={{ background: 'none', border: '1px solid #2a2a2a', color: page === totalPages ? '#333' : '#888', fontFamily: 'inherit', fontSize: 10, letterSpacing: 1, padding: '4px 10px', borderRadius: 3, cursor: page === totalPages ? 'default' : 'pointer' }}>NEXT</button>
+          </div>
+        )}
+
         {/* Footer */}
         <footer className="footer">
-          <span>STOCKS ON SOLANA — REAL-TIME TOKENIZED EQUITY SCREENER</span>
-          <span style={{ margin: '0 10px', color: '#222' }}>|</span>
-          <a href="/privacy" style={{ color: '#444', textDecoration: 'none', letterSpacing: 2 }} onMouseOver={e => (e.currentTarget.style.color='#ff9900')} onMouseOut={e => (e.currentTarget.style.color='#444')}>PRIVACY</a>
-          <span style={{ margin: '0 10px', color: '#222' }}>|</span>
-          <a href="/terms" style={{ color: '#444', textDecoration: 'none', letterSpacing: 2 }} onMouseOver={e => (e.currentTarget.style.color='#ff9900')} onMouseOut={e => (e.currentTarget.style.color='#444')}>TERMS</a>
+          <a href="/privacy" className="footer-link" title="Privacy Policy"><Shield size={14} /></a>
+          <a href="https://solana.com" target="_blank" rel="noopener noreferrer" className="footer-pbs" aria-label="Powered by Solana">
+            <img src="/stacked-white.svg" alt="Powered by Solana" style={{ display: 'block', height: 26, width: 'auto', borderRadius: 5 }} />
+          </a>
+          <a href="/terms" className="footer-link" title="Terms of Service"><FileText size={14} /></a>
         </footer>
 
         {/* Token detail modal */}

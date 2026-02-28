@@ -67,7 +67,7 @@ The Service is not available to residents of jurisdictions where tokenized secur
           },
           {
             title: '10. Governing Law',
-            body: `These Terms are governed by the laws of Victoria, Australia, without regard to conflict of law principles.`,
+            body: `These Terms shall be governed by and construed in accordance with applicable law. Any disputes arising under these Terms shall be resolved through binding arbitration or a court of competent jurisdiction.`,
           },
           {
             title: '11. Contact',

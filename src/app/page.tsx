@@ -355,7 +355,7 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
               <tr
                 key={row.mint}
                 className={i % 2 !== 0 ? 'even' : ''}
-                onClick={() => openToken(row)}
+                onClick={() => setSelectedToken(row)}
                 style={{ contentVisibility: 'auto', containIntrinsicSize: '0 46px' } as React.CSSProperties}
               >
                 <td style={{ paddingLeft: 14 }}>

@@ -568,6 +568,43 @@ function HomeInner() {
     return () => window.removeEventListener('resize', check);
   }, [rows, loading, solPrice]);
 
+  // Status bar drag-to-scroll
+  useEffect(() => {
+    const bar = statusBarRef.current;
+    if (!bar) return;
+    let isDown = false, startX = 0, scrollLeft = 0;
+
+    const pause = () => { bar.style.animationPlayState = 'paused'; if (statusInnerRef.current) statusInnerRef.current.style.animationPlayState = 'paused'; };
+    const resume = () => { bar.style.animationPlayState = ''; if (statusInnerRef.current) statusInnerRef.current.style.animationPlayState = ''; };
+
+    const onDown = (x: number) => { isDown = true; startX = x; scrollLeft = bar.scrollLeft; pause(); bar.style.cursor = 'grabbing'; };
+    const onMove = (x: number) => { if (!isDown) return; bar.scrollLeft = scrollLeft - (x - startX); };
+    const onUp = () => { isDown = false; bar.style.cursor = 'grab'; setTimeout(resume, 800); };
+
+    const md = (e: MouseEvent) => onDown(e.pageX);
+    const mm = (e: MouseEvent) => onMove(e.pageX);
+    const mu = () => onUp();
+    const td = (e: TouchEvent) => onDown(e.touches[0].pageX);
+    const tm = (e: TouchEvent) => { onMove(e.touches[0].pageX); };
+    const tu = () => onUp();
+
+    bar.addEventListener('mousedown', md);
+    window.addEventListener('mousemove', mm);
+    window.addEventListener('mouseup', mu);
+    bar.addEventListener('touchstart', td, { passive: true });
+    bar.addEventListener('touchmove', tm, { passive: true });
+    bar.addEventListener('touchend', tu);
+
+    return () => {
+      bar.removeEventListener('mousedown', md);
+      window.removeEventListener('mousemove', mm);
+      window.removeEventListener('mouseup', mu);
+      bar.removeEventListener('touchstart', td);
+      bar.removeEventListener('touchmove', tm);
+      bar.removeEventListener('touchend', tu);
+    };
+  }, []);
+
   const sorted = [...rows]
     .filter(r => {
       const matchesSearch = r.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -716,32 +753,31 @@ function HomeInner() {
         .status-bar {
           background: #0d0d0d;
           border-bottom: 1px solid var(--border);
-          padding: 0 14px;
-          height: 28px;
-          display: flex;
-          align-items: center;
-          font-size: 10px;
+          height: 30px;
           overflow: hidden;
-          white-space: nowrap;
           position: relative;
+          user-select: none;
+          font-size: 10px;
+          letter-spacing: 0.5px;
         }
-        .status-bar-inner {
+        .status-bar-track {
           display: flex;
           align-items: center;
-          gap: 10px;
           white-space: nowrap;
+          height: 100%;
+          animation: ticker-scroll 50s linear infinite;
           will-change: transform;
         }
-        .status-bar-inner.scrolling {
-          animation: ticker-scroll var(--ticker-duration, 30s) linear infinite;
-          padding-right: 80px;
-        }
-        .status-bar-inner.scrolling:hover { animation-play-state: paused; }
+        .status-bar-track:hover { animation-play-state: paused; }
         @keyframes ticker-scroll {
           0%   { transform: translateX(0); }
-          100% { transform: translateX(var(--ticker-offset, -50%)); }
+          100% { transform: translateX(-50%); }
         }
-        .sep { color: #2a2a2a; }
+        .sb-item { display: inline-flex; align-items: center; padding: 0 16px; gap: 6px; border-right: 1px solid #1e1e1e; height: 100%; }
+        .sb-label { color: #555; }
+        .sb-value { color: var(--amber); font-weight: 600; }
+        .sb-status-open { color: var(--green); }
+        .sb-status-closed { color: var(--red); }
         .refresh-btn {
           background: transparent;
           border: none;
@@ -789,7 +825,7 @@ function HomeInner() {
         }
 
         /* ── Desktop table ── */
-        .desktop-table { display: block; }
+        .desktop-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .mobile-cards { display: none; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; }
         th {
@@ -1088,8 +1124,8 @@ function HomeInner() {
 
         /* ── Responsive ── */
         @media (max-width: 640px) {
-          .desktop-table { display: none; }
-          .mobile-cards { display: block; padding-top: 8px; }
+          .desktop-table { display: block; }
+          .mobile-cards { display: none; }
           .header-brand span { font-size: 11px; }
           .header-pbs { display: none; }
         }
@@ -1165,69 +1201,30 @@ function HomeInner() {
 
         {/* Status bar */}
         <div className="status-bar" ref={statusBarRef}>
-          <div className={`status-bar-inner ${tickerScrolling ? 'scrolling' : ''}`} ref={statusInnerRef}>
-          {loading ? (
-            <span className="brand-loader-dots">
-              LOADING <span>●</span><span>●</span><span>●</span>
-            </span>
-          ) : (
-            <span style={{ color: 'var(--text-dim)' }}>
-              {sorted.length} TOKENS
-            </span>
-          )}
-          <span className="sep">|</span>
-          <span style={{ color: isOpen ? 'var(--green)' : 'var(--red)' }}>
-            ● NYSE {isOpen ? 'OPEN' : 'CLOSED'}
-          </span>
-          <span className="sep">|</span>
-          <span style={{ color: 'var(--text-dim)' }}>{timeLabel}</span>
-          <span className="sep">|</span>
-          {[
-            { label: 'X', provider: 'xStocks', count: xCount, total: rows.filter(r => r.provider === 'xStocks').length },
-            { label: 'ONDO', provider: 'Ondo', count: ondoCount, total: rows.filter(r => r.provider === 'Ondo').length },
-            { label: 'PRE', provider: 'PreStocks', count: preCount, total: rows.filter(r => r.provider === 'PreStocks').length },
-          ].map(({ label, provider, count, total }, i, arr) => {
-            const active = providerFilter === provider;
-            return (
-              <span key={label}>
-                <button
-                  onClick={() => { setProviderFilter(active ? null : provider); setPage(1); }}
-                  style={{
-                    background: active ? 'rgba(255,153,0,0.12)' : 'transparent',
-                    border: active ? '1px solid rgba(255,153,0,0.4)' : '1px solid transparent',
-                    borderRadius: 3, padding: '1px 5px', cursor: 'pointer',
-                    color: active ? 'var(--amber)' : 'inherit', fontSize: 10,
-                    letterSpacing: 1, fontWeight: active ? 700 : 400,
-                  }}
-                >
-                  <span style={{ color: active ? 'var(--amber)' : 'var(--text-dim)' }}>{label} </span>
-                  <span style={{ color: 'var(--amber)' }}>{count}/{total}</span>
-                </button>
-                {i < arr.length - 1 && <span className="sep" style={{ marginLeft: 6 }}>|</span>}
-              </span>
+          {(() => {
+            const items = (
+              <>
+                <span className="sb-item"><span className="sb-label">STOCKS</span><span className="sb-value">{sorted.length}</span></span>
+                <span className="sb-item"><span className={isOpen ? 'sb-status-open' : 'sb-status-closed'}>● NYSE/NASDAQ {isOpen ? 'OPEN' : 'CLOSED'}</span><span className="sb-label" style={{fontSize:9}}>{timeLabel}</span></span>
+                <span className="sb-item"><span className="sb-label">XSTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'xStocks').length}</span></span>
+                <span className="sb-item"><span className="sb-label">ONDO</span><span className="sb-value">{rows.filter(r => r.provider === 'Ondo').length}</span></span>
+                <span className="sb-item"><span className="sb-label">PRESTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'PreStocks').length}</span></span>
+                {totalMcap > 0 && <span className="sb-item"><span className="sb-label">MCAP</span><span className="sb-value">{fmtVol(totalMcap)}</span></span>}
+                {totalLiq > 0 && <span className="sb-item"><span className="sb-label">LIQUIDITY</span><span className="sb-value">{fmtVol(totalLiq)}</span></span>}
+                {solPrice && <span className="sb-item"><span className="sb-label">SOL</span><span className="sb-value">${solPrice.toFixed(2)}</span></span>}
+                <span className="sb-item">
+                  <button onClick={fetchPrices} style={{background:'none',border:'none',cursor:'pointer',color:'#555',fontFamily:'inherit',fontSize:9,letterSpacing:1,display:'flex',alignItems:'center',gap:4,padding:0}}>
+                    <RefreshCw size={9} className={loading ? 'animate-spin' : ''} style={loading ? {color:'#ff9900'} : {}} />REFRESH
+                  </button>
+                </span>
+              </>
             );
-          })}
-          {totalMcap > 0 && <>
-            <span className="sep">|</span>
-            <span style={{ color: 'var(--text-dim)' }}>MCAP </span>
-            <span style={{ color: 'var(--amber)' }}>{fmtVol(totalMcap)}</span>
-          </>}
-          {totalLiq > 0 && <>
-            <span className="sep">|</span>
-            <span style={{ color: 'var(--text-dim)' }}>LIQ </span>
-            <span style={{ color: 'var(--amber)' }}>{fmtVol(totalLiq)}</span>
-          </>}
-          {solPrice && <>
-            <span className="sep">|</span>
-            <span style={{ color: 'var(--text-dim)' }}>SOL </span>
-            <span style={{ color: 'var(--amber)', fontWeight: 700 }}>${solPrice.toFixed(2)}</span>
-          </>}
-          <button className="refresh-btn" onClick={fetchPrices}>
-            <RefreshCw size={9} className={loading ? 'animate-spin' : ''} style={loading ? { color: '#ff9900' } : {}} />
-            REFRESH
-          </button>
-          {/* Duplicate for seamless loop when scrolling */}
-          </div>
+            return (
+              <div className="status-bar-track" ref={statusInnerRef}>
+                {items}{items}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Sort bar (mobile) */}

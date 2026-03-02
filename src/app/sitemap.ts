@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 import { ALL_TOKENS } from '@/lib/tokens';
 
-const BASE = 'https://stocks.sol.new';
+const BASE = 'https://stocksonsolana.com';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

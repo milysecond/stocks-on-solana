@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title,
       description,
-      url: `https://stocks.sol.new/token/${token.symbol.toLowerCase()}`,
+      url: `https://stocksonsolana.com/token/${token.symbol.toLowerCase()}`,
       siteName: 'Stocks on Solana',
       type: 'website',
     },
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
     },
     alternates: {
-      canonical: `https://stocks.sol.new/token/${token.symbol.toLowerCase()}`,
+      canonical: `https://stocksonsolana.com/token/${token.symbol.toLowerCase()}`,
     },
   };
 }
@@ -61,7 +61,7 @@ export default async function TokenPage({ params }: Props) {
     name: token.name,
     alternateName: token.symbol,
     description: `Tokenized version of ${token.name} on Solana blockchain`,
-    url: `https://stocks.sol.new/token/${token.symbol.toLowerCase()}`,
+    url: `https://stocksonsolana.com/token/${token.symbol.toLowerCase()}`,
     category: token.sector,
     offers: {
       '@type': 'Offer',
@@ -69,7 +69,7 @@ export default async function TokenPage({ params }: Props) {
       seller: {
         '@type': 'Organization',
         name: 'Stocks on Solana',
-        url: 'https://stocks.sol.new',
+        url: 'https://stocksonsolana.com',
       },
     },
   };
@@ -82,7 +82,7 @@ export default async function TokenPage({ params }: Props) {
       />
       {/* Redirect to home with modal state in URL hash */}
       <meta httpEquiv="refresh" content={`0; url=/?t=${encodeURIComponent(token.symbol)}`} />
-      <link rel="canonical" href={`https://stocks.sol.new/token/${token.symbol.toLowerCase()}`} />
+      <link rel="canonical" href={`https://stocksonsolana.com/token/${token.symbol.toLowerCase()}`} />
       <div style={{
         minHeight: '100vh',
         background: '#0a0a0a',

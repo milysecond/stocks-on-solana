@@ -1341,7 +1341,7 @@ export default function Home() {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
     name: 'Stocks on Solana',
-    url: 'https://stocks.sol.new',
+    url: 'https://stocksonsolana.com',
     description: 'Real-time screener for 251+ tokenized stocks on Solana. Track prices, liquidity, and discount to real-world price.',
     applicationCategory: 'FinanceApplication',
     operatingSystem: 'Web',

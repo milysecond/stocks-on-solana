@@ -20,8 +20,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build & Deploy (OpenNext + Cloudflare)
-        run: npx @opennextjs/cloudflare build && npx @opennextjs/cloudflare deploy
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Build Next.js
+        run: npm run build
+
+      - name: Build Cloudflare Pages bundle
+        run: npx @cloudflare/next-on-pages
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy .vercel/output/static --project-name=stocks-on-solana --branch=main --commit-dirty=true

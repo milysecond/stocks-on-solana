@@ -130,7 +130,7 @@ function TokenIcon({ symbol, mint, size = 28 }: { symbol: string; mint: string; 
 function ShareBar({ symbol, name, price, change }: { symbol: string; name: string; price: number | null; change: number | null }) {
   const [copied, setCopied] = useState(false);
   const url = `https://stocksonsolana.com?t=${symbol}`;
-  const text = `${name} (${symbol})${price !== null ? ` — $${price.toFixed(2)}` : ''}${change !== null ? ` ${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toFixed(2)}%` : ''} on Stocks on Solana`;
+  const text = `${name} (${symbol})${price !== null ? ` — $${price.toFixed(2)}` : ''}${change !== null ? ` ${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toFixed(2)}%` : ''} on Stocks on Solana @StocksOnSolana`;
 
   const copy = () => {
     navigator.clipboard.writeText(url);

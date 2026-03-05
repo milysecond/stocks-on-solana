@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     default: 'Stocks on Solana — Tokenized Stock Screener',
     template: '%s | Stocks on Solana',
   },
-  description: 'Real-time screener for 251+ tokenized stocks on Solana. Track xStocks, Ondo Finance, and PreStocks — prices, liquidity, and discount to real-world price.',
+  description: 'Real-time screener for 250+ tokenized stocks on Solana. Track xStocks, Ondo Finance, and PreStocks — prices, liquidity, and discount to real-world price.',
   keywords: [
     'tokenized stocks',
     'stocks on solana',
@@ -82,6 +82,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://api.jup.ag" />
         <link rel="dns-prefetch" href="https://api.jup.ag" />
+        <link rel="preconnect" href="https://datapi.jup.ag" />
+        <link rel="dns-prefetch" href="https://datapi.jup.ag" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* Google Analytics */}
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-79CB6BK271" />

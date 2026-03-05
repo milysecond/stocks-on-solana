@@ -1,12 +1,23 @@
 import { MetadataRoute } from 'next';
+import { discoverTokens } from '@/lib/discover-tokens';
 import { ALL_TOKENS } from '@/lib/tokens';
 
 const BASE = 'https://stocksonsolana.com';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const revalidate = 3600; // regenerate sitemap hourly
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
-  const tokenPages: MetadataRoute.Sitemap = ALL_TOKENS.map(t => ({
+  // Fetch dynamic token list; fall back to static if unavailable
+  let tokens;
+  try {
+    tokens = await discoverTokens();
+  } catch {
+    tokens = ALL_TOKENS;
+  }
+
+  const tokenPages: MetadataRoute.Sitemap = tokens.map(t => ({
     url: `${BASE}/token/${t.symbol.toLowerCase()}`,
     lastModified: now,
     changeFrequency: 'hourly',

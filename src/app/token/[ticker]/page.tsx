@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { ALL_TOKENS } from '@/lib/tokens';
+import { discoverTokens } from '@/lib/discover-tokens';
 
 interface Props {
   params: Promise<{ ticker: string }>;
@@ -16,7 +17,13 @@ function findToken(ticker: string) {
 }
 
 export async function generateStaticParams() {
-  return ALL_TOKENS.map(t => ({ ticker: t.symbol.toLowerCase() }));
+  let tokens;
+  try {
+    tokens = await discoverTokens();
+  } catch {
+    tokens = ALL_TOKENS;
+  }
+  return tokens.map(t => ({ ticker: t.symbol.toLowerCase() }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -55,30 +62,58 @@ export default async function TokenPage({ params }: Props) {
   const token = findToken(ticker);
   if (!token) notFound();
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'FinancialProduct',
-    name: token.name,
-    alternateName: token.symbol,
-    description: `Tokenized version of ${token.name} on Solana blockchain`,
-    url: `https://stocksonsolana.com/token/${token.symbol.toLowerCase()}`,
-    category: token.sector,
-    offers: {
-      '@type': 'Offer',
-      priceCurrency: 'USD',
-      seller: {
-        '@type': 'Organization',
-        name: 'Stocks on Solana',
-        url: 'https://stocksonsolana.com',
+  const tokenUrl = `https://stocksonsolana.com/token/${token.symbol.toLowerCase()}`;
+
+  const schemas = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'FinancialProduct',
+      name: token.name,
+      alternateName: token.symbol,
+      description: `Trade ${token.name} (${token.symbol}) as a tokenized stock on Solana. Real-time price, liquidity, and discount to real-world price via xStocks, Ondo, or PreStocks.`,
+      url: tokenUrl,
+      category: token.sector,
+      offers: {
+        '@type': 'Offer',
+        priceCurrency: 'USD',
+        seller: {
+          '@type': 'Organization',
+          name: 'Stocks on Solana',
+          url: 'https://stocksonsolana.com',
+        },
       },
     },
-  };
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Stocks on Solana',
+          item: 'https://stocksonsolana.com',
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: token.sector ?? 'Stocks',
+          item: `https://stocksonsolana.com/?sector=${encodeURIComponent(token.sector ?? '')}`,
+        },
+        {
+          '@type': 'ListItem',
+          position: 3,
+          name: `${token.name} (${token.symbol})`,
+          item: tokenUrl,
+        },
+      ],
+    },
+  ];
 
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }}
       />
       {/* Redirect to home with modal state in URL hash */}
       <meta httpEquiv="refresh" content={`0; url=/?t=${encodeURIComponent(token.symbol)}`} />

@@ -3,26 +3,65 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 
 export const runtime = 'nodejs';
+export const revalidate = 1800; // regenerate every 30 minutes
 export const alt = 'Stocks on Solana — Real-time Stock Screener';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
+const FALLBACK_STOCKS = [
+  { sym: 'AAPL',  price: '—', chg: '—', up: true },
+  { sym: 'NVDA',  price: '—', chg: '—', up: true },
+  { sym: 'TSLA',  price: '—', chg: '—', up: false },
+  { sym: 'MSFT',  price: '—', chg: '—', up: true },
+  { sym: 'GOOGL', price: '—', chg: '—', up: true },
+];
+
+async function fetchTopStocks() {
+  try {
+    const res = await fetch('https://datapi.jup.ag/v2/assets/stocks/24h?stocks=xstocks&offset=0&includeOndoStatus=false', {
+      next: { revalidate: 1800 },
+    });
+    if (!res.ok) return FALLBACK_STOCKS;
+    const data: { assets: Array<{
+      symbol: string;
+      usdPrice?: number;
+      stats24h?: { priceChange?: number; buyVolume?: number; sellVolume?: number };
+    }> } = await res.json();
+
+    // Top 5 by 24h volume
+    const sorted = data.assets
+      .filter(a => a.usdPrice != null)
+      .sort((a, b) => {
+        const va = (a.stats24h?.buyVolume ?? 0) + (a.stats24h?.sellVolume ?? 0);
+        const vb = (b.stats24h?.buyVolume ?? 0) + (b.stats24h?.sellVolume ?? 0);
+        return vb - va;
+      })
+      .slice(0, 5);
+
+    return sorted.map(a => {
+      const chg = a.stats24h?.priceChange ?? 0;
+      const sym = a.symbol.replace(/x$/, ''); // strip the 'x' suffix
+      return {
+        sym,
+        price: `$${(a.usdPrice!).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        chg: `${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%`,
+        up: chg >= 0,
+      };
+    });
+  } catch {
+    return FALLBACK_STOCKS;
+  }
+}
+
 export default async function Image() {
-  const [fontRegData, fontBoldData, logoData] = await Promise.all([
+  const [fontRegData, fontBoldData, logoData, stocks] = await Promise.all([
     readFile(path.join(process.cwd(), 'public/fonts/JetBrainsMono-Regular.ttf')),
     readFile(path.join(process.cwd(), 'public/fonts/JetBrainsMono-Bold.ttf')),
     readFile(path.join(process.cwd(), 'public/logo.png')),
+    fetchTopStocks(),
   ]);
 
   const logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`;
-
-  const stocks = [
-    { sym: 'AAPL',  price: '$213.49', chg: '+2.14%', up: true },
-    { sym: 'NVDA',  price: '$876.20', chg: '+4.82%', up: true },
-    { sym: 'TSLA',  price: '$241.11', chg: '-1.37%', up: false },
-    { sym: 'MSFT',  price: '$415.30', chg: '+0.91%', up: true },
-    { sym: 'GOOGL', price: '$178.92', chg: '+1.55%', up: true },
-  ];
 
   return new ImageResponse(
     (

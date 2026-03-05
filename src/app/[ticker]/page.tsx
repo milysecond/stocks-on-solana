@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { ALL_TOKENS } from '@/lib/tokens';
+import { discoverTokens } from '@/lib/discover-tokens';
 
 interface Props {
   params: Promise<{ ticker: string }>;
@@ -18,7 +19,13 @@ function findToken(ticker: string) {
 }
 
 export async function generateStaticParams() {
-  return ALL_TOKENS.map(t => ({ ticker: t.symbol.toLowerCase() }));
+  let tokens;
+  try {
+    tokens = await discoverTokens();
+  } catch {
+    tokens = ALL_TOKENS;
+  }
+  return tokens.map(t => ({ ticker: t.symbol.toLowerCase() }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

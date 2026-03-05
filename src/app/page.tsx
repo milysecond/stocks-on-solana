@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, ExternalLink, Search, X, TrendingUp, TrendingDown, Droplets, BarChart2, ChevronLeft, ChevronRight, Star, LogOut, Shield, FileText, Handshake } from 'lucide-react';
-import { ALL_TOKENS, StockToken } from '@/lib/tokens';
+import { StockToken } from '@/lib/tokens';
 
 interface PriceEntry {
   price: number;
@@ -417,9 +417,7 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
 function HomeInner() {
   const searchParams = useSearchParams();
 
-  const [rows, setRows] = useState<StockRow[]>(
-    ALL_TOKENS.map(t => ({ ...t, price: null, change24h: null, volume24h: null, liquidity: null, stockPrice: null, mcap: null }))
-  );
+  const [rows, setRows] = useState<StockRow[]>([]);
   const [sortKey, setSortKey] = useState<SortKey>('change24h');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [search, setSearch] = useState('');
@@ -457,6 +455,24 @@ function HomeInner() {
       const saved = localStorage.getItem('sos-starred');
       if (saved) setStarred(new Set(JSON.parse(saved)));
     } catch { /* */ }
+  }, []);
+
+  // Fetch token list dynamically — auto-discovers new tokens from Jupiter
+  useEffect(() => {
+    fetch('/api/token-list')
+      .then(r => r.json())
+      .then((tokens: StockToken[]) => {
+        setRows(tokens.map(t => ({
+          ...t,
+          price: null,
+          change24h: null,
+          volume24h: null,
+          liquidity: null,
+          stockPrice: null,
+          mcap: null,
+        })));
+      })
+      .catch(err => console.error('[token-list] failed to load:', err));
   }, []);
 
   const toggleStar = useCallback((mint: string) => {
@@ -536,14 +552,9 @@ function HomeInner() {
   // Handle ?t=TICKER query param (from /token/[ticker] redirect)
   useEffect(() => {
     const t = searchParams.get('t');
-    if (t) {
-      const match = ALL_TOKENS.find(tok =>
-        tok.symbol.toLowerCase() === t.toLowerCase()
-      );
-      if (match) {
-        const row = rows.find(r => r.mint === match.mint);
-        if (row) openToken(row);
-      }
+    if (t && rows.length > 0) {
+      const row = rows.find(r => r.symbol.toLowerCase() === t.toLowerCase());
+      if (row) openToken(row);
     }
   }, [searchParams, rows]);
 
@@ -774,6 +785,10 @@ function HomeInner() {
           100% { transform: translateX(-50%); }
         }
         .sb-item { display: inline-flex; align-items: center; padding: 0 16px; gap: 6px; border-right: 1px solid #1e1e1e; height: 100%; }
+        .sb-item-clickable { cursor: pointer; transition: background 0.15s; }
+        .sb-item-clickable:hover { background: rgba(255,255,255,0.04); }
+        .sb-item-active { background: rgba(255,165,0,0.08) !important; }
+        .sb-item-active .sb-label { color: var(--amber); }
         .sb-label { color: #555; }
         .sb-value { color: var(--amber); font-weight: 600; }
         .sb-status-open { color: var(--green); }
@@ -1204,11 +1219,11 @@ function HomeInner() {
           {(() => {
             const items = (
               <>
-                <span className="sb-item"><span className="sb-label">STOCKS</span><span className="sb-value">{sorted.length}</span></span>
+                <span className={`sb-item sb-item-clickable${providerFilter === null ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(null)} title="Show all"><span className="sb-label">STOCKS</span><span className="sb-value">{rows.length}</span></span>
                 <span className="sb-item"><span className={isOpen ? 'sb-status-open' : 'sb-status-closed'}>● NYSE/NASDAQ {isOpen ? 'OPEN' : 'CLOSED'}</span><span className="sb-label" style={{fontSize:9}}>{timeLabel}</span></span>
-                <span className="sb-item"><span className="sb-label">XSTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'xStocks').length}</span></span>
-                <span className="sb-item"><span className="sb-label">ONDO</span><span className="sb-value">{rows.filter(r => r.provider === 'Ondo').length}</span></span>
-                <span className="sb-item"><span className="sb-label">PRESTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'PreStocks').length}</span></span>
+                <span className={`sb-item sb-item-clickable${providerFilter === 'xStocks' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'xStocks' ? null : 'xStocks')} title="Filter xStocks"><span className="sb-label">XSTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'xStocks').length}</span></span>
+                <span className={`sb-item sb-item-clickable${providerFilter === 'Ondo' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'Ondo' ? null : 'Ondo')} title="Filter Ondo"><span className="sb-label">ONDO</span><span className="sb-value">{rows.filter(r => r.provider === 'Ondo').length}</span></span>
+                <span className={`sb-item sb-item-clickable${providerFilter === 'PreStocks' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'PreStocks' ? null : 'PreStocks')} title="Filter PreStocks"><span className="sb-label">PRESTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'PreStocks').length}</span></span>
                 {totalMcap > 0 && <span className="sb-item"><span className="sb-label">MCAP</span><span className="sb-value">{fmtVol(totalMcap)}</span></span>}
                 {totalLiq > 0 && <span className="sb-item"><span className="sb-label">LIQUIDITY</span><span className="sb-value">{fmtVol(totalLiq)}</span></span>}
                 {solPrice && <span className="sb-item"><span className="sb-label">SOL</span><span className="sb-value">${solPrice.toFixed(2)}</span></span>}

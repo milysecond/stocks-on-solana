@@ -1352,31 +1352,48 @@ function HomeInner() {
 }
 
 export default function Home() {
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'WebApplication',
-    name: 'Stocks on Solana',
-    url: 'https://stocksonsolana.com',
-    description: 'Real-time screener for 251+ tokenized stocks on Solana. Track prices, liquidity, and discount to real-world price.',
-    applicationCategory: 'FinanceApplication',
-    operatingSystem: 'Web',
-    offers: {
-      '@type': 'Offer',
-      price: '0',
-      priceCurrency: 'USD',
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebApplication',
+      name: 'Stocks on Solana',
+      url: 'https://stocksonsolana.com',
+      description: 'Real-time screener for 250+ tokenized stocks on Solana. Track prices, liquidity, and discount to real-world price.',
+      applicationCategory: 'FinanceApplication',
+      operatingSystem: 'Web',
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+      about: {
+        '@type': 'FinancialMarket',
+        name: 'Tokenized Stock Market on Solana',
+        description: 'xStocks, Ondo Finance, and PreStocks tokenized equities trading on Solana',
+      },
     },
-    about: {
-      '@type': 'FinancialMarket',
-      name: 'Tokenized Stock Market on Solana',
-      description: 'xStocks, Ondo Finance, and PreStocks tokenized equities trading on Solana',
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'Stocks on Solana',
+      url: 'https://stocksonsolana.com',
+      description: 'Real-time screener for tokenized stocks on Solana — xStocks, Ondo Finance, PreStocks.',
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: 'https://stocksonsolana.com/?q={search_term_string}',
+        },
+        'query-input': 'required name=search_term_string',
+      },
     },
-  };
+  ];
 
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd, null, 0) }}
       />
       <Suspense fallback={null}>
         <HomeInner />

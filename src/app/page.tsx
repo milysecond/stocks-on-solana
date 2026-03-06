@@ -436,6 +436,11 @@ function HomeInner() {
   const [tickerScrolling, setTickerScrolling] = useState(false);
   const statusBarRef = React.useRef<HTMLDivElement>(null);
   const statusInnerRef = React.useRef<HTMLDivElement>(null);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [showPartners, setShowPartners] = useState(false);
+  const [welcomeCountdown, setWelcomeCountdown] = useState(8);
   const [showSignIn, setShowSignIn] = useState(false);
   const [signInEmail, setSignInEmail] = useState('');
   const [signInStatus, setSignInStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
@@ -455,7 +460,36 @@ function HomeInner() {
       const saved = localStorage.getItem('sos-starred');
       if (saved) setStarred(new Set(JSON.parse(saved)));
     } catch { /* */ }
+    // Show welcome modal for first-time visitors
+    try {
+      if (!localStorage.getItem('sos-welcomed')) {
+        setShowWelcome(true);
+      }
+    } catch { /* */ }
   }, []);
+
+  // Auto-close welcome modal after 8 seconds
+  useEffect(() => {
+    if (!showWelcome) return;
+    setWelcomeCountdown(8);
+    const interval = setInterval(() => {
+      setWelcomeCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setShowWelcome(false);
+          try { localStorage.setItem('sos-welcomed', '1'); } catch { /* */ }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [showWelcome]);
+
+  const dismissWelcome = () => {
+    setShowWelcome(false);
+    try { localStorage.setItem('sos-welcomed', '1'); } catch { /* */ }
+  };
 
   // Fetch token list dynamically — auto-discovers new tokens from Jupiter
   useEffect(() => {
@@ -954,6 +988,89 @@ function HomeInner() {
           padding: 16px;
           backdrop-filter: blur(4px);
         }
+        /* Welcome modal */
+        .welcome-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.85);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 200;
+          padding: 24px;
+          backdrop-filter: blur(6px);
+          animation: fadeIn 0.25s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .welcome-modal {
+          background: #111;
+          border: 1px solid #2a1400;
+          border-top: 3px solid var(--amber);
+          border-radius: 12px;
+          width: 100%;
+          max-width: 480px;
+          padding: 32px 28px 28px;
+          animation: slideUp 0.25s ease;
+          position: relative;
+        }
+        @keyframes slideUp { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+        .welcome-close {
+          position: absolute;
+          top: 14px; right: 14px;
+          background: #1a1a1a;
+          border: 1px solid #2a2a2a;
+          color: #555;
+          border-radius: 6px;
+          width: 28px; height: 28px;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer;
+          font-size: 16px;
+          transition: all 0.15s;
+        }
+        .welcome-close:hover { border-color: var(--amber); color: var(--amber); }
+        .welcome-headline {
+          font-size: 22px;
+          font-weight: 700;
+          color: #fff;
+          line-height: 1.2;
+          margin-bottom: 6px;
+          letter-spacing: -0.5px;
+        }
+        .welcome-sub {
+          font-size: 11px;
+          color: var(--amber);
+          letter-spacing: 3px;
+          margin-bottom: 20px;
+        }
+        .welcome-body {
+          font-size: 13px;
+          color: #aaa;
+          line-height: 1.7;
+          margin-bottom: 24px;
+        }
+        .welcome-body strong { color: #ddd; }
+        .welcome-cta {
+          width: 100%;
+          background: var(--amber);
+          color: #000;
+          border: none;
+          border-radius: 8px;
+          padding: 12px;
+          font-family: inherit;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 2px;
+          cursor: pointer;
+          transition: all 0.15s;
+          margin-bottom: 10px;
+        }
+        .welcome-cta:hover { background: #ffb020; }
+        .welcome-note {
+          font-size: 10px;
+          color: #444;
+          text-align: center;
+          letter-spacing: 1px;
+        }
         .token-modal {
           background: #111;
           border: 1px solid #2a2a2a;
@@ -1184,6 +1301,110 @@ function HomeInner() {
           )}
         </header>
 
+        {/* Welcome Modal — first-time visitors */}
+        {showWelcome && (
+          <div className="welcome-overlay" onClick={e => { if (e.target === e.currentTarget) dismissWelcome(); }}>
+            <div className="welcome-modal">
+              <button className="welcome-close" onClick={dismissWelcome}>✕</button>
+              <div className="welcome-sub">TOKENIZED EQUITY · SOLANA</div>
+              <div className="welcome-headline">The stock market never closes here.</div>
+              <div className="welcome-body">
+                <strong>Tokenized stocks are real equity exposure, wrapped as Solana tokens.</strong><br />
+                Buy Apple at 3am. Trade Tesla on a Sunday. No brokerage account. No waiting for market open.<br /><br />
+                This screener tracks every tokenized stock on Solana — live prices, liquidity, and discount to real-world price.
+              </div>
+              <button className="welcome-cta" onClick={dismissWelcome}>
+                EXPLORE THE SCREENER →
+              </button>
+              <div className="welcome-note">NO WALLET REQUIRED TO BROWSE · CLOSES IN {welcomeCountdown}s</div>
+            </div>
+          </div>
+        )}
+
+        {/* Privacy Popover */}
+        {showPrivacy && (
+          <div className="welcome-overlay" onClick={e => { if (e.target === e.currentTarget) setShowPrivacy(false); }}>
+            <div className="welcome-modal" style={{ maxWidth: 600, maxHeight: '80vh', overflowY: 'auto' }}>
+              <button className="welcome-close" onClick={() => setShowPrivacy(false)}>✕</button>
+              <div className="welcome-sub">LEGAL</div>
+              <div className="welcome-headline" style={{ fontSize: 18 }}>Privacy Policy</div>
+              <div style={{ color: '#555', fontSize: 10, letterSpacing: 2, marginBottom: 24 }}>Last updated: February 28, 2026</div>
+              {[
+                { t: '1. Information We Collect', b: 'We collect: email address (when you sign in), usage data via Google Analytics, and wallet address if you connect one (optional). We do not collect passwords, financial information, or sensitive personal data.' },
+                { t: '2. How We Use Your Information', b: 'To provide and improve the service, send product updates (if opted in), authenticate your session, and understand how the site is used.' },
+                { t: '3. Data Sharing', b: 'We do not sell your personal data. We share data only with: Google Analytics (usage data), authentication providers, and hosting infrastructure. All third parties are bound by their own privacy policies.' },
+                { t: '4. Cookies', b: 'We use minimal cookies for authentication sessions and analytics. You can disable cookies in your browser, though some features may not function correctly.' },
+                { t: '5. Data Retention', b: 'We retain your email address for as long as your account is active or until you request deletion. Analytics data is retained for 26 months per Google Analytics defaults.' },
+                { t: '6. Your Rights', b: 'You may request access to, correction of, or deletion of your personal data at any time by emailing privacy@stocksonsolana.com.' },
+                { t: '7. Security', b: 'We use industry-standard security practices including HTTPS, secure authentication tokens, and access controls. No system is 100% secure — use the platform at your own risk.' },
+                { t: '8. Contact', b: 'Questions? Email privacy@stocksonsolana.com' },
+              ].map(({ t, b }) => (
+                <div key={t} style={{ marginBottom: 20 }}>
+                  <div style={{ color: '#ff9900', fontSize: 11, letterSpacing: 2, marginBottom: 6 }}>{t}</div>
+                  <div style={{ color: '#888', fontSize: 12, lineHeight: 1.8 }}>{b}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Terms Popover */}
+        {showTerms && (
+          <div className="welcome-overlay" onClick={e => { if (e.target === e.currentTarget) setShowTerms(false); }}>
+            <div className="welcome-modal" style={{ maxWidth: 600, maxHeight: '80vh', overflowY: 'auto' }}>
+              <button className="welcome-close" onClick={() => setShowTerms(false)}>✕</button>
+              <div className="welcome-sub">LEGAL</div>
+              <div className="welcome-headline" style={{ fontSize: 18 }}>Terms of Service</div>
+              <div style={{ color: '#555', fontSize: 10, letterSpacing: 2, marginBottom: 24 }}>Last updated: February 28, 2026</div>
+              {[
+                { t: '1. Acceptance', b: 'By accessing or using Stocks on Solana ("the Service"), you agree to these Terms. If you do not agree, do not use the Service.' },
+                { t: '2. Not Financial Advice', b: 'Stocks on Solana is an informational tool only. Nothing on this site constitutes financial, investment, legal, or tax advice. All data is provided for informational purposes only. Do your own research. Tokenized assets carry significant risks including smart contract risk, liquidity risk, regulatory risk, and total loss of funds.' },
+                { t: '3. Eligibility', b: 'You must be of legal age in your jurisdiction to use this service. You are responsible for compliance with all local laws and regulations.' },
+                { t: '4. Data Accuracy', b: 'Price and market data is sourced from third-party providers and may be delayed or inaccurate. We make no warranties about the accuracy, completeness, or timeliness of any data.' },
+                { t: '5. Prohibited Use', b: 'You may not use this service to violate any laws, infringe on intellectual property, distribute malware, or engage in market manipulation.' },
+                { t: '6. Limitation of Liability', b: 'To the maximum extent permitted by law, Stocks on Solana shall not be liable for any indirect, incidental, or consequential damages arising from your use of the service.' },
+                { t: '7. Changes', b: 'We may update these terms at any time. Continued use of the service after changes constitutes acceptance of the new terms.' },
+                { t: '8. Contact', b: 'Questions? Email hello@stocksonsolana.com' },
+              ].map(({ t, b }) => (
+                <div key={t} style={{ marginBottom: 20 }}>
+                  <div style={{ color: '#ff9900', fontSize: 11, letterSpacing: 2, marginBottom: 6 }}>{t}</div>
+                  <div style={{ color: '#888', fontSize: 12, lineHeight: 1.8 }}>{b}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Partners Popover */}
+        {showPartners && (
+          <div className="welcome-overlay" onClick={e => { if (e.target === e.currentTarget) setShowPartners(false); }}>
+            <div className="welcome-modal" style={{ maxWidth: 520 }}>
+              <button className="welcome-close" onClick={() => setShowPartners(false)}>✕</button>
+              <div className="welcome-sub">ECOSYSTEM</div>
+              <div className="welcome-headline" style={{ fontSize: 18 }}>Partners</div>
+              <div style={{ color: '#555', fontSize: 11, letterSpacing: 1, marginBottom: 24 }}>The ecosystem powering Stocks on Solana.</div>
+              {[
+                { name: 'Jupiter', desc: 'The leading DEX aggregator on Solana. All buy orders route through Jupiter for best execution.', url: 'https://jup.ag/?ref=yfgv2ibxy07v' },
+                { name: 'Solana', desc: 'The high-performance blockchain powering tokenized equities with sub-second finality and near-zero fees.', url: 'https://solana.com' },
+                { name: 'Helius', desc: 'Enterprise-grade Solana RPC and API infrastructure powering real-time price and on-chain data.', url: 'https://helius.dev' },
+              ].map(p => (
+                <a key={p.name} href={p.url} target="_blank" rel="noopener noreferrer"
+                  style={{ display: 'block', background: '#0d0d0d', border: '1px solid #1e1e1e', borderRadius: 8, padding: '16px 20px', textDecoration: 'none', marginBottom: 10, transition: 'border-color 0.15s' }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = '#ff9900')}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = '#1e1e1e')}
+                >
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#ff9900', letterSpacing: 2, marginBottom: 6 }}>{p.name} ↗</div>
+                  <div style={{ fontSize: 11, color: '#666', lineHeight: 1.7 }}>{p.desc}</div>
+                </a>
+              ))}
+              <div style={{ marginTop: 16, padding: '14px', border: '1px dashed #2a2a2a', borderRadius: 8, textAlign: 'center' }}>
+                <div style={{ fontSize: 10, color: '#555', letterSpacing: 1, marginBottom: 8 }}>BECOME A PARTNER</div>
+                <a href="mailto:hello@stocksonsolana.com" style={{ fontSize: 11, color: '#ff9900', letterSpacing: 2, textDecoration: 'none' }}>hello@stocksonsolana.com →</a>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Sign In Modal */}
         {showSignIn && (
           <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) { setShowSignIn(false); setSignInStatus('idle'); setSignInEmail(''); } }}>
@@ -1320,12 +1541,13 @@ function HomeInner() {
 
         {/* Footer */}
         <footer className="footer">
-          <a href="/privacy" className="footer-link" title="Privacy Policy"><Shield size={14} /></a>
-          <a href="/partners" className="footer-link" title="Partners"><Handshake size={14} /></a>
+          <button onClick={() => setShowPrivacy(true)} className="footer-link" title="Privacy Policy" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}><Shield size={14} /></button>
+          <button onClick={() => setShowPartners(true)} className="footer-link" title="Partners" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}><Handshake size={14} /></button>
           <a href="https://solana.com" target="_blank" rel="noopener noreferrer" className="footer-pbs" aria-label="Powered by Solana">
             <img src="/stacked-white.svg" alt="Powered by Solana" style={{ display: 'block', height: 26, width: 'auto', borderRadius: 5 }} />
           </a>
-          <a href="/terms" className="footer-link" title="Terms of Service"><FileText size={14} /></a>
+          <button onClick={() => setShowTerms(true)} className="footer-link" title="Terms of Service" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}><FileText size={14} /></button>
+          <button onClick={() => { setShowWelcome(true); setWelcomeCountdown(8); }} className="footer-link" title="Info" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', fontSize: 9, letterSpacing: 2 }}>INFO</button>
         </footer>
 
         {/* Token detail modal */}

@@ -436,6 +436,7 @@ function HomeInner() {
   const [tickerScrolling, setTickerScrolling] = useState(false);
   const statusBarRef = React.useRef<HTMLDivElement>(null);
   const statusInnerRef = React.useRef<HTMLDivElement>(null);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
   const [signInEmail, setSignInEmail] = useState('');
   const [signInStatus, setSignInStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
@@ -454,6 +455,12 @@ function HomeInner() {
     try {
       const saved = localStorage.getItem('sos-starred');
       if (saved) setStarred(new Set(JSON.parse(saved)));
+    } catch { /* */ }
+    // Show welcome modal for first-time visitors
+    try {
+      if (!localStorage.getItem('sos-welcomed')) {
+        setShowWelcome(true);
+      }
     } catch { /* */ }
   }, []);
 
@@ -954,6 +961,89 @@ function HomeInner() {
           padding: 16px;
           backdrop-filter: blur(4px);
         }
+        /* Welcome modal */
+        .welcome-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.85);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 200;
+          padding: 24px;
+          backdrop-filter: blur(6px);
+          animation: fadeIn 0.25s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .welcome-modal {
+          background: #111;
+          border: 1px solid #2a1400;
+          border-top: 3px solid var(--amber);
+          border-radius: 12px;
+          width: 100%;
+          max-width: 480px;
+          padding: 32px 28px 28px;
+          animation: slideUp 0.25s ease;
+          position: relative;
+        }
+        @keyframes slideUp { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+        .welcome-close {
+          position: absolute;
+          top: 14px; right: 14px;
+          background: #1a1a1a;
+          border: 1px solid #2a2a2a;
+          color: #555;
+          border-radius: 6px;
+          width: 28px; height: 28px;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer;
+          font-size: 16px;
+          transition: all 0.15s;
+        }
+        .welcome-close:hover { border-color: var(--amber); color: var(--amber); }
+        .welcome-headline {
+          font-size: 22px;
+          font-weight: 700;
+          color: #fff;
+          line-height: 1.2;
+          margin-bottom: 6px;
+          letter-spacing: -0.5px;
+        }
+        .welcome-sub {
+          font-size: 11px;
+          color: var(--amber);
+          letter-spacing: 3px;
+          margin-bottom: 20px;
+        }
+        .welcome-body {
+          font-size: 13px;
+          color: #aaa;
+          line-height: 1.7;
+          margin-bottom: 24px;
+        }
+        .welcome-body strong { color: #ddd; }
+        .welcome-cta {
+          width: 100%;
+          background: var(--amber);
+          color: #000;
+          border: none;
+          border-radius: 8px;
+          padding: 12px;
+          font-family: inherit;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 2px;
+          cursor: pointer;
+          transition: all 0.15s;
+          margin-bottom: 10px;
+        }
+        .welcome-cta:hover { background: #ffb020; }
+        .welcome-note {
+          font-size: 10px;
+          color: #444;
+          text-align: center;
+          letter-spacing: 1px;
+        }
         .token-modal {
           background: #111;
           border: 1px solid #2a2a2a;
@@ -1183,6 +1273,26 @@ function HomeInner() {
             <button className="signin-btn" onClick={() => setShowSignIn(true)}>SIGN IN</button>
           )}
         </header>
+
+        {/* Welcome Modal — first-time visitors */}
+        {showWelcome && (
+          <div className="welcome-overlay" onClick={e => { if (e.target === e.currentTarget) { setShowWelcome(false); try { localStorage.setItem('sos-welcomed', '1'); } catch { /* */ } } }}>
+            <div className="welcome-modal">
+              <button className="welcome-close" onClick={() => { setShowWelcome(false); try { localStorage.setItem('sos-welcomed', '1'); } catch { /* */ } }}>✕</button>
+              <div className="welcome-sub">TOKENIZED EQUITY · SOLANA</div>
+              <div className="welcome-headline">The stock market never closes here.</div>
+              <div className="welcome-body">
+                <strong>Tokenized stocks are real equity exposure, wrapped as Solana tokens.</strong><br />
+                Buy Apple at 3am. Trade Tesla on a Sunday. No brokerage account. No waiting for market open.<br /><br />
+                This screener tracks every tokenized stock on Solana — live prices, liquidity, and discount to real-world price.
+              </div>
+              <button className="welcome-cta" onClick={() => { setShowWelcome(false); try { localStorage.setItem('sos-welcomed', '1'); } catch { /* */ } }}>
+                EXPLORE THE SCREENER →
+              </button>
+              <div className="welcome-note">NO WALLET REQUIRED TO BROWSE</div>
+            </div>
+          </div>
+        )}
 
         {/* Sign In Modal */}
         {showSignIn && (

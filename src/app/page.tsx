@@ -297,6 +297,16 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
           >
             BUY ON JUPITER <ExternalLink size={12} />
           </a>
+          {row.provider === 'xStocks' && (
+            <a
+              href="https://defi.xstocks.fi/points?ref=NEWUSER"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tm-buy-btn tm-buy-btn-secondary"
+            >
+              TRADE ON XSTOCKS <ExternalLink size={12} />
+            </a>
+          )}
         </div>
 
         {/* Share */}
@@ -404,6 +414,17 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
                   >
                     BUY <ExternalLink size={9} />
                   </a>
+                  {row.provider === 'xStocks' && (
+                    <a
+                      href="https://defi.xstocks.fi/points?ref=NEWUSER"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="buy-btn buy-btn-xstocks"
+                      title="Trade on xStocks"
+                    >
+                      XSTOCKS <ExternalLink size={9} />
+                    </a>
+                  )}
                 </td>
               </tr>
             );
@@ -920,6 +941,8 @@ function HomeInner() {
           transition: background 0.1s;
         }
         .buy-btn:hover { background: rgba(255,153,0,0.1); border-color: rgba(255,153,0,0.3); }
+        .buy-btn-xstocks { color: #00c2ff; }
+        .buy-btn-xstocks:hover { background: rgba(0,194,255,0.08); border-color: rgba(0,194,255,0.3); }
 
         /* ── Mobile cards ── */
         .card {
@@ -1213,6 +1236,8 @@ function HomeInner() {
           transition: opacity 0.1s;
         }
         .tm-buy-btn:hover { opacity: 0.9; }
+        .tm-buy-btn-secondary { background: transparent; border: 1px solid rgba(0,194,255,0.4); color: #00c2ff; flex: none; padding: 10px 14px; }
+        .tm-buy-btn-secondary:hover { background: rgba(0,194,255,0.08); opacity: 1; }
         .tm-link-btn {
           display: inline-flex;
           align-items: center;
@@ -1442,7 +1467,7 @@ function HomeInner() {
               <>
                 <span className={`sb-item sb-item-clickable${providerFilter === null ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(null)} title="Show all"><span className="sb-label">STOCKS</span><span className="sb-value">{rows.length}</span></span>
                 <span className="sb-item"><span className={isOpen ? 'sb-status-open' : 'sb-status-closed'}>● NYSE/NASDAQ {isOpen ? 'OPEN' : 'CLOSED'}</span><span className="sb-label" style={{fontSize:9}}>{timeLabel}</span></span>
-                <span className={`sb-item sb-item-clickable${providerFilter === 'xStocks' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'xStocks' ? null : 'xStocks')} title="Filter xStocks"><span className="sb-label">XSTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'xStocks').length}</span></span>
+                <span className={`sb-item sb-item-clickable${providerFilter === 'xStocks' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'xStocks' ? null : 'xStocks')} title="Filter xStocks"><span className="sb-label">XSTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'xStocks').length}</span><a href="https://defi.xstocks.fi/points?ref=NEWUSER" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} title="Trade on xStocks" style={{color:'inherit',opacity:0.5,lineHeight:1,display:'flex',alignItems:'center'}}><ExternalLink size={9} /></a></span>
                 <span className={`sb-item sb-item-clickable${providerFilter === 'Ondo' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'Ondo' ? null : 'Ondo')} title="Filter Ondo"><span className="sb-label">ONDO</span><span className="sb-value">{rows.filter(r => r.provider === 'Ondo').length}</span></span>
                 <span className={`sb-item sb-item-clickable${providerFilter === 'PreStocks' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'PreStocks' ? null : 'PreStocks')} title="Filter PreStocks"><span className="sb-label">PRESTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'PreStocks').length}</span></span>
                 {totalMcap > 0 && <span className="sb-item"><span className="sb-label">MCAP</span><span className="sb-value">{fmtVol(totalMcap)}</span></span>}

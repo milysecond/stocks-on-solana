@@ -81,7 +81,7 @@ function getMarketStatus() {
   return { isOpen, timeLabel };
 }
 
-function TokenIcon({ symbol, mint, size = 28 }: { symbol: string; mint: string; size?: number }) {
+function TokenIcon({ symbol, mint, name, size = 28 }: { symbol: string; mint: string; name?: string; size?: number }) {
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const letters = symbol.replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase();
 
@@ -102,7 +102,7 @@ function TokenIcon({ symbol, mint, size = 28 }: { symbol: string; mint: string; 
     return (
       <img
         src={imgSrc}
-        alt={symbol}
+        alt={name ? `${name} (${symbol}) tokenized stock on Solana` : symbol}
         width={size}
         height={size}
         loading="lazy"
@@ -218,7 +218,7 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
         {/* Header */}
         <div className="tm-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <TokenIcon symbol={row.symbol} mint={row.mint} size={44} />
+            <TokenIcon symbol={row.symbol} mint={row.mint} name={row.name} size={44} />
             <div>
               <div className="tm-name">{row.name}</div>
               <div className="tm-symbol">{row.symbol}</div>
@@ -370,7 +370,7 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
               >
                 <td style={{ paddingLeft: 14 }}>
                   <div className="name-cell">
-                    <TokenIcon symbol={row.symbol} mint={row.mint} size={26} />
+                    <TokenIcon symbol={row.symbol} mint={row.mint} name={row.name} size={26} />
                     <div>
                       <div className="token-name">{row.name}</div>
                       <div className="token-symbol">{row.symbol}</div>
@@ -1298,10 +1298,10 @@ function HomeInner() {
         </h1>
         {/* Header */}
         <header className="header">
-          <div className="header-brand">
+          <a href="/" className="header-brand" style={{ textDecoration: 'none', color: 'inherit' }}>
             <img src="/logo.png" alt="Stocks on Solana" width={22} height={22} fetchPriority="high" style={{ borderRadius: 4 }} />
             <span>STOCKS ON SOLANA</span>
-          </div>
+          </a>
           <div className="header-search">
             <Search size={12} />
             <input
@@ -1510,7 +1510,7 @@ function HomeInner() {
               <div key={row.mint} className="card" onClick={() => openToken(row)}>
                 <div className="card-top">
                   <div className="card-left">
-                    <TokenIcon symbol={row.symbol} mint={row.mint} size={28} />
+                    <TokenIcon symbol={row.symbol} mint={row.mint} name={row.name} size={28} />
                     <div>
                       <div className="token-name">{row.name}</div>
                       <div className="token-symbol">{row.symbol}</div>
@@ -1564,14 +1564,71 @@ function HomeInner() {
           </div>
         )}
 
+        {/* SEO Content Section — terminal-style info panels */}
+        <section style={{ maxWidth: '100%', padding: '24px 16px 0', fontFamily: 'var(--font-mono), monospace' }}>
+          {/* About panel — matches stats bar / table border style */}
+          <div style={{ border: '1px solid #1e1e1e', borderRadius: 6, marginBottom: 12, overflow: 'hidden' }}>
+            <details>
+              <summary style={{ padding: '10px 16px', cursor: 'pointer', listStyle: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#0a0a0a' }}>
+                <span style={{ fontSize: 9, fontWeight: 700, color: '#555', letterSpacing: 3, textTransform: 'uppercase' }}>ABOUT</span>
+                <span style={{ fontSize: 8, color: '#333', letterSpacing: 1 }}>EXPAND</span>
+              </summary>
+              <div style={{ padding: '16px 16px 20px', borderTop: '1px solid #1e1e1e' }}>
+                <h2 style={{ fontSize: 11, fontWeight: 700, color: '#ff9900', letterSpacing: 2, marginBottom: 10 }}>WHAT ARE TOKENIZED STOCKS ON SOLANA?</h2>
+                <p style={{ fontSize: 11, color: '#666', lineHeight: 1.9, marginBottom: 14 }}>
+                  Tokenized stocks are blockchain-based tokens that represent real-world equity. Each token is backed by or synthetically pegged to the price of a publicly traded stock like Apple, Tesla, or NVIDIA. On Solana, providers such as <span style={{ color: '#888' }}>xStocks</span>, <span style={{ color: '#888' }}>Ondo Finance</span>, and <span style={{ color: '#888' }}>PreStocks</span> issue these tokens, enabling anyone with a Solana wallet to gain exposure to traditional equities.
+                </p>
+                <p style={{ fontSize: 11, color: '#666', lineHeight: 1.9, marginBottom: 14 }}>
+                  Unlike traditional brokerage accounts, tokenized stocks trade on decentralized exchanges and are available around the clock. Prices are maintained through oracle feeds, arbitrage mechanisms, and in some cases direct asset backing. This screener tracks every tokenized stock on Solana — live prices, 24-hour changes, on-chain liquidity, and the premium or discount relative to real stock prices. Browse individual tokens like <a href="/token/aapl" style={{ color: '#ff9900', textDecoration: 'none' }}>Apple (AAPL)</a>, <a href="/token/tsla" style={{ color: '#ff9900', textDecoration: 'none' }}>Tesla (TSLA)</a>, or <a href="/token/nvda" style={{ color: '#ff9900', textDecoration: 'none' }}>NVIDIA (NVDA)</a>.
+                </p>
+                <h2 style={{ fontSize: 11, fontWeight: 700, color: '#ff9900', letterSpacing: 2, marginBottom: 10, marginTop: 18 }}>HOW TO BUY</h2>
+                <p style={{ fontSize: 11, color: '#666', lineHeight: 1.9, marginBottom: 14 }}>
+                  Connect a Solana wallet (Phantom, Solflare), fund it with SOL or USDC, and swap for any tokenized stock via Jupiter. No brokerage account, KYC, or minimum deposit required. Click any token in the screener to find a direct buy link.
+                </p>
+                <h2 style={{ fontSize: 11, fontWeight: 700, color: '#ff9900', letterSpacing: 2, marginBottom: 10, marginTop: 18 }}>WHY SOLANA?</h2>
+                <p style={{ fontSize: 11, color: '#666', lineHeight: 1.9 }}>
+                  24/7 trading, sub-second finality, fees under $0.01, permissionless access worldwide. No brokerage, no settlement delays, fractional ownership built in — buy $1 of any stock. Read our <a href="/terms" style={{ color: '#555', textDecoration: 'none', borderBottom: '1px solid #333' }}>Terms</a> and <a href="/privacy" style={{ color: '#555', textDecoration: 'none', borderBottom: '1px solid #333' }}>Privacy Policy</a>.
+                </p>
+              </div>
+            </details>
+          </div>
+
+          {/* FAQ panel — same bordered style, each Q as its own accordion row */}
+          <div style={{ border: '1px solid #1e1e1e', borderRadius: 6, marginBottom: 24, overflow: 'hidden' }}>
+            <details>
+              <summary style={{ padding: '10px 16px', cursor: 'pointer', listStyle: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#0a0a0a' }}>
+                <span style={{ fontSize: 9, fontWeight: 700, color: '#555', letterSpacing: 3, textTransform: 'uppercase' }}>FAQ</span>
+                <span style={{ fontSize: 8, color: '#333', letterSpacing: 1 }}>EXPAND</span>
+              </summary>
+              <div style={{ borderTop: '1px solid #1e1e1e' }}>
+                {[
+                  { q: 'What are tokenized stocks?', a: 'Tokenized stocks are digital tokens on the Solana blockchain that represent or track the price of real publicly traded stocks. They allow you to gain exposure to equities like Apple, Tesla, and Amazon without using a traditional brokerage.' },
+                  { q: 'How do tokenized stock prices track real stock prices?', a: 'Prices are maintained through oracle price feeds, market maker arbitrage, and in some cases direct asset backing. Most tokenized stocks stay within a small premium or discount of the real-world stock price, which this screener tracks in real time.' },
+                  { q: 'Do I need a brokerage account?', a: 'No. You only need a Solana wallet (like Phantom or Solflare) and some SOL or USDC. There is no KYC, no account minimums, and no paperwork required.' },
+                  { q: 'What is the minimum investment?', a: 'There is no minimum. Tokenized stocks support fractional ownership, so you can invest as little as $1 in any stock available on Solana.' },
+                  { q: 'Is it safe to trade tokenized stocks on Solana?', a: 'Tokenized stocks carry risks including smart contract risk, liquidity risk, and regulatory uncertainty. Always do your own research and only invest what you can afford to lose. Solana itself offers battle-tested infrastructure with sub-second finality and low fees.' },
+                ].map(({ q, a }, i) => (
+                  <details key={i} style={{ borderBottom: i < 4 ? '1px solid #1a1a1a' : 'none' }}>
+                    <summary style={{ padding: '10px 16px', cursor: 'pointer', listStyle: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <h3 style={{ fontSize: 11, fontWeight: 600, color: '#888', margin: 0, letterSpacing: 0.3 }}>{q}</h3>
+                      <span style={{ fontSize: 8, color: '#333', flexShrink: 0, marginLeft: 12 }}>+</span>
+                    </summary>
+                    <p style={{ fontSize: 11, color: '#555', lineHeight: 1.9, padding: '0 16px 12px', margin: 0 }}>{a}</p>
+                  </details>
+                ))}
+              </div>
+            </details>
+          </div>
+        </section>
+
         {/* Footer */}
         <footer className="footer">
-          <button onClick={() => setShowPrivacy(true)} className="footer-link" title="Privacy Policy" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}><Shield size={14} /></button>
+          <a href="/privacy" className="footer-link" title="Privacy Policy"><Shield size={14} /></a>
           <button onClick={() => setShowPartners(true)} className="footer-link" title="Partners" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}><Handshake size={14} /></button>
           <a href="https://solana.com" target="_blank" rel="noopener noreferrer" className="footer-pbs" aria-label="Powered by Solana">
             <img src="/stacked-white.svg" alt="Powered by Solana" style={{ display: 'block', height: 26, width: 'auto', borderRadius: 5 }} />
           </a>
-          <button onClick={() => setShowTerms(true)} className="footer-link" title="Terms of Service" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}><FileText size={14} /></button>
+          <a href="/terms" className="footer-link" title="Terms of Service"><FileText size={14} /></a>
           <button onClick={() => { setShowWelcome(true); setWelcomeCountdown(8); }} className="footer-link" title="Info" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', fontSize: 9, letterSpacing: 2 }}>INFO</button>
         </footer>
 
@@ -1599,6 +1656,18 @@ function HomeInner() {
 }
 
 export default function Home() {
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      { '@type': 'Question', name: 'What are tokenized stocks?', acceptedAnswer: { '@type': 'Answer', text: 'Tokenized stocks are digital tokens on the Solana blockchain that represent or track the price of real publicly traded stocks. They allow you to gain exposure to equities like Apple, Tesla, and Amazon without using a traditional brokerage.' } },
+      { '@type': 'Question', name: 'How do tokenized stock prices track real stock prices?', acceptedAnswer: { '@type': 'Answer', text: 'Prices are maintained through oracle price feeds, market maker arbitrage, and in some cases direct asset backing. Most tokenized stocks stay within a small premium or discount of the real-world stock price.' } },
+      { '@type': 'Question', name: 'Do I need a brokerage account?', acceptedAnswer: { '@type': 'Answer', text: 'No. You only need a Solana wallet (like Phantom or Solflare) and some SOL or USDC. There is no KYC, no account minimums, and no paperwork required.' } },
+      { '@type': 'Question', name: 'What is the minimum investment?', acceptedAnswer: { '@type': 'Answer', text: 'There is no minimum. Tokenized stocks support fractional ownership, so you can invest as little as $1 in any stock available on Solana.' } },
+      { '@type': 'Question', name: 'Is it safe to trade tokenized stocks on Solana?', acceptedAnswer: { '@type': 'Answer', text: 'Tokenized stocks carry risks including smart contract risk, liquidity risk, and regulatory uncertainty. Always do your own research and only invest what you can afford to lose. Solana itself offers battle-tested infrastructure with sub-second finality and low fees.' } },
+    ],
+  };
+
   const jsonLd = [
     {
       '@context': 'https://schema.org',
@@ -1641,6 +1710,10 @@ export default function Home() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd, null, 0) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd, null, 0) }}
       />
       <Suspense fallback={null}>
         <HomeInner />

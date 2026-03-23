@@ -300,6 +300,22 @@ export const ONDO_TOKENS: StockToken[] = [
   { symbol: 'ABNBon', name: "Airbnb", mint: '128qNYovdGv2YqayErcJgU7gDwbNVX1VuoxbtWz8ondo', provider: 'Ondo', sector: 'Consumer' },
 ];
 
+// ─── Flash Trade Equities (perps, deep link map) ──────────────────────────────
+// URL pattern: https://www.flash.trade/USDC-{TICKER}?referral=newuser
+export const FLASH_TICKERS = new Set([
+  'SPY', 'NVDA', 'TSLA', 'AAPL', 'AMD', 'AMZN',
+]);
+
+/** Returns Flash Trade deep link for a token, or null if not available */
+export function getFlashTradeUrl(token: StockToken): string | null {
+  // Map token symbol/company to Flash ticker
+  const key = token.company || token.symbol.replace(/x$|on$/, '').toUpperCase();
+  if (FLASH_TICKERS.has(key)) {
+    return `https://www.flash.trade/USDC-${key}?referral=newuser`;
+  }
+  return null;
+}
+
 // ─── Combined ──────────────────────────────────────────────────────────────────
 
 // Remove placeholder tokens with empty mints

@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, ExternalLink, Search, X, TrendingUp, TrendingDown, Droplets, BarChart2, ChevronLeft, ChevronRight, Star, LogOut, Shield, FileText, Handshake } from 'lucide-react';
-import { StockToken } from '@/lib/tokens';
+import { StockToken, getFlashTradeUrl } from '@/lib/tokens';
 
 interface PriceEntry {
   price: number;
@@ -307,6 +307,16 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
               TRADE ON XSTOCKS <ExternalLink size={12} />
             </a>
           )}
+          {getFlashTradeUrl(row) && (
+            <a
+              href={getFlashTradeUrl(row)!}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tm-buy-btn tm-buy-btn-flash"
+            >
+              TRADE ON FLASH <ExternalLink size={12} />
+            </a>
+          )}
         </div>
 
         {/* Share */}
@@ -423,6 +433,17 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
                       title="Trade on xStocks"
                     >
                       XSTOCKS <ExternalLink size={9} />
+                    </a>
+                  )}
+                  {getFlashTradeUrl(row) && (
+                    <a
+                      href={getFlashTradeUrl(row)!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="buy-btn buy-btn-flash"
+                      title="Trade on Flash"
+                    >
+                      FLASH <ExternalLink size={9} />
                     </a>
                   )}
                 </td>
@@ -943,6 +964,8 @@ function HomeInner() {
         .buy-btn:hover { background: rgba(255,153,0,0.1); border-color: rgba(255,153,0,0.3); }
         .buy-btn-xstocks { color: #00c2ff; }
         .buy-btn-xstocks:hover { background: rgba(0,194,255,0.08); border-color: rgba(0,194,255,0.3); }
+        .buy-btn-flash { color: #ff3b3b; }
+        .buy-btn-flash:hover { background: rgba(255,59,59,0.08); border-color: rgba(255,59,59,0.3); }
 
         /* ── Mobile cards ── */
         .card {
@@ -1238,6 +1261,8 @@ function HomeInner() {
         .tm-buy-btn:hover { opacity: 0.9; }
         .tm-buy-btn-secondary { background: transparent; border: 1px solid rgba(0,194,255,0.4); color: #00c2ff; flex: none; padding: 10px 14px; }
         .tm-buy-btn-secondary:hover { background: rgba(0,194,255,0.08); opacity: 1; }
+        .tm-buy-btn-flash { background: transparent; border: 1px solid rgba(255,59,59,0.4); color: #ff3b3b; flex: none; padding: 10px 14px; }
+        .tm-buy-btn-flash:hover { background: rgba(255,59,59,0.08); opacity: 1; }
         .tm-link-btn {
           display: inline-flex;
           align-items: center;
@@ -1411,14 +1436,15 @@ function HomeInner() {
               {[
                 { name: 'Jupiter', desc: 'The leading DEX aggregator on Solana. All buy orders route through Jupiter for best execution.', url: 'https://jup.ag/?ref=yfgv2ibxy07v' },
                 { name: 'Solana', desc: 'The high-performance blockchain powering tokenized equities with sub-second finality and near-zero fees.', url: 'https://solana.com' },
-                { name: 'Helius', desc: 'Enterprise-grade Solana RPC and API infrastructure powering real-time price and on-chain data.', url: 'https://helius.dev' },
+                { name: 'xStocks', desc: 'Tokenized equities on Solana — trade 45+ stocks including Apple, Tesla, NVIDIA and more with instant settlement.', url: 'https://defi.xstocks.fi/points?ref=NEWUSER', color: '#ff3b3b' },
+                { name: 'Flash Trade', desc: 'High-performance perpetual futures trading on Solana with up to 100x leverage and deep liquidity.', url: 'https://flash.trade/?referral=newuser', color: '#ff3b3b' },
               ].map(p => (
                 <a key={p.name} href={p.url} target="_blank" rel="noopener noreferrer"
                   style={{ display: 'block', background: '#0d0d0d', border: '1px solid #1e1e1e', borderRadius: 8, padding: '16px 20px', textDecoration: 'none', marginBottom: 10, transition: 'border-color 0.15s' }}
                   onMouseEnter={e => (e.currentTarget.style.borderColor = '#ff9900')}
                   onMouseLeave={e => (e.currentTarget.style.borderColor = '#1e1e1e')}
                 >
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#ff9900', letterSpacing: 2, marginBottom: 6 }}>{p.name} ↗</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: (p as any).color || '#ff9900', letterSpacing: 2, marginBottom: 6 }}>{p.name} ↗</div>
                   <div style={{ fontSize: 11, color: '#666', lineHeight: 1.7 }}>{p.desc}</div>
                 </a>
               ))}
@@ -1470,6 +1496,7 @@ function HomeInner() {
                 <span className={`sb-item sb-item-clickable${providerFilter === 'xStocks' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'xStocks' ? null : 'xStocks')} title="Filter xStocks"><span className="sb-label">XSTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'xStocks').length}</span><a href="https://defi.xstocks.fi/points?ref=NEWUSER" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} title="Trade on xStocks" style={{color:'inherit',opacity:0.5,lineHeight:1,display:'flex',alignItems:'center'}}><ExternalLink size={9} /></a></span>
                 <span className={`sb-item sb-item-clickable${providerFilter === 'Ondo' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'Ondo' ? null : 'Ondo')} title="Filter Ondo"><span className="sb-label">ONDO</span><span className="sb-value">{rows.filter(r => r.provider === 'Ondo').length}</span></span>
                 <span className={`sb-item sb-item-clickable${providerFilter === 'PreStocks' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'PreStocks' ? null : 'PreStocks')} title="Filter PreStocks"><span className="sb-label">PRESTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'PreStocks').length}</span></span>
+                <span className="sb-item"><a href="https://flash.trade/?referral=newuser" target="_blank" rel="noopener noreferrer" title="Trade on Flash" style={{color:'#ff6b35',textDecoration:'none',display:'flex',alignItems:'center',gap:4,fontSize:9,letterSpacing:1,fontFamily:'inherit'}}><span className="sb-label" style={{color:'#ff6b35'}}>FLASH</span><ExternalLink size={9} /></a></span>
                 {totalMcap > 0 && <span className="sb-item"><span className="sb-label">MCAP</span><span className="sb-value">{fmtVol(totalMcap)}</span></span>}
                 {totalLiq > 0 && <span className="sb-item"><span className="sb-label">LIQUIDITY</span><span className="sb-value">{fmtVol(totalLiq)}</span></span>}
                 {solPrice && <span className="sb-item"><span className="sb-label">SOL</span><span className="sb-value">${solPrice.toFixed(2)}</span></span>}
@@ -1539,7 +1566,7 @@ function HomeInner() {
                     })()}
                     <span className="card-vol">{fmtVol(row.liquidity)} liq</span>
                   </div>
-                  <span onClick={e => e.stopPropagation()}>
+                  <span onClick={e => e.stopPropagation()} style={{display:'flex',gap:4}}>
                     <a
                       href={`https://jup.ag/tokens/${row.mint}?ref=yfgv2ibxy07v`}
                       target="_blank"
@@ -1548,6 +1575,17 @@ function HomeInner() {
                     >
                       BUY <ExternalLink size={9} />
                     </a>
+                    {getFlashTradeUrl(row) && (
+                      <a
+                        href={getFlashTradeUrl(row)!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="buy-btn buy-btn-flash"
+                        title="Trade on Flash"
+                      >
+                        FLASH <ExternalLink size={9} />
+                      </a>
+                    )}
                   </span>
                 </div>
               </div>

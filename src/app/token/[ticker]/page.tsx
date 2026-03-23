@@ -16,14 +16,13 @@ function findToken(ticker: string) {
   );
 }
 
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
-  let tokens;
-  try {
-    tokens = await discoverTokens();
-  } catch {
-    tokens = ALL_TOKENS;
-  }
-  return tokens.map(t => ({ ticker: t.symbol.toLowerCase() }));
+  // Only pre-render xStocks (45 tokens) to stay within CF Pages limits
+  // All other tokens render on-demand via dynamicParams
+  const { XSTOCKS } = await import('@/lib/tokens');
+  return XSTOCKS.map(t => ({ ticker: t.symbol.toLowerCase() }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

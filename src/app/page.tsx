@@ -21,9 +21,11 @@ interface StockRow extends StockToken {
   liquidity: number | null;
   stockPrice: number | null;
   mcap: number | null;
+  createdAt: number | null;
 }
 
-type SortKey = 'name' | 'price' | 'change24h' | 'volume24h' | 'provider';
+type SortKey = 'name' | 'price' | 'change24h' | 'volume24h' | 'provider' | 'age';
+type AgeFilter = '7d' | '30d' | '90d' | '1y' | '1y+' | null;
 type SortDir = 'asc' | 'desc';
 
 function fmt(n: number | null, decimals = 2) {
@@ -42,6 +44,40 @@ function fmtVol(n: number | null) {
   if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`;
   if (n >= 1e3) return `$${(n / 1e3).toFixed(2)}K`;
   return `$${n.toFixed(2)}`;
+}
+
+function fmtAge(ts: number | null): string {
+  if (ts === null) return '—';
+  const now = Date.now() / 1000;
+  const diff = now - ts;
+  const days = Math.floor(diff / 86400);
+  if (days < 1) return '<1d';
+  if (days < 30) return `${days}d`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo`;
+  const years = Math.floor(months / 12);
+  const remMonths = months % 12;
+  if (remMonths === 0) return `${years}y`;
+  return `${years}y ${remMonths}mo`;
+}
+
+function fmtAgeDate(ts: number | null): string {
+  if (ts === null) return '—';
+  const d = new Date(ts * 1000);
+  const now = Date.now() / 1000;
+  const months = Math.floor((now - ts) / (30 * 86400));
+  const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  if (months < 1) return `${dateStr} (< 1 month)`;
+  if (months < 12) return `${dateStr} (${months} month${months !== 1 ? 's' : ''})`;
+  const years = Math.floor(months / 12);
+  const remM = months % 12;
+  const rel = remM > 0 ? `${years}y ${remM}mo` : `${years}y`;
+  return `${dateStr} (${rel})`;
+}
+
+function isNewToken(ts: number | null): boolean {
+  if (ts === null) return false;
+  return (Date.now() / 1000 - ts) < 7 * 86400;
 }
 
 function getMarketStatus() {
@@ -279,6 +315,13 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
             <div className="tm-stat-label">MARKET CAP</div>
             <div className="tm-stat-value">{fmtVol(row.mcap)}</div>
           </div>
+          <div className="tm-stat" style={{ gridColumn: '1 / -1' }}>
+            <div className="tm-stat-label">TOKEN AGE</div>
+            <div className="tm-stat-value" style={{ fontSize: 12, color: isNewToken(row.createdAt) ? 'var(--amber)' : 'var(--text)' }}>
+              {fmtAgeDate(row.createdAt)}
+              {isNewToken(row.createdAt) && <span style={{ marginLeft: 8, fontSize: 9, letterSpacing: 2, background: 'rgba(255,153,0,0.15)', border: '1px solid rgba(255,153,0,0.4)', borderRadius: 3, padding: '1px 5px', color: 'var(--amber)' }}>NEW</span>}
+            </div>
+          </div>
         </div>
 
         {/* Mint address */}
@@ -365,6 +408,9 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
             <th onClick={() => toggleSort('volume24h')}>
               <span className="th-inner">LIQUIDITY <SortIcon col="volume24h" /></span>
             </th>
+            <th onClick={() => toggleSort('age')}>
+              <span className="th-inner">AGE <SortIcon col="age" /></span>
+            </th>
             <th></th>
           </tr>
         </thead>
@@ -407,6 +453,14 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
                 </td>
                 <td className="text-right dim">
                   {row.liquidity !== null ? fmtVol(row.liquidity) : <span className="loading-cell" />}
+                </td>
+                <td className="text-right" style={{ color: 'var(--text-dim)', fontSize: 11, whiteSpace: 'nowrap' }}>
+                  {row.createdAt !== null ? (
+                    <span style={isNewToken(row.createdAt) ? { color: 'var(--amber)', textShadow: '0 0 8px rgba(255,153,0,0.4)' } : {}}>
+                      {isNewToken(row.createdAt) && <span style={{ fontSize: 8, letterSpacing: 1.5, background: 'rgba(255,153,0,0.15)', border: '1px solid rgba(255,153,0,0.4)', borderRadius: 2, padding: '1px 4px', marginRight: 4, color: 'var(--amber)', verticalAlign: 'middle' }}>NEW</span>}
+                      {fmtAge(row.createdAt)}
+                    </span>
+                  ) : <span className="loading-cell" style={{ width: 32 }} />}
                 </td>
                 <td onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: 6, paddingRight: 8 }}>
                   <button
@@ -464,6 +518,7 @@ function HomeInner() {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [search, setSearch] = useState('');
   const [providerFilter, setProviderFilter] = useState<string | null>(null);
+  const [ageFilter, setAgeFilter] = useState<AgeFilter>(null);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -546,9 +601,23 @@ function HomeInner() {
           liquidity: null,
           stockPrice: null,
           mcap: null,
+          createdAt: null,
         })));
       })
       .catch(err => console.error('[token-list] failed to load:', err));
+  }, []);
+
+  // Fetch token ages once on mount (creation dates never change)
+  useEffect(() => {
+    fetch('/api/token-ages')
+      .then(r => r.json())
+      .then((ages: Record<string, number>) => {
+        setRows(prev => prev.map(row => ({
+          ...row,
+          createdAt: ages[row.mint] ?? null,
+        })));
+      })
+      .catch(err => console.error('[token-ages] failed to load:', err));
   }, []);
 
   const toggleStar = useCallback((mint: string) => {
@@ -593,6 +662,7 @@ function HomeInner() {
         liquidity: data[row.mint]?.liquidity ?? null,
         stockPrice: data[row.mint]?.stockPrice ?? null,
         mcap: data[row.mint]?.mcap ?? null,
+        // preserve createdAt — ages endpoint manages it
       })));
       setLastUpdated(new Date());
     } catch (e) {
@@ -692,12 +762,26 @@ function HomeInner() {
     };
   }, []);
 
+  const NOW_SEC = Date.now() / 1000;
+
   const sorted = [...rows]
     .filter(r => {
       const matchesSearch = r.name.toLowerCase().includes(search.toLowerCase()) ||
         r.symbol.toLowerCase().includes(search.toLowerCase());
       const matchesProvider = !providerFilter || r.provider === providerFilter;
-      return matchesSearch && matchesProvider;
+      let matchesAge = true;
+      if (ageFilter && r.createdAt !== null) {
+        const ageDays = (NOW_SEC - r.createdAt) / 86400;
+        if (ageFilter === '7d') matchesAge = ageDays < 7;
+        else if (ageFilter === '30d') matchesAge = ageDays < 30;
+        else if (ageFilter === '90d') matchesAge = ageDays < 90;
+        else if (ageFilter === '1y') matchesAge = ageDays < 365;
+        else if (ageFilter === '1y+') matchesAge = ageDays >= 365;
+      } else if (ageFilter) {
+        // createdAt not loaded yet — don't filter out
+        matchesAge = true;
+      }
+      return matchesSearch && matchesProvider && matchesAge;
     })
     .sort((a, b) => {
       // Starred always float to top
@@ -708,6 +792,7 @@ function HomeInner() {
       let av: string | number | null, bv: string | number | null;
       if (sortKey === 'name') { av = a.name; bv = b.name; }
       else if (sortKey === 'provider') { av = a.provider; bv = b.provider; }
+      else if (sortKey === 'age') { av = a.createdAt; bv = b.createdAt; }
       else { av = a[sortKey]; bv = b[sortKey]; }
       if (av === null && bv === null) return 0;
       if (av === null) return 1;
@@ -1497,6 +1582,16 @@ function HomeInner() {
                 <span className={`sb-item sb-item-clickable${providerFilter === 'Ondo' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'Ondo' ? null : 'Ondo')} title="Filter Ondo"><span className="sb-label">ONDO</span><span className="sb-value">{rows.filter(r => r.provider === 'Ondo').length}</span></span>
                 <span className={`sb-item sb-item-clickable${providerFilter === 'PreStocks' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'PreStocks' ? null : 'PreStocks')} title="Filter PreStocks"><span className="sb-label">PRESTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'PreStocks').length}</span></span>
                 <span className="sb-item"><a href="https://flash.trade/?referral=newuser" target="_blank" rel="noopener noreferrer" title="Trade on Flash" style={{color:'#ff6b35',textDecoration:'none',display:'flex',alignItems:'center',gap:4,fontSize:9,letterSpacing:1,fontFamily:'inherit'}}><span className="sb-label" style={{color:'#ff6b35'}}>FLASH</span><ExternalLink size={9} /></a></span>
+                <span className="sb-item" style={{gap:4}}>
+                  <span className="sb-label">AGE:</span>
+                  {([['7d', '<7D'], ['30d', '<30D'], ['90d', '<90D'], ['1y', '<1Y'], ['1y+', '1Y+']] as [AgeFilter, string][]).map(([key, label]) => (
+                    <span key={key!}
+                      className={`sb-item-clickable${ageFilter === key ? ' sb-item-active' : ''}`}
+                      onClick={() => setAgeFilter(a => a === key ? null : key)}
+                      style={{padding:'0 6px',height:'100%',display:'inline-flex',alignItems:'center',fontSize:9,letterSpacing:0.5,cursor:'pointer',color:ageFilter===key?'var(--amber)':'#555',borderRight:'none'}}
+                    >{label}</span>
+                  ))}
+                </span>
                 {totalMcap > 0 && <span className="sb-item"><span className="sb-label">MCAP</span><span className="sb-value">{fmtVol(totalMcap)}</span></span>}
                 {totalLiq > 0 && <span className="sb-item"><span className="sb-label">LIQUIDITY</span><span className="sb-value">{fmtVol(totalLiq)}</span></span>}
                 {solPrice && <span className="sb-item"><span className="sb-label">SOL</span><span className="sb-value">${solPrice.toFixed(2)}</span></span>}
@@ -1518,10 +1613,16 @@ function HomeInner() {
         {/* Sort bar (mobile) */}
         <div className="sort-bar">
           <span style={{ fontSize: 9, color: 'var(--text-dim)', letterSpacing: 1, flexShrink: 0 }}>SORT:</span>
-          {([['name', 'NAME'], ['price', 'PRICE'], ['change24h', '24H'], ['volume24h', 'VOL']] as [SortKey, string][]).map(([key, label]) => (
+          {([['name', 'NAME'], ['price', 'PRICE'], ['change24h', '24H'], ['volume24h', 'VOL'], ['age', 'AGE']] as [SortKey, string][]).map(([key, label]) => (
             <button key={key} className={`sort-chip ${sortKey === key ? 'active' : ''}`} onClick={() => toggleSort(key)}>
               {label}
               {sortKey === key && (sortDir === 'asc' ? <ArrowUp size={9} /> : <ArrowDown size={9} />)}
+            </button>
+          ))}
+          <span style={{ fontSize: 9, color: 'var(--text-dim)', letterSpacing: 1, flexShrink: 0, marginLeft: 4 }}>AGE:</span>
+          {([['7d', '< 7D'], ['30d', '< 30D'], ['90d', '< 90D'], ['1y', '< 1Y'], ['1y+', '1Y+']] as [AgeFilter, string][]).map(([key, label]) => (
+            <button key={key!} className={`sort-chip ${ageFilter === key ? 'active' : ''}`} onClick={() => setAgeFilter(a => a === key ? null : key)}>
+              {label}
             </button>
           ))}
         </div>

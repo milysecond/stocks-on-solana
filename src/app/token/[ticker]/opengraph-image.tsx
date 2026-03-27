@@ -1,9 +1,7 @@
 import { ImageResponse } from 'next/og';
-import { readFile } from 'fs/promises';
-import path from 'path';
 import { ALL_TOKENS } from '@/lib/tokens';
 
-export const runtime = 'nodejs';
+export const runtime = 'edge';
 export const revalidate = 1800;
 export const alt = 'Stock on Solana';
 export const size = { width: 1200, height: 630 };
@@ -26,9 +24,7 @@ async function fetchLiveData(symbol: string) {
   try {
     const providers = ['xstocks', 'ondo', 'prestocks'];
     for (const p of providers) {
-      const res = await fetch(`https://datapi.jup.ag/v2/assets/stocks/24h?stocks=${p}&offset=0&includeOndoStatus=false`, {
-        next: { revalidate: 1800 },
-      });
+      const res = await fetch(`https://datapi.jup.ag/v2/assets/stocks/24h?stocks=${p}&offset=0&includeOndoStatus=false`);
       if (!res.ok) continue;
       const data = await res.json();
       const found = (data.assets || []).find((a: any) =>
@@ -57,7 +53,7 @@ export default async function Image({ params }: Props) {
   const token = findToken(ticker);
   if (!token) {
     return new ImageResponse(
-      <div style={{ width: '100%', height: '100%', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#555', fontSize: 32, fontFamily: 'sans-serif' }}>
+      <div style={{ width: '100%', height: '100%', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#555', fontSize: 32 }}>
         Stock not found
       </div>,
       { ...size }
@@ -65,13 +61,13 @@ export default async function Image({ params }: Props) {
   }
 
   const [fontRegData, fontBoldData, logoData, live] = await Promise.all([
-    readFile(path.join(process.cwd(), 'public/fonts/JetBrainsMono-Regular.ttf')),
-    readFile(path.join(process.cwd(), 'public/fonts/JetBrainsMono-Bold.ttf')),
-    readFile(path.join(process.cwd(), 'public/logo.png')),
+    fetch(new URL('/fonts/JetBrainsMono-Regular.ttf', 'https://stocksonsolana.com')).then(r => r.arrayBuffer()),
+    fetch(new URL('/fonts/JetBrainsMono-Bold.ttf', 'https://stocksonsolana.com')).then(r => r.arrayBuffer()),
+    fetch(new URL('/logo.png', 'https://stocksonsolana.com')).then(r => r.arrayBuffer()),
     fetchLiveData(token.symbol),
   ]);
 
-  const logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`;
+  const logoBase64 = `data:image/png;base64,${Buffer.from(logoData).toString('base64')}`;
 
   const price = live?.usdPrice ? fmtPrice(live.usdPrice) : '—';
   const mcap = live?.mcap ? fmtMcap(live.mcap) : '—';
@@ -158,8 +154,8 @@ export default async function Image({ params }: Props) {
     {
       ...size,
       fonts: [
-        { name: 'JetBrains Mono', data: fontRegData, weight: 400 },
-        { name: 'JetBrains Mono', data: fontBoldData, weight: 700 },
+        { name: 'JetBrains Mono', data: fontRegData, weight: 400 as const },
+        { name: 'JetBrains Mono', data: fontBoldData, weight: 700 as const },
       ],
     }
   );

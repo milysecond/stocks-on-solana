@@ -30,8 +30,16 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { ticker } = await params;
   if (RESERVED.has(ticker.toLowerCase())) return {};
-  const token = findToken(ticker);
-  if (!token) return {};
+  let token = findToken(ticker);
+  if (!token) {
+    const discovered = await discoverTokens();
+    const slug = ticker.toLowerCase();
+    token = discovered.find(t =>
+      t.symbol.toLowerCase() === slug ||
+      t.symbol.toLowerCase().replace(/[xon]+$/, '') === slug
+    ) ?? undefined;
+    if (!token) return {};
+  }
 
   const title = `${token.name} (${token.symbol}) — Tokenized Stock on Solana`;
   const description = `Trade ${token.name} (${token.symbol}) as a tokenized stock on Solana. Real-time price, 24h change, liquidity, and discount vs real stock. Buy on Jupiter.`;
@@ -50,8 +58,17 @@ export default async function TickerPage({ params }: Props) {
 
   if (RESERVED.has(ticker.toLowerCase())) notFound();
 
-  const token = findToken(ticker);
-  if (!token) notFound();
+  let token = findToken(ticker);
+  if (!token) {
+    // Fallback: try discovering from Jupiter API
+    const discovered = await discoverTokens();
+    const slug = ticker.toLowerCase();
+    token = discovered.find(t =>
+      t.symbol.toLowerCase() === slug ||
+      t.symbol.toLowerCase().replace(/[xon]+$/, '') === slug
+    ) ?? undefined;
+    if (!token) notFound();
+  }
 
   const jsonLd = {
     '@context': 'https://schema.org',

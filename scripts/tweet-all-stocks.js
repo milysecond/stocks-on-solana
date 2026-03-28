@@ -131,7 +131,7 @@ async function main() {
   const mcapStr = next.mcap ? ` | MCap: ${formatMcap(next.mcap)}` : '';
   const holdersStr = next.holders ? ` | ${next.holders.toLocaleString()} holders` : '';
 
-  const tweet = `${next.name} ($${next.symbol}) is now a tokenized stock on Solana via ${next.provider}${priceStr}${mcapStr}${holdersStr}\n\nhttps://stocksonsolana.com/${slug}`;
+  const tweet = `${next.name} ($${next.symbol}) is now a tokenized stock on Solana${priceStr}${mcapStr}${holdersStr}\n\nhttps://stocksonsolana.com/${slug}`;
 
   console.log(`[${state.tweeted.length + 1}/${tokens.length}] ${next.symbol} — ${next.name} (${remaining} remaining)`);
 

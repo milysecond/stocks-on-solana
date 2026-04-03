@@ -1284,7 +1284,7 @@ function HomeInner() {
         }
         .tm-mint-label { font-size: 9px; color: var(--text-dim); letter-spacing: 1.5px; flex-shrink: 0; }
         .tm-mint-addr { font-size: 11px; color: var(--text-dim); font-family: monospace; }
-        .tm-actions { display: flex; gap: 8px; }
+        .tm-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .tm-nav {
           display: flex;
           align-items: center;
@@ -1399,6 +1399,90 @@ function HomeInner() {
         @media (min-width: 641px) {
           .sort-bar { display: none; }
         }
+
+        /* ── Spinning conic-gradient border ── */
+        @property --angle {
+          syntax: '<angle>';
+          initial-value: 0deg;
+          inherits: false;
+        }
+        @keyframes spin-border {
+          to { --angle: 360deg; }
+        }
+
+        /* Shared spinning border setup */
+        .token-modal,
+        .welcome-modal,
+        .card,
+        .header,
+        .tm-stat {
+          position: relative;
+        }
+
+        /* Spinning border pseudo-element */
+        .token-modal::before,
+        .welcome-modal::before,
+        .card::before,
+        .header::before,
+        .tm-stat::before {
+          content: '';
+          position: absolute;
+          inset: -1px;
+          border-radius: inherit;
+          padding: 1px;
+          background: conic-gradient(from var(--angle, 0deg), var(--amber), #1a1a1a, var(--amber));
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          animation: spin-border 3s linear infinite;
+          pointer-events: none;
+          z-index: 1;
+        }
+
+        /* Glow layer */
+        .token-modal::after,
+        .welcome-modal::after,
+        .card::after,
+        .header::after {
+          content: '';
+          position: absolute;
+          inset: -1px;
+          border-radius: inherit;
+          background: conic-gradient(from var(--angle, 0deg), transparent 60%, rgba(255,153,0,0.15), transparent 40%);
+          animation: spin-border 3s linear infinite;
+          filter: blur(12px);
+          z-index: -1;
+          pointer-events: none;
+        }
+
+        /* Slower spin for mobile cards */
+        .card::before { animation-duration: 5s; }
+        .card::after { animation-duration: 5s; }
+
+        /* Header: bottom glow only */
+        .header::before {
+          inset: auto -1px -1px -1px;
+          height: 2px;
+          border-radius: 0;
+          padding: 0;
+          -webkit-mask: none;
+          mask: none;
+        }
+        .header::after {
+          inset: auto -1px -2px -1px;
+          height: 6px;
+          border-radius: 0;
+        }
+
+        /* Subtler border for stat cells */
+        .tm-stat::before {
+          opacity: 0.5;
+          animation-duration: 4s;
+        }
+
+        /* Remove the static top border from welcome modal (replaced by spinning border) */
+        .welcome-modal { border-top: none; }
+
       `}</style>
 
       <main style={{ minHeight: '100vh', background: 'var(--bg)', paddingBottom: 44 }}>

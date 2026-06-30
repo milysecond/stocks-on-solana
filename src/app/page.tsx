@@ -530,6 +530,9 @@ function HomeInner() {
     else window.history.replaceState(null, '', '/');
   };
   const [solPrice, setSolPrice] = useState<number | null>(null);
+  const [backpackMarkets, setBackpackMarkets] = useState<number | null>(null);
+  const [backpackTickers, setBackpackTickers] = useState<Set<string>>(new Set());
+  const [backpackFilter, setBackpackFilter] = useState(false);
   const [tickerScrolling, setTickerScrolling] = useState(false);
   const statusBarRef = React.useRef<HTMLDivElement>(null);
   const statusInnerRef = React.useRef<HTMLDivElement>(null);
@@ -695,6 +698,21 @@ function HomeInner() {
     return () => clearInterval(iv);
   }, []);
 
+  // Backpack market count — public API, refresh every 5min
+  useEffect(() => {
+    const fetchBackpack = async () => {
+      try {
+        const res = await fetch('/api/backpack-markets');
+        const d = await res.json();
+        if (typeof d?.count === 'number') setBackpackMarkets(d.count);
+        if (Array.isArray(d?.stockTickers)) setBackpackTickers(new Set(d.stockTickers));
+      } catch { /* silent */ }
+    };
+    fetchBackpack();
+    const iv = setInterval(fetchBackpack, 300000);
+    return () => clearInterval(iv);
+  }, []);
+
   // Handle ?t=TICKER query param (from /token/[ticker] redirect)
   useEffect(() => {
     const t = searchParams.get('t');
@@ -769,6 +787,15 @@ function HomeInner() {
       const matchesSearch = r.name.toLowerCase().includes(search.toLowerCase()) ||
         r.symbol.toLowerCase().includes(search.toLowerCase());
       const matchesProvider = !providerFilter || r.provider === providerFilter;
+      let matchesBackpack = true;
+      if (backpackFilter) {
+        // Strip provider suffix (xStocks → "x", Ondo → "on") to get the bare
+        // ticker, then check it against Backpack's listed equity tickers.
+        let root = r.symbol;
+        if (r.provider === 'xStocks' && root.endsWith('x')) root = root.slice(0, -1);
+        else if (r.provider === 'Ondo' && root.endsWith('on')) root = root.slice(0, -2);
+        matchesBackpack = backpackTickers.has(root.toUpperCase());
+      }
       let matchesAge = true;
       if (ageFilter && r.createdAt !== null) {
         const ageDays = (NOW_SEC - r.createdAt) / 86400;
@@ -781,7 +808,7 @@ function HomeInner() {
         // createdAt not loaded yet — don't filter out
         matchesAge = true;
       }
-      return matchesSearch && matchesProvider && matchesAge;
+      return matchesSearch && matchesProvider && matchesBackpack && matchesAge;
     })
     .sort((a, b) => {
       // Starred always float to top
@@ -1604,6 +1631,7 @@ function HomeInner() {
               <div style={{ color: '#555', fontSize: 11, letterSpacing: 1, marginBottom: 24 }}>The ecosystem powering Stocks on Solana.</div>
               {[
                 { name: 'Jupiter', desc: 'The leading DEX aggregator on Solana. All buy orders route through Jupiter for best execution.', url: 'https://jup.ag/?ref=yfgv2ibxy07v' },
+                { name: 'Backpack', desc: 'Regulated exchange for crypto and tokenized equities. Trade, custody, and on-ramp into Solana assets.', url: 'https://backpack.exchange/signup?referral=downunder' },
                 { name: 'Solana', desc: 'The high-performance blockchain powering tokenized equities with sub-second finality and near-zero fees.', url: 'https://solana.com' },
                 { name: 'xStocks', desc: 'Tokenized equities on Solana — trade 45+ stocks including Apple, Tesla, NVIDIA and more with instant settlement.', url: 'https://defi.xstocks.fi/points?ref=NEWUSER', color: '#ff3b3b' },
                 { name: 'Flash Trade', desc: 'High-performance perpetual futures trading on Solana with up to 100x leverage and deep liquidity.', url: 'https://flash.trade/?referral=newuser', color: '#ff3b3b' },
@@ -1666,6 +1694,7 @@ function HomeInner() {
                 <span className={`sb-item sb-item-clickable${providerFilter === 'Ondo' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'Ondo' ? null : 'Ondo')} title="Filter Ondo"><span className="sb-label">ONDO</span><span className="sb-value">{rows.filter(r => r.provider === 'Ondo').length}</span></span>
                 <span className={`sb-item sb-item-clickable${providerFilter === 'PreStocks' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'PreStocks' ? null : 'PreStocks')} title="Filter PreStocks"><span className="sb-label">PRESTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'PreStocks').length}</span></span>
                 <span className="sb-item"><a href="https://flash.trade/?referral=newuser" target="_blank" rel="noopener noreferrer" title="Trade on Flash" style={{color:'#ff6b35',textDecoration:'none',display:'flex',alignItems:'center',gap:4,fontSize:9,letterSpacing:1,fontFamily:'inherit'}}><span className="sb-label" style={{color:'#ff6b35'}}>FLASH</span><ExternalLink size={9} /></a></span>
+                <span className={`sb-item sb-item-clickable${backpackFilter ? ' sb-item-active' : ''}`} onClick={() => setBackpackFilter(f => !f)} title="Filter stocks listed on Backpack"><span className="sb-label" style={{color:'#e33e3e'}}>BACKPACK</span>{backpackMarkets !== null && <span className="sb-value">{backpackMarkets}</span>}<a href="https://backpack.exchange/signup?referral=downunder" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} title="Trade on Backpack" style={{color:'#e33e3e',opacity:0.6,lineHeight:1,display:'flex',alignItems:'center'}}><ExternalLink size={9} /></a></span>
                 <span className="sb-item" style={{gap:4}}>
                   <span className="sb-label">AGE:</span>
                   {([['7d', '<7D'], ['30d', '<30D'], ['90d', '<90D'], ['1y', '<1Y'], ['1y+', '1Y+']] as [AgeFilter, string][]).map(([key, label]) => (

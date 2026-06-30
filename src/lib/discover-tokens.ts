@@ -22,6 +22,7 @@ const PROVIDERS: Array<{ key: string; provider: TokenProvider }> = [
   { key: 'xstocks',   provider: 'xStocks'   },
   { key: 'ondo',      provider: 'Ondo'       },
   { key: 'prestocks', provider: 'PreStocks'  },
+  { key: 'backpack',  provider: 'Backpack'   },
 ];
 
 const PAGE_SIZE = 50;

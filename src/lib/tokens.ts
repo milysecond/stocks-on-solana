@@ -1,4 +1,4 @@
-export type TokenProvider = 'xStocks' | 'Ondo' | 'PreStocks';
+export type TokenProvider = 'xStocks' | 'Ondo' | 'PreStocks' | 'Backpack';
 
 export interface StockToken {
   symbol: string;
@@ -149,6 +149,18 @@ export const PRESTOCKS: StockToken[] = [
   { symbol: 'ANDURIL', name: 'Anduril', mint: 'PresTj4Yc2bAR197Er7wz4UUKSfqt6FryBEdAriBoQB', provider: 'PreStocks', sector: 'Defense' },
   { symbol: 'POLYMARKET', name: 'Polymarket', mint: 'Pre8AREmFPtoJFT8mQSXQLh56cwJmM7CFDRuoGBZiUP', provider: 'PreStocks', sector: 'Prediction' },
   { symbol: 'KALSHI', name: 'Kalshi', mint: 'PreLWGkkeqG1s4HEfFZSy9moCrJ7btsHuUtfcCeoRua', provider: 'PreStocks', sector: 'Prediction' },
+];
+
+// ─── Backpack Securities ───────────────────────────────────────────────────────
+// Tokenized US equities issued by Backpack Securities (regulated broker-dealer).
+// The full list is auto-discovered from Jupiter datapi (stocks=backpack); this
+// static set is the offline fallback.
+
+export const BACKPACK_TOKENS: StockToken[] = [
+  { symbol: 'MU', name: 'Micron Technology', mint: 'MUxEsUKSMACyw5fZf68wxf5FLnZVhtU9CwH8uNNGay1', provider: 'Backpack', sector: 'Tech' },
+  { symbol: 'SPCX', name: 'SpaceX', mint: 'SPCXxcqXj6e5dJDVNovHN8744zkbhM2bYudU45BimGb', provider: 'Backpack', sector: 'Aerospace' },
+  { symbol: 'SNDK', name: 'Sandisk', mint: 'SNDKbwMUQvZhnLnxLduradgLHG5KrPuKwpnrkkGRhfH', provider: 'Backpack', sector: 'Tech' },
+  { symbol: 'DRAM', name: 'Roundhill Memory ETF', mint: 'DRAMjSWR7HRfJKjRkvQWYL2bcaejaVhuxEcjf4pAY4Cw', provider: 'Backpack', sector: 'ETF' },
 ];
 
 // ─── Ondo (263 tokens) ─────────────────────────────────────────────────────────
@@ -435,21 +447,24 @@ export function getFlashTradeUrl(token: StockToken): string | null {
   return null;
 }
 
-// Tickers Backpack lists as tokenized US equities (".US" markets).
+// Tickers Backpack Securities issues as tokenized US equities.
 export const BACKPACK_TICKERS = new Set([
-  'MU', 'SPCX',
+  'MU', 'SPCX', 'SNDK', 'DRAM',
 ]);
+
+export const BACKPACK_REFERRAL_URL = 'https://backpack.exchange/signup?referral=downunder';
 
 /** Returns Backpack referral link for a token tradeable on Backpack, else null */
 export function getBackpackTradeUrl(token: StockToken): string | null {
+  // Backpack-issued tokens are by definition tradeable on Backpack.
+  if (token.provider === 'Backpack') return BACKPACK_REFERRAL_URL;
+  // Cross-provider: same ticker is also listed on Backpack.
   const key = token.company || token.symbol.replace(/x$|on$/, '').toUpperCase();
-  if (BACKPACK_TICKERS.has(key)) {
-    return 'https://backpack.exchange/signup?referral=downunder';
-  }
+  if (BACKPACK_TICKERS.has(key)) return BACKPACK_REFERRAL_URL;
   return null;
 }
 
 // ─── Combined ──────────────────────────────────────────────────────────────────
 
 // Remove placeholder tokens with empty mints
-export const ALL_TOKENS = [...XSTOCKS, ...PRESTOCKS, ...ONDO_TOKENS].filter(t => t.mint !== '');
+export const ALL_TOKENS = [...XSTOCKS, ...PRESTOCKS, ...ONDO_TOKENS, ...BACKPACK_TOKENS].filter(t => t.mint !== '');

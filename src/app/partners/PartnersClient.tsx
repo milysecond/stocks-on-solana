@@ -7,6 +7,11 @@ const partners = [
     url: 'https://jup.ag/?ref=yfgv2ibxy07v',
   },
   {
+    name: 'Backpack',
+    description: 'Regulated exchange for crypto and tokenized equities. Trade, custody, and on-ramp into Solana assets.',
+    url: 'https://backpack.exchange/signup?referral=downunder',
+  },
+  {
     name: 'Solana',
     description: 'The high-performance blockchain powering tokenized equities with sub-second finality and near-zero fees.',
     url: 'https://solana.com',

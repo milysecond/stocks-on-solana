@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, ExternalLink, Search, X, TrendingUp, TrendingDown, Droplets, BarChart2, ChevronLeft, ChevronRight, Star, LogOut, Shield, FileText, Handshake } from 'lucide-react';
-import { StockToken, getFlashTradeUrl } from '@/lib/tokens';
+import { StockToken, getFlashTradeUrl, getBackpackTradeUrl } from '@/lib/tokens';
 
 interface PriceEntry {
   price: number;
@@ -360,6 +360,16 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
               TRADE ON FLASH <ExternalLink size={12} />
             </a>
           )}
+          {getBackpackTradeUrl(row) && (
+            <a
+              href={getBackpackTradeUrl(row)!}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tm-buy-btn tm-buy-btn-secondary"
+            >
+              TRADE ON BACKPACK <ExternalLink size={12} />
+            </a>
+          )}
         </div>
 
         {/* Share */}
@@ -498,6 +508,17 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
                       title="Trade on Flash"
                     >
                       FLASH <ExternalLink size={9} />
+                    </a>
+                  )}
+                  {getBackpackTradeUrl(row) && (
+                    <a
+                      href={getBackpackTradeUrl(row)!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="buy-btn buy-btn-xstocks"
+                      title="Trade on Backpack"
+                    >
+                      BACKPACK <ExternalLink size={9} />
                     </a>
                   )}
                 </td>
@@ -1798,6 +1819,17 @@ function HomeInner() {
                         title="Trade on Flash"
                       >
                         FLASH <ExternalLink size={9} />
+                      </a>
+                    )}
+                    {getBackpackTradeUrl(row) && (
+                      <a
+                        href={getBackpackTradeUrl(row)!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="buy-btn buy-btn-xstocks"
+                        title="Trade on Backpack"
+                      >
+                        BACKPACK <ExternalLink size={9} />
                       </a>
                     )}
                   </span>

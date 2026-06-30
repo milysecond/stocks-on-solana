@@ -435,6 +435,20 @@ export function getFlashTradeUrl(token: StockToken): string | null {
   return null;
 }
 
+// Tickers Backpack lists as tokenized US equities (".US" markets).
+export const BACKPACK_TICKERS = new Set([
+  'MU', 'SPCX',
+]);
+
+/** Returns Backpack referral link for a token tradeable on Backpack, else null */
+export function getBackpackTradeUrl(token: StockToken): string | null {
+  const key = token.company || token.symbol.replace(/x$|on$/, '').toUpperCase();
+  if (BACKPACK_TICKERS.has(key)) {
+    return 'https://backpack.exchange/signup?referral=downunder';
+  }
+  return null;
+}
+
 // ─── Combined ──────────────────────────────────────────────────────────────────
 
 // Remove placeholder tokens with empty mints

@@ -4,6 +4,16 @@ const nextConfig: NextConfig = {
   // Compress responses
   compress: true,
 
+  async redirects() {
+    return [
+      {
+        source: "/flash",
+        destination: "https://www.flash.trade?referral=newuser",
+        permanent: false,
+      },
+    ];
+  },
+
   // Headers for caching & security
   async headers() {
     return [

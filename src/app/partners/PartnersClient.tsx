@@ -12,6 +12,11 @@ const partners = [
     url: 'https://backpack.exchange/signup?referral=downunder',
   },
   {
+    name: 'Flash Trade',
+    description: 'High-performance perpetual futures trading on Solana with up to 100x leverage and deep liquidity.',
+    url: 'https://www.flash.trade?referral=newuser',
+  },
+  {
     name: 'Solana',
     description: 'The high-performance blockchain powering tokenized equities with sub-second finality and near-zero fees.',
     url: 'https://solana.com',

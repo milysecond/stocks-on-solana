@@ -32,6 +32,28 @@ Domain `stocksonsolana.com` must be verified in Resend (DNS). From address: `nor
 5. Audience: segment (set `RESEND_SEGMENT_ID`) or all contacts
 6. Preview → schedule or send
 
+## Send welcome to everyone
+
+Requires a **full-access** Resend API key (not send-only).
+
+```bash
+export RESEND_API_KEY=re_...   # full access
+export RESEND_FROM='Stocks on Solana <noreply@stocksonsolana.com>'
+
+# Dry run (list contacts only)
+node scripts/send-welcome-blast.mjs --dry-run
+
+# Send transactional welcome to every contact
+node scripts/send-welcome-blast.mjs
+
+# Or broadcast to a segment
+export RESEND_SEGMENT_ID=your-segment-uuid
+node scripts/send-welcome-blast.mjs --broadcast
+
+# Or from a CSV (works with send-only key)
+node scripts/send-welcome-blast.mjs --csv path/to/emails.csv
+```
+
 ## Transactional (magic link)
 
 `src/app/api/auth/request/route.ts` sends sign-in links via Resend and best-effort upserts the contact for broadcasts.

@@ -4,6 +4,9 @@ import { notFound } from 'next/navigation';
 import { ALL_TOKENS, getFlashTradeUrl, getBackpackTradeUrl, type StockToken } from '@/lib/tokens';
 import { discoverTokens } from '@/lib/discover-tokens';
 
+// Note: do not set runtime = 'edge' here — generateStaticParams requires Node SSG
+// for the pre-rendered xStocks set. Dynamic params still work on demand.
+
 interface Props {
   params: Promise<{ ticker: string }>;
 }

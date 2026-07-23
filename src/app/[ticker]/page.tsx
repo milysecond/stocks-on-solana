@@ -2,6 +2,8 @@ import { permanentRedirect, notFound } from 'next/navigation';
 import { ALL_TOKENS } from '@/lib/tokens';
 import { discoverTokens } from '@/lib/discover-tokens';
 
+export const runtime = 'edge';
+
 interface Props {
   params: Promise<{ ticker: string }>;
 }

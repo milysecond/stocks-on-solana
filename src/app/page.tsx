@@ -1859,10 +1859,19 @@ export default function Home() {
   const jsonLd = [
     {
       '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: 'Stocks on Solana',
+      url: 'https://stocksonsolana.com',
+      logo: 'https://stocksonsolana.com/logo.png',
+      sameAs: ['https://x.com/StocksOnSolana'],
+    },
+    {
+      '@context': 'https://schema.org',
       '@type': 'WebApplication',
       name: 'Stocks on Solana',
       url: 'https://stocksonsolana.com',
-      description: 'Real-time screener for 250+ tokenized stocks on Solana. Track prices, liquidity, and discount to real-world price.',
+      description:
+        'Real-time screener for 250+ tokenized stocks on Solana. Track prices, liquidity, and discount to real-world price.',
       applicationCategory: 'FinanceApplication',
       operatingSystem: 'Web',
       offers: {
@@ -1873,7 +1882,8 @@ export default function Home() {
       about: {
         '@type': 'FinancialMarket',
         name: 'Tokenized Stock Market on Solana',
-        description: 'xStocks, Ondo Finance, and PreStocks tokenized equities trading on Solana',
+        description:
+          'xStocks, Ondo Finance, PreStocks, and Backpack tokenized equities trading on Solana',
       },
     },
     {
@@ -1881,7 +1891,8 @@ export default function Home() {
       '@type': 'WebSite',
       name: 'Stocks on Solana',
       url: 'https://stocksonsolana.com',
-      description: 'Real-time screener for tokenized stocks on Solana — xStocks, Ondo Finance, PreStocks.',
+      description:
+        'Real-time screener for tokenized stocks on Solana — xStocks, Ondo Finance, PreStocks, Backpack.',
       potentialAction: {
         '@type': 'SearchAction',
         target: {

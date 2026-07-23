@@ -1,4 +1,7 @@
-User-agent: *
+User-Agent: *
 Allow: /
+Disallow: /api/
+Disallow: /dashboard
 
-Sitemap: https://stocks.sol.new/sitemap.xml
+Sitemap: https://stocksonsolana.com/sitemap.xml
+Host: https://stocksonsolana.com

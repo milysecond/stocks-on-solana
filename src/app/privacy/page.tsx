@@ -1,8 +1,16 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — Stocks on Solana',
-  description: 'Privacy Policy for stocksonsolana.com',
+  title: 'Privacy Policy',
+  description:
+    'Privacy Policy for Stocks on Solana (stocksonsolana.com) — what data we collect, how Google Analytics is used, and how to request deletion.',
+  alternates: { canonical: 'https://stocksonsolana.com/privacy' },
+  openGraph: {
+    title: 'Privacy Policy | Stocks on Solana',
+    description: 'Privacy Policy for stocksonsolana.com',
+    url: 'https://stocksonsolana.com/privacy',
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function PrivacyPage() {

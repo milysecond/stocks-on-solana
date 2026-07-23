@@ -26,6 +26,7 @@ Providers: **xStocks**, **Ondo Finance**, **PreStocks**
 - **Star stocks** — bookmark favourites (localStorage)
 - **Sign in** — magic link auth via email (JWT cookie, 30 days)
 - **Email capture** → SendGrid "Stocks on Solana" list
+- **Newsletter** → HTML templates in `emails/` (welcome + weekly market pulse)
 - **Virtualised table** — `@tanstack/react-virtual`, renders only visible rows (TBT ~10ms)
 - **252 `/token/[ticker]` static pages** — SEO, OG tags, JSON-LD schema
 - **Sitemap** at `/sitemap.xml`, `robots.txt`

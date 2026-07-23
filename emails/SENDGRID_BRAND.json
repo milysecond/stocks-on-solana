@@ -1,0 +1,57 @@
+{
+  "product": "Stocks on Solana",
+  "domain": "stocksonsolana.com",
+  "from": {
+    "email": "noreply@stocksonsolana.com",
+    "name": "Stocks on Solana"
+  },
+  "reply_to": "hello@stocksonsolana.com",
+  "logo_url": "https://stocksonsolana.com/logo-192.png",
+  "site_url": "https://stocksonsolana.com",
+  "x_url": "https://x.com/StocksOnSolana",
+  "list": {
+    "id": "f776877f-7764-467e-b6f7-b36270d19f0b",
+    "name": "Stocks on Solana",
+    "note": "Contacts are added on magic-link sign-in via /api/auth/request"
+  },
+  "colors": {
+    "bg": "#0a0a0a",
+    "bg_card": "#111111",
+    "border": "#1e1e1e",
+    "amber": "#FF9900",
+    "amber_dim": "#cc7700",
+    "green": "#22c55e",
+    "red": "#ef4444",
+    "text": "#e0e0e0",
+    "text_dim": "#888888",
+    "text_muted": "#555555"
+  },
+  "typography": {
+    "font_stack": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+    "brand_font": "JetBrains Mono"
+  },
+  "templates": {
+    "newsletter": "emails/newsletter.html",
+    "welcome": "emails/welcome.html",
+    "issue_001": "emails/issues/001-market-pulse.html"
+  },
+  "sendgrid": {
+    "unsubscribe_placeholder": "{{unsubscribe}}",
+    "unsubscribe_preferences": "{{unsubscribe_preferences}}",
+    "asm_group_note": "Create an unsubscribe group in SendGrid (Marketing > Unsubscribe Groups) and attach it to single sends / campaigns.",
+    "how_to_send": [
+      "Marketing > Single Sends > Create Single Send",
+      "Paste HTML from emails/issues/*.html into the Design editor (Code mode)",
+      "Recipients: list f776877f-7764-467e-b6f7-b36270d19f0b",
+      "From: Stocks on Solana <noreply@stocksonsolana.com>",
+      "Subject: use the subject line at the top of each issue file",
+      "Preview text: use preheader comment in the HTML"
+    ]
+  },
+  "notes": [
+    "Match terminal aesthetic: black bg, amber #FF9900, mono type.",
+    "Keep body copy tight. Numbers first, narrative second.",
+    "Always include unsubscribe + privacy links.",
+    "Not financial advice disclaimer in every market issue."
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "product": "Stocks on Solana",
+  "domain": "stocksonsolana.com",
+  "from": "Stocks on Solana <noreply@stocksonsolana.com>",
+  "reply_to": "hello@stocksonsolana.com",
+  "logo_url": "https://stocksonsolana.com/logo-192.png",
+  "site_url": "https://stocksonsolana.com",
+  "x_url": "https://x.com/StocksOnSolana",
+  "mailing_list": {
+    "segment_id_env": "RESEND_SEGMENT_ID",
+    "note": "Create a Resend segment for Stocks on Solana and set RESEND_SEGMENT_ID. Plan limit is often 3 segments.",
+    "subscribe_on_signin": "src/app/api/auth/request/route.ts → upsertMailingContact",
+    "preferences": "https://stocksonsolana.com/privacy"
+  },
+  "unsubscribe_page_dashboard": {
+    "title": "Email preferences",
+    "description": "Choose what you hear from Stocks on Solana — market pulse and product updates.",
+    "logo": "https://stocksonsolana.com/logo-192.png",
+    "background_color": "#0a0a0a",
+    "text_color": "#e0e0e0",
+    "accent_color": "#FF9900"
+  },
+  "colors": {
+    "bg": "#0a0a0a",
+    "bg_card": "#111111",
+    "border": "#1e1e1e",
+    "amber": "#FF9900",
+    "green": "#22c55e",
+    "red": "#ef4444",
+    "text": "#e0e0e0",
+    "text_dim": "#888888"
+  },
+  "templates": {
+    "broadcast": "emails/newsletter.html",
+    "welcome": "emails/welcome.html",
+    "issue_001": "emails/issues/001-market-pulse.html"
+  },
+  "notes": [
+    "Paste HTML into Resend Broadcasts; keep {{{RESEND_UNSUBSCRIBE_URL}}}.",
+    "Send broadcasts to the Stocks on Solana segment (or all contacts).",
+    "Transactional magic links use RESEND_API_KEY via /api/auth/request.",
+    "Dashboard: Settings → Unsubscribe Page → background #0a0a0a, text #e0e0e0, accent #FF9900.",
+    "Env: RESEND_API_KEY, RESEND_FROM, RESEND_SEGMENT_ID (optional), NEXT_PUBLIC_URL."
+  ]
+}

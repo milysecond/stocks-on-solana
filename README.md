@@ -25,8 +25,8 @@ Providers: **xStocks**, **Ondo Finance**, **PreStocks**
 - **SOL price** in status bar
 - **Star stocks** — bookmark favourites (localStorage)
 - **Sign in** — magic link auth via email (JWT cookie, 30 days)
-- **Email capture** → SendGrid "Stocks on Solana" list
-- **Newsletter** → HTML templates in `emails/` (welcome + weekly market pulse)
+- **Email capture** → Resend contacts (on magic-link sign-in)
+- **Newsletter** → Resend Broadcasts HTML in `emails/` (welcome + weekly market pulse)
 - **Virtualised table** — `@tanstack/react-virtual`, renders only visible rows (TBT ~10ms)
 - **252 `/token/[ticker]` static pages** — SEO, OG tags, JSON-LD schema
 - **Sitemap** at `/sitemap.xml`, `robots.txt`
@@ -42,7 +42,7 @@ Providers: **xStocks**, **Ondo Finance**, **PreStocks**
 - **Next.js 15** + TypeScript + Tailwind-free (pure CSS-in-JS)
 - **JetBrains Mono** throughout
 - **Jupiter Price API v3** for prices
-- **SendGrid** for email (domain verified: `noreply@stocksonsolana.com`)
+- **Resend** for email (domain: `noreply@stocksonsolana.com`)
 - **jose** for JWT sessions
 - **Cloudflare Pages** for hosting
 
@@ -59,10 +59,12 @@ npm run dev
 ### Env vars
 
 ```
-SENDGRID_API_KEY=
-SENDGRID_FROM=noreply@stocksonsolana.com
+RESEND_API_KEY=
+RESEND_FROM=Stocks on Solana <noreply@stocksonsolana.com>
+RESEND_SEGMENT_ID=
 JWT_SECRET=
 NEXT_PUBLIC_JUPITER_REF_ID=yfgv2ibxy07v
+NEXT_PUBLIC_URL=https://stocksonsolana.com
 ```
 
 ### Production build (CF Pages)

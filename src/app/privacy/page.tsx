@@ -50,7 +50,7 @@ We do not collect passwords, financial information, or sensitive personal data.`
             title: '3. Data Sharing',
             body: `We do not sell your personal data. We share data only with:
 
-• SendGrid — email delivery
+• Resend — email delivery
 • Google Analytics — anonymous usage analytics
 • Cloudflare — infrastructure and DDoS protection
 

@@ -7,8 +7,11 @@
   "site_url": "https://stocksonsolana.com",
   "x_url": "https://x.com/StocksOnSolana",
   "mailing_list": {
+    "segment_id": "c7b7154e-cb8e-43cf-a262-bd1212bf1358",
+    "segment_name": "Stocks on Solana",
+    "general_segment_id": "355ae10d-de67-4dec-90bd-02c1601c5480",
     "segment_id_env": "RESEND_SEGMENT_ID",
-    "note": "Create a Resend segment for Stocks on Solana and set RESEND_SEGMENT_ID. Plan limit is often 3 segments.",
+    "note": "Stocks on Solana segment for this product. Contacts empty until users sign in or are imported.",
     "subscribe_on_signin": "src/app/api/auth/request/route.ts → upsertMailingContact",
     "preferences": "https://stocksonsolana.com/privacy"
   },

@@ -1,16 +1,25 @@
 import type { Metadata } from 'next';
-import { JetBrains_Mono, Space_Grotesk } from 'next/font/google';
+import localFont from 'next/font/local';
 import Script from 'next/script';
 import './globals.css';
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
+const spaceGrotesk = localFont({
+  src: [
+    { path: '../fonts/SpaceGrotesk-Light.ttf', weight: '300', style: 'normal' },
+    { path: '../fonts/SpaceGrotesk-Regular.ttf', weight: '400', style: 'normal' },
+    { path: '../fonts/SpaceGrotesk-Medium.ttf', weight: '500', style: 'normal' },
+    { path: '../fonts/SpaceGrotesk-SemiBold.ttf', weight: '600', style: 'normal' },
+    { path: '../fonts/SpaceGrotesk-Bold.ttf', weight: '700', style: 'normal' },
+  ],
   variable: '--font-sans',
   display: 'swap',
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
+const jetbrainsMono = localFont({
+  src: [
+    { path: '../fonts/JetBrainsMono-Regular.ttf', weight: '400', style: 'normal' },
+    { path: '../fonts/JetBrainsMono-Bold.ttf', weight: '700', style: 'normal' },
+  ],
   variable: '--font-mono',
   display: 'swap',
 });

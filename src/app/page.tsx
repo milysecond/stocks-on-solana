@@ -873,8 +873,8 @@ function HomeInner() {
           --text-dim: #888;
           --amber: #ffb000;
           --brand: #ffb000;
-          --brand-end: #c44dff;
-          --brand-gradient: linear-gradient(135deg, #ffcc33 0%, #ff9900 42%, #ff5a1f 68%, #c44dff 100%);
+          --brand-end: #7f47dd;
+          --brand-gradient: linear-gradient(135deg, #f8f700 0%, #fbae17 45%, #7f47dd 100%);
           --green: #22c55e;
           --red: #ef4444;
           --blue: #4488ff;
@@ -1708,7 +1708,7 @@ function HomeInner() {
                     onKeyDown={e => e.key === 'Enter' && handleSignIn()}
                     style={{ width: '100%', boxSizing: 'border-box', background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: 4, padding: '10px 12px', color: '#ccc', fontFamily: 'inherit', fontSize: 16, outline: 'none' }}
                   />
-                  <button onClick={handleSignIn} disabled={signInStatus === 'sending'} style={{ width: '100%', background: 'linear-gradient(135deg, #ffcc33 0%, #ff9900 42%, #ff5a1f 68%, #c44dff 100%)', color: '#0a0a0a', border: 'none', borderRadius: 6, padding: '12px', fontFamily: 'inherit', fontSize: 12, fontWeight: 700, letterSpacing: 1, cursor: 'pointer' }}>
+                  <button onClick={handleSignIn} disabled={signInStatus === 'sending'} style={{ width: '100%', background: 'linear-gradient(135deg, #f8f700 0%, #fbae17 45%, #7f47dd 100%)', color: '#0a0a0a', border: 'none', borderRadius: 6, padding: '12px', fontFamily: 'inherit', fontSize: 12, fontWeight: 700, letterSpacing: 1, cursor: 'pointer' }}>
                     {signInStatus === 'sending' ? '...' : 'SEND MAGIC LINK'}
                   </button>
                 </div>

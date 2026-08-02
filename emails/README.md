@@ -1,6 +1,6 @@
 # Stocks on Solana · Email / Newsletter (Resend)
 
-Terminal-styled HTML for [Resend](https://resend.com). Brand matches the screener: black `#0a0a0a`, amber `#FF9900`, mono type.
+Brand HTML for [Resend](https://resend.com). Brand matches the screener: black `#0a0a0a`, gold→violet brand gradient `#F8F700` / `#FBAE17` / `#7F47DD`, mono type.
 
 ## Files
 
@@ -77,3 +77,13 @@ open emails/issues/001-market-pulse.html
 - Numbers first, short sentences
 - No hashtags, no emoji
 - Always: not financial advice + liquidity caveat
+
+
+## Resend Templates (published)
+
+| Alias | Env |
+|-------|-----|
+| `sos-magic-link` | `RESEND_TPL_MAGIC_LINK` |
+| `sos-welcome` | `RESEND_TPL_WELCOME` |
+
+Publish: `python3 scripts/publish-resend-templates.py`

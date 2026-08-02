@@ -537,8 +537,10 @@ function HomeInner() {
   const searchParams = useSearchParams();
 
   const [rows, setRows] = useState<StockRow[]>([]);
-  const [sortKey, setSortKey] = useState<SortKey>('change24h');
+  const [sortKey, setSortKey] = useState<SortKey>('volume24h');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  /** Hide illiquid ghosts when sorting by 24h % (thin books print nonsense marks) */
+  const MIN_LIQ_FOR_CHG = 1000;
   const [search, setSearch] = useState('');
   const [providerFilter, setProviderFilter] = useState<string | null>(null);
   const [ageFilter, setAgeFilter] = useState<AgeFilter>(null);
@@ -817,6 +819,14 @@ function HomeInner() {
       const aStarred = starred.has(a.mint) ? 0 : 1;
       const bStarred = starred.has(b.mint) ? 0 : 1;
       if (aStarred !== bStarred) return aStarred - bStarred;
+
+      // 24H % on thin books is noise — sink liq < $1k when sorting by change
+      if (sortKey === 'change24h') {
+        const aThin = (a.liquidity ?? 0) < MIN_LIQ_FOR_CHG;
+        const bThin = (b.liquidity ?? 0) < MIN_LIQ_FOR_CHG;
+        if (aThin !== bThin) return aThin ? 1 : -1;
+      }
+
       // Then apply normal sort
       let av: string | number | null, bv: string | number | null;
       if (sortKey === 'name') { av = a.name; bv = b.name; }

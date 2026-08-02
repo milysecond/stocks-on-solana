@@ -6,6 +6,8 @@
  * Send-only key: transactional mail (magic links, single welcome sends).
  */
 
+import { magicLinkHtml as brandMagicHtml, welcomeHtml as brandWelcomeHtml } from './email-brand';
+
 const RESEND_API = 'https://api.resend.com';
 
 export const RESEND_FROM =
@@ -185,141 +187,48 @@ export async function upsertMailingContact(email: string): Promise<void> {
   }
 }
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+/** Published Resend template IDs (optional env overrides). */
+const TPL_MAGIC =
+  process.env.RESEND_TPL_MAGIC_LINK || '91193563-db1a-43bd-8ad9-9d94141696d6';
+const TPL_WELCOME =
+  process.env.RESEND_TPL_WELCOME || '1139c53d-1341-4410-8384-a71c51a0a561';
 
 export function magicLinkHtml(magicUrl: string): string {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="dark" />
-  <title>Sign in · Stocks on Solana</title>
-</head>
-<body style="margin:0;padding:0;background:#0a0a0a;color:#e0e0e0;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#0a0a0a;">
-    <tr>
-      <td align="center" style="padding:40px 16px;">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:500px;background:#111111;border:1px solid #1e1e1e;border-radius:8px;overflow:hidden;">
-          <tr>
-            <td style="height:3px;background:linear-gradient(90deg,#FF9900 0%,#cc7700 100%);font-size:0;line-height:0;">&nbsp;</td>
-          </tr>
-          <tr>
-            <td style="padding:36px 28px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;">
-              <div style="font-size:11px;font-weight:700;letter-spacing:0.18em;color:#FF9900;margin-bottom:6px;">STOCKS ON SOLANA</div>
-              <div style="font-size:10px;letter-spacing:0.12em;color:#555555;margin-bottom:24px;">REAL-TIME TOKENIZED EQUITY SCREENER</div>
-              <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#a8a8a8;">
-                Click to sign in. Link expires in 15 minutes.
-              </p>
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0">
-                <tr>
-                  <td style="border-radius:4px;background:#FF9900;">
-                    <a href="${escapeHtml(magicUrl)}" style="display:inline-block;padding:12px 24px;font-size:12px;font-weight:700;letter-spacing:0.08em;color:#0a0a0a;text-decoration:none;text-transform:uppercase;">
-                      Sign in
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              <p style="margin:28px 0 0;font-size:11px;color:#555555;line-height:1.5;">
-                If you did not request this, ignore it.
-              </p>
-              <p style="margin:16px 0 0;font-size:10px;color:#444444;word-break:break-all;">
-                ${escapeHtml(magicUrl)}
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+  return brandMagicHtml(magicUrl);
 }
 
-/** Transactional welcome HTML (no Broadcast-only placeholders). */
 export function welcomeHtml(firstName?: string): string {
-  const name = firstName?.trim() || 'there';
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="dark" />
-  <title>Welcome to Stocks on Solana</title>
-</head>
-<body style="margin:0;padding:0;background:#0a0a0a;color:#e0e0e0;">
-  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
-    You're in. Track 500+ tokenized stocks on Solana in real time.
-  </div>
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#0a0a0a;">
-    <tr>
-      <td align="center" style="padding:40px 16px;">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:520px;background:#111111;border:1px solid #1e1e1e;border-radius:8px;overflow:hidden;">
-          <tr>
-            <td style="height:3px;background:linear-gradient(90deg,#FF9900 0%,#cc7700 100%);font-size:0;line-height:0;">&nbsp;</td>
-          </tr>
-          <tr>
-            <td style="padding:36px 28px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;text-align:center;">
-              <img src="https://stocksonsolana.com/logo-192.png" width="56" height="56" alt="" style="border-radius:10px;margin-bottom:16px;" />
-              <div style="font-size:11px;font-weight:700;letter-spacing:0.18em;color:#FF9900;margin-bottom:10px;">
-                STOCKS ON SOLANA
-              </div>
-              <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;">
-                Welcome to the terminal
-              </h1>
-              <p style="margin:0 0 24px;font-size:14px;line-height:1.65;color:#a8a8a8;">
-                Hey ${escapeHtml(name)} — you're in. Real-time screener for tokenized equities on Solana: xStocks, Ondo, PreStocks, and Backpack. Prices, liquidity, and discount or premium vs the real-world stock.
-              </p>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 28px;text-align:left;">
-                <tr>
-                  <td style="padding:12px 14px;border:1px solid #1e1e1e;border-radius:6px;background:#0d0d0d;">
-                    <div style="font-size:12px;color:#e0e0e0;margin-bottom:8px;"><span style="color:#FF9900;">→</span> Live prices via Jupiter</div>
-                    <div style="font-size:12px;color:#e0e0e0;margin-bottom:8px;"><span style="color:#FF9900;">→</span> Discount / premium vs NYSE &amp; NASDAQ</div>
-                    <div style="font-size:12px;color:#e0e0e0;margin-bottom:8px;"><span style="color:#FF9900;">→</span> Star favourites · filter by provider</div>
-                    <div style="font-size:12px;color:#e0e0e0;"><span style="color:#FF9900;">→</span> Market pulse in this inbox</div>
-                  </td>
-                </tr>
-              </table>
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 28px;">
-                <tr>
-                  <td style="border-radius:4px;background:#FF9900;">
-                    <a href="https://stocksonsolana.com" style="display:inline-block;padding:14px 28px;font-size:12px;font-weight:700;letter-spacing:0.08em;color:#0a0a0a;text-decoration:none;text-transform:uppercase;">
-                      Open screener
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              <p style="margin:0 0 20px;font-size:12px;line-height:1.6;color:#666666;">
-                Follow <a href="https://x.com/StocksOnSolana" style="color:#FF9900;text-decoration:none;">@StocksOnSolana</a> for new listings and volume alerts.
-              </p>
-              <p style="margin:0;font-size:11px;color:#555555;line-height:1.6;">
-                <a href="${SITE_URL}/privacy" style="color:#666666;">Privacy</a>
-                ·
-                Not financial advice.
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+  return brandWelcomeHtml(firstName);
 }
 
 export async function sendWelcomeEmail(email: string, firstName?: string) {
   const name = firstName?.trim() || 'there';
+  if (TPL_WELCOME) {
+    return resendFetch('/emails', {
+      method: 'POST',
+      body: JSON.stringify({
+        from: RESEND_FROM,
+        to: [email],
+        template: {
+          id: TPL_WELCOME,
+          variables: { CONTACT_NAME: name },
+        },
+        headers: {
+          'List-Unsubscribe': `<${SITE_URL}/privacy>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        },
+        tags: [
+          { name: 'category', value: 'welcome' },
+          { name: 'product', value: 'stocks-on-solana' },
+        ],
+      }),
+    });
+  }
   return sendEmail({
     to: email,
     subject: "You're on Stocks on Solana",
     html: welcomeHtml(firstName),
-    text: `Hey ${name} — you're on the Stocks on Solana list.\n\nTrack 500+ tokenized stocks in real time: ${SITE_URL}\n\nFollow @StocksOnSolana for listings and volume alerts.\n\nPrivacy: ${SITE_URL}/privacy\nNot financial advice.`,
+    text: `Hey ${name} — you're on the Stocks on Solana list.\n\nTrack 600+ tokenized stocks in real time: ${SITE_URL}\n\nFollow @StocksOnSolana for listings and volume alerts.\n\nPrivacy: ${SITE_URL}/privacy\nNot financial advice.`,
     listUnsubscribe: true,
     tags: [
       { name: 'category', value: 'welcome' },
@@ -329,6 +238,23 @@ export async function sendWelcomeEmail(email: string, firstName?: string) {
 }
 
 export async function sendMagicLinkEmail(email: string, magicUrl: string) {
+  if (TPL_MAGIC) {
+    return resendFetch('/emails', {
+      method: 'POST',
+      body: JSON.stringify({
+        from: RESEND_FROM,
+        to: [email],
+        template: {
+          id: TPL_MAGIC,
+          variables: { MAGIC_URL: magicUrl },
+        },
+        tags: [
+          { name: 'category', value: 'magic-link' },
+          { name: 'product', value: 'stocks-on-solana' },
+        ],
+      }),
+    });
+  }
   return sendEmail({
     to: email,
     subject: 'Your Stocks on Solana login link',
@@ -341,20 +267,13 @@ export async function sendMagicLinkEmail(email: string, magicUrl: string) {
   });
 }
 
-/**
- * Create + send a Resend Broadcast to a segment (full-access key + marketing plan).
- */
+/** Create + send a Resend Broadcast to a segment (full-access key). */
 export async function sendWelcomeBroadcast(segmentId: string) {
-  const html = welcomeHtml('{{{contact.first_name|there}}}').replace(
-    /Hey there — you're in\./,
-    "Hey {{{contact.first_name|there}}} — you're in."
-  );
-  // Prefer broadcast template with unsubscribe token
   const broadcastHtml = welcomeHtml().replace(
-    `<a href="${SITE_URL}/privacy" style="color:#666666;">Privacy</a>`,
-    `<a href="{{{RESEND_UNSUBSCRIBE_URL}}}" style="color:#666666;">Unsubscribe</a>
+    `<a href="${SITE_URL}/privacy" style="color:#666;">Privacy</a>`,
+    `<a href="{{{RESEND_UNSUBSCRIBE_URL}}}" style="color:#666;">Unsubscribe</a>
                 ·
-                <a href="${SITE_URL}/privacy" style="color:#666666;">Privacy</a>`
+                <a href="${SITE_URL}/privacy" style="color:#666;">Privacy</a>`
   );
 
   return resendFetch('/broadcasts', {

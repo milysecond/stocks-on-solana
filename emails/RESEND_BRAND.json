@@ -2,47 +2,37 @@
   "product": "Stocks on Solana",
   "domain": "stocksonsolana.com",
   "from": "Stocks on Solana <noreply@stocksonsolana.com>",
-  "reply_to": "hello@stocksonsolana.com",
-  "logo_url": "https://stocksonsolana.com/logo-192.png",
+  "logo_url": "https://stocksonsolana.com/logo-mark.png",
   "site_url": "https://stocksonsolana.com",
   "x_url": "https://x.com/StocksOnSolana",
-  "mailing_list": {
-    "segment_id": "c7b7154e-cb8e-43cf-a262-bd1212bf1358",
-    "segment_name": "Stocks on Solana",
-    "general_segment_id": "355ae10d-de67-4dec-90bd-02c1601c5480",
-    "segment_id_env": "RESEND_SEGMENT_ID",
-    "note": "Stocks on Solana segment for this product. Contacts empty until users sign in or are imported.",
-    "subscribe_on_signin": "src/app/api/auth/request/route.ts → upsertMailingContact",
-    "preferences": "https://stocksonsolana.com/privacy"
-  },
-  "unsubscribe_page_dashboard": {
-    "title": "Email preferences",
-    "description": "Choose what you hear from Stocks on Solana — market pulse and product updates.",
-    "logo": "https://stocksonsolana.com/logo-192.png",
-    "background_color": "#0a0a0a",
-    "text_color": "#e0e0e0",
-    "accent_color": "#FF9900"
-  },
   "colors": {
     "bg": "#0a0a0a",
     "bg_card": "#111111",
     "border": "#1e1e1e",
-    "amber": "#FF9900",
-    "green": "#22c55e",
-    "red": "#ef4444",
-    "text": "#e0e0e0",
-    "text_dim": "#888888"
+    "gold": "#F8F700",
+    "amber": "#FBAE17",
+    "violet": "#7F47DD",
+    "gradient": "linear-gradient(90deg,#F8F700 0%,#FBAE17 45%,#7F47DD 100%)",
+    "text": "#e8e8e8"
   },
   "templates": {
-    "broadcast": "emails/newsletter.html",
-    "welcome": "emails/welcome.html",
-    "issue_001": "emails/issues/001-market-pulse.html"
+    "sos-magic-link": {
+      "id": "91193563-db1a-43bd-8ad9-9d94141696d6",
+      "name": "SoS Magic Link",
+      "subject": "Your Stocks on Solana login link"
+    },
+    "sos-welcome": {
+      "id": "1139c53d-1341-4410-8384-a71c51a0a561",
+      "name": "SoS Welcome",
+      "subject": "You're on Stocks on Solana"
+    }
   },
-  "notes": [
-    "Paste HTML into Resend Broadcasts; keep {{{RESEND_UNSUBSCRIBE_URL}}}.",
-    "Send broadcasts to the Stocks on Solana segment (or all contacts).",
-    "Transactional magic links use RESEND_API_KEY via /api/auth/request.",
-    "Dashboard: Settings → Unsubscribe Page → background #0a0a0a, text #e0e0e0, accent #FF9900.",
-    "Env: RESEND_API_KEY, RESEND_FROM, RESEND_SEGMENT_ID (optional), NEXT_PUBLIC_URL."
-  ]
+  "mailing_list": {
+    "segment_id": "c7b7154e-cb8e-43cf-a262-bd1212bf1358",
+    "segment_name": "Stocks on Solana"
+  },
+  "env": {
+    "RESEND_TPL_MAGIC_LINK": "91193563-db1a-43bd-8ad9-9d94141696d6",
+    "RESEND_TPL_WELCOME": "1139c53d-1341-4410-8384-a71c51a0a561"
+  }
 }

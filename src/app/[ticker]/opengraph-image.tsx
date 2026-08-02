@@ -1,15 +1,12 @@
 import { ImageResponse } from 'next/og';
 import { ALL_TOKENS } from '@/lib/tokens';
+import { BRAND } from '@/lib/brand';
 
 export const runtime = 'edge';
 export const revalidate = 900;
 export const alt = 'Stock on Solana';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
-
-const BRAND_GRAD = 'linear-gradient(135deg, #f8f700 0%, #fbae17 42%, #7f47dd 100%)';
-const GREEN = '#00e676';
-const RED = '#ff4d4d';
 
 interface Props {
   params: Promise<{ ticker: string }>;
@@ -27,7 +24,6 @@ function findToken(ticker: string) {
 
 async function fetchLiveData(symbol: string) {
   try {
-    // unfiltered feed first pages + known providers
     const urls = [
       'https://datapi.jup.ag/v2/assets/stocks/24h?offset=0&includeOndoStatus=false',
       'https://datapi.jup.ag/v2/assets/stocks/24h?stocks=xstocks&offset=0&includeOndoStatus=false',
@@ -63,6 +59,7 @@ function fmtMcap(m: number) {
   return `$${m.toFixed(0)}`;
 }
 
+/** Token OG — brand guide: ink/panel, bare mark, exact gradient, mono numbers */
 export default async function Image({ params }: Props) {
   const { ticker } = await params;
   const token = findToken(ticker);
@@ -74,12 +71,12 @@ export default async function Image({ params }: Props) {
           style={{
             width: '100%',
             height: '100%',
-            background: '#07060c',
+            background: BRAND.ink,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#888',
-            fontSize: 32,
+            color: BRAND.muted,
+            fontSize: 28,
             fontFamily: 'sans-serif',
           }}
         >
@@ -91,13 +88,9 @@ export default async function Image({ params }: Props) {
   }
 
   const [sgBold, jbBold, logoData, live] = await Promise.all([
-    fetch(new URL('/fonts/SpaceGrotesk-Bold.ttf', 'https://stocksonsolana.com')).then((r) =>
-      r.arrayBuffer(),
-    ),
-    fetch(new URL('/fonts/JetBrainsMono-Bold.ttf', 'https://stocksonsolana.com')).then((r) =>
-      r.arrayBuffer(),
-    ),
-    fetch(new URL('/logo-mark.png', 'https://stocksonsolana.com')).then((r) => r.arrayBuffer()),
+    fetch(new URL('/fonts/SpaceGrotesk-Bold.ttf', BRAND.site)).then((r) => r.arrayBuffer()),
+    fetch(new URL('/fonts/JetBrainsMono-Bold.ttf', BRAND.site)).then((r) => r.arrayBuffer()),
+    fetch(new URL('/logo-mark.png', BRAND.site)).then((r) => r.arrayBuffer()),
     fetchLiveData(token.symbol),
   ]);
 
@@ -110,8 +103,7 @@ export default async function Image({ params }: Props) {
   const isUp = chg24h === null || chg24h >= 0;
   const stockPrice = live?.stockData?.price != null ? fmtPrice(live.stockData.price) : null;
   const cleanSymbol = token.symbol.replace(/[xX]$/, '').replace(/on$/i, '').replace(/pre$/i, '');
-  const provider =
-    token.provider === 'Backpack' ? 'SUNRISE' : token.provider.toUpperCase();
+  const provider = token.provider === 'Backpack' ? 'SUNRISE' : token.provider.toUpperCase();
 
   return new ImageResponse(
     (
@@ -120,89 +112,47 @@ export default async function Image({ params }: Props) {
           width: '100%',
           height: '100%',
           display: 'flex',
-          position: 'relative',
-          overflow: 'hidden',
-          background: '#07060c',
+          flexDirection: 'column',
+          background: BRAND.ink,
           fontFamily: '"Space Grotesk"',
+          overflow: 'hidden',
         }}
       >
         <div
           style={{
-            position: 'absolute',
-            inset: 0,
-            background: isUp
-              ? 'radial-gradient(ellipse 80% 70% at 15% 20%, rgba(0,230,118,0.18) 0%, transparent 50%), radial-gradient(ellipse 90% 80% at 100% 100%, rgba(127,71,221,0.4) 0%, transparent 55%), radial-gradient(ellipse 50% 40% at 60% 0%, rgba(248,247,0,0.2) 0%, transparent 45%)'
-              : 'radial-gradient(ellipse 80% 70% at 15% 20%, rgba(255,77,77,0.2) 0%, transparent 50%), radial-gradient(ellipse 90% 80% at 100% 100%, rgba(127,71,221,0.4) 0%, transparent 55%), radial-gradient(ellipse 50% 40% at 60% 0%, rgba(251,174,23,0.18) 0%, transparent 45%)',
+            width: '100%',
+            height: 6,
+            background: BRAND.gradient,
             display: 'flex',
+            flexShrink: 0,
           }}
         />
-
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 8,
-            background: BRAND_GRAD,
-            display: 'flex',
-          }}
-        />
-
-        {live?.icon ? (
-          <div
-            style={{
-              position: 'absolute',
-              right: -80,
-              bottom: -80,
-              display: 'flex',
-              opacity: 0.12,
-            }}
-          >
-            <img src={live.icon} width={560} height={560} style={{ borderRadius: 280 }} />
-          </div>
-        ) : (
-          <div
-            style={{
-              position: 'absolute',
-              right: -40,
-              bottom: -60,
-              display: 'flex',
-              opacity: 0.16,
-            }}
-          >
-            <img src={logo} width={480} height={480} />
-          </div>
-        )}
 
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
-            width: '100%',
-            height: '100%',
-            padding: '48px 56px 44px',
-            position: 'relative',
-            zIndex: 1,
+            flex: 1,
+            padding: '44px 56px 40px',
           }}
         >
-          {/* Header */}
+          {/* Header — bare mark */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: 40,
+              marginBottom: 36,
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <img src={logo} width={48} height={48} />
+              <img src={logo} width={44} height={44} />
               <span
                 style={{
-                  fontSize: 16,
+                  fontSize: 15,
                   letterSpacing: 3,
                   fontWeight: 700,
-                  backgroundImage: BRAND_GRAD,
+                  backgroundImage: BRAND.gradient,
                   backgroundClip: 'text',
                   color: 'transparent',
                 }}
@@ -212,14 +162,14 @@ export default async function Image({ params }: Props) {
             </div>
             <div
               style={{
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: 700,
                 letterSpacing: 2,
-                padding: '8px 16px',
-                borderRadius: 999,
-                background: 'rgba(0,0,0,0.45)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                color: '#fff',
+                padding: '7px 14px',
+                borderRadius: 4,
+                background: BRAND.panel,
+                border: `1px solid ${BRAND.border}`,
+                color: BRAND.body,
               }}
             >
               {provider}
@@ -227,20 +177,28 @@ export default async function Image({ params }: Props) {
           </div>
 
           {/* Ticker */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 8 }}>
             {live?.icon ? (
-              <img src={live.icon} width={80} height={80} style={{ borderRadius: 20 }} />
+              <img src={live.icon} width={72} height={72} style={{ borderRadius: 10 }} />
             ) : null}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
-                <span style={{ fontSize: 64, fontWeight: 700, color: '#fff', lineHeight: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
+                <span
+                  style={{
+                    fontSize: 60,
+                    fontWeight: 700,
+                    color: BRAND.body,
+                    lineHeight: 1,
+                    letterSpacing: -1,
+                  }}
+                >
                   {cleanSymbol}
                 </span>
-                <span style={{ fontSize: 22, color: 'rgba(255,255,255,0.4)' }}>{token.symbol}</span>
+                <span style={{ fontSize: 20, color: BRAND.muted, fontFamily: '"JetBrains Mono"' }}>
+                  {token.symbol}
+                </span>
               </div>
-              <span style={{ fontSize: 22, color: 'rgba(255,255,255,0.55)', marginTop: 8 }}>
-                {token.name}
-              </span>
+              <span style={{ fontSize: 20, color: BRAND.muted, marginTop: 8 }}>{token.name}</span>
             </div>
           </div>
 
@@ -249,40 +207,35 @@ export default async function Image({ params }: Props) {
             style={{
               display: 'flex',
               alignItems: 'baseline',
-              gap: 22,
+              gap: 20,
               marginTop: 28,
-              marginBottom: 36,
+              marginBottom: 32,
             }}
           >
             <span
               style={{
-                fontSize: 56,
+                fontSize: 52,
                 fontWeight: 700,
                 fontFamily: '"JetBrains Mono"',
-                backgroundImage: BRAND_GRAD,
-                backgroundClip: 'text',
-                color: 'transparent',
+                color: BRAND.brandAmber,
               }}
             >
               {price}
             </span>
             <span
               style={{
-                fontSize: 28,
+                fontSize: 24,
                 fontWeight: 700,
                 fontFamily: '"JetBrains Mono"',
-                color: isUp ? GREEN : RED,
-                padding: '8px 16px',
-                borderRadius: 12,
-                background: isUp ? 'rgba(0,230,118,0.12)' : 'rgba(255,77,77,0.12)',
+                color: isUp ? BRAND.green : BRAND.red,
               }}
             >
-              {`${isUp ? '▲' : '▼'} ${chgStr}`}
+              {`${isUp ? '+' : ''}${chgStr}`.replace('++', '+')}
             </span>
           </div>
 
-          {/* Stats */}
-          <div style={{ display: 'flex', gap: 16 }}>
+          {/* Stats panels */}
+          <div style={{ display: 'flex', gap: 12 }}>
             {[
               ['ON-CHAIN MCAP', mcap],
               ['LIQUIDITY', liq],
@@ -295,20 +248,18 @@ export default async function Image({ params }: Props) {
                   flexDirection: 'column',
                   gap: 6,
                   padding: '16px 20px',
-                  borderRadius: 14,
-                  background: 'rgba(0,0,0,0.4)',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 8,
+                  background: BRAND.panel,
+                  border: `1px solid ${BRAND.border}`,
                   minWidth: 150,
                 }}
               >
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: 2 }}>
-                  {label}
-                </span>
+                <span style={{ fontSize: 11, color: BRAND.muted, letterSpacing: 2 }}>{label}</span>
                 <span
                   style={{
-                    fontSize: 26,
+                    fontSize: 24,
                     fontWeight: 700,
-                    color: '#fff',
+                    color: BRAND.body,
                     fontFamily: '"JetBrains Mono"',
                   }}
                 >
@@ -326,10 +277,10 @@ export default async function Image({ params }: Props) {
               alignItems: 'center',
             }}
           >
-            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', letterSpacing: 1 }}>
+            <span style={{ fontSize: 13, color: BRAND.brandAmber, letterSpacing: 1, fontWeight: 600 }}>
               {`stocksonsolana.com/token/${token.symbol.toLowerCase()}`}
             </span>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.28)' }}>Design by Gray</span>
+            <span style={{ fontSize: 12, color: BRAND.dim }}>Design by Gray</span>
           </div>
         </div>
       </div>

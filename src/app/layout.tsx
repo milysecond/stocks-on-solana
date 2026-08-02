@@ -1,7 +1,13 @@
 import type { Metadata } from 'next';
-import { JetBrains_Mono } from 'next/font/google';
+import { JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+});
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
@@ -81,13 +87,11 @@ export const metadata: Metadata = {
       'max-video-preview': -1,
     },
   },
-  // Prefer DNS/HTML file verification in GSC; meta kept empty so we don't
-  // ship a stale token. Add verification.google if you switch to meta tag.
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={jetbrainsMono.variable}>
+    <html lang="en" className={`${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
       <head>
         <link rel="preconnect" href="https://api.jup.ag" />
         <link rel="dns-prefetch" href="https://api.jup.ag" />
@@ -96,9 +100,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
       </head>
-      <body style={{ fontFamily: 'var(--font-mono), "JetBrains Mono", monospace' }}>
+      <body
+        style={{
+          fontFamily: 'var(--font-sans), "Space Grotesk", system-ui, sans-serif',
+        }}
+      >
         {children}
-        {/* GA4 — afterInteractive keeps LCP clean while still counting pageviews */}
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
           strategy="afterInteractive"

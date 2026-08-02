@@ -7,7 +7,7 @@ export default function NotFound() {
         minHeight: '100vh',
         background: '#0a0a0a',
         color: '#e8e8e8',
-        fontFamily: 'var(--font-mono), "JetBrains Mono", monospace',
+        fontFamily: 'var(--font-sans), "Space Grotesk", system-ui, sans-serif',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

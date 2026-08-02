@@ -76,7 +76,7 @@ export default async function Image() {
         {/* Grid */}
         <div style={{
           position: 'absolute', inset: 0,
-          backgroundImage: 'linear-gradient(rgba(255,153,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,153,0,0.03) 1px, transparent 1px)',
+          backgroundImage: 'linear-gradient(rgba(255,153,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(196,77,255,0.03) 1px, transparent 1px)',
           backgroundSize: '60px 60px',
           display: 'flex',
         }} />
@@ -95,12 +95,12 @@ export default async function Image() {
           position: 'absolute', right: -100, bottom: -100,
           width: 500, height: 500,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,153,0,0.06) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(196,77,255,0.10) 0%, transparent 70%)',
           display: 'flex',
         }} />
 
         {/* Top amber bar */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: '#ff9900', display: 'flex' }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #ffcc33 0%, #ff9900 40%, #ff5a1f 70%, #c44dff 100%)', display: 'flex' }} />
 
         {/* LEFT PANEL */}
         <div style={{
@@ -111,8 +111,8 @@ export default async function Image() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 16 }}>
             <img src={logoBase64} width={72} height={72} style={{ borderRadius: 12 }} />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <div style={{ fontSize: 22, color: '#aaa', letterSpacing: 6, fontWeight: 400 }}>STOCKS ON</div>
-              <div style={{ fontSize: 54, color: '#ff9900', letterSpacing: 4, fontWeight: 700, lineHeight: 1 }}>SOLANA</div>
+              <div style={{ fontSize: 22, color: '#aaa', letterSpacing: 4, fontWeight: 500 }}>STOCKS ON</div>
+              <div style={{ fontSize: 54, color: '#ffb000', letterSpacing: 2, fontWeight: 700, lineHeight: 1 }}>SOLANA</div>
             </div>
           </div>
 

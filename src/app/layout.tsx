@@ -27,7 +27,7 @@ const jetbrainsMono = localFont({
 const GA_ID = 'G-79CB6BK271';
 const SITE_URL = 'https://stocksonsolana.com';
 const DESCRIPTION =
-  'Real-time screener for 250+ tokenized stocks on Solana. Track xStocks, Ondo Finance, PreStocks, and Backpack — prices, liquidity, and discount to real-world price.';
+  'Real-time screener for 250+ tokenized stocks on Solana. Track xStocks, Sunrise (Backpack), Ondo, PreStocks — prices, liquidity, and discount to real-world price.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     'xStocks',
     'Ondo Finance',
     'PreStocks',
-    'Backpack Securities',
+    'Sunrise',
     'tokenized equity',
     'solana DeFi',
     'on-chain stocks',

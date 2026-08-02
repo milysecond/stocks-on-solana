@@ -860,7 +860,10 @@ function HomeInner() {
     <>
       <style>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: var(--bg); font-family: var(--font-sans), "Space Grotesk", system-ui, sans-serif; }
+        html, body, button, input, select, textarea {
+          font-family: var(--font-sans), "Space Grotesk", system-ui, sans-serif;
+        }
+        body { background: var(--bg); color: var(--text); }
         :root {
           --bg: #0a0a0a;
           --bg-secondary: #111111;
@@ -868,18 +871,16 @@ function HomeInner() {
           --border: #1e1e1e;
           --text: #e8e8e8;
           --text-dim: #888;
-          --amber: #ff9900;
+          --amber: #ffb000;
           --brand: #ffb000;
           --brand-end: #c44dff;
           --brand-gradient: linear-gradient(135deg, #ffcc33 0%, #ff9900 42%, #ff5a1f 68%, #c44dff 100%);
           --green: #22c55e;
           --red: #ef4444;
           --blue: #4488ff;
-          --font-sans: var(--font-sans), "Space Grotesk", system-ui, sans-serif;
-          --font-mono: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
         }
         .mono, .tbl td.num, .tbl th.num, .tm-mint-addr, code, .price, .chg, .hdr-stat-val {
-          font-family: var(--font-mono);
+          font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
         }
         .brand-text {
           background: var(--brand-gradient);
@@ -891,7 +892,14 @@ function HomeInner() {
         .brand-bg { background: var(--brand-gradient); color: #0a0a0a; }
         .brand-bar { background: var(--brand-gradient); height: 3px; width: 100%; }
         .tbl, .tbl th, .tbl td { font-variant-numeric: tabular-nums; }
-        .tbl td:not(:first-child), .tbl .num { font-family: var(--font-mono), "JetBrains Mono", monospace; }
+        .tbl td:not(:first-child), .tbl .num {
+          font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+        }
+        .tbl th {
+          font-family: var(--font-sans), "Space Grotesk", system-ui, sans-serif;
+          font-weight: 600;
+          letter-spacing: 0.06em;
+        }
 
 
         /* ── Header ── */
@@ -910,8 +918,14 @@ function HomeInner() {
         .header-brand {
           display: flex;
           align-items: center;
-          gap: 7px;
+          gap: 10px;
           flex-shrink: 0;
+        }
+        .header-brand img {
+          width: 28px;
+          height: 28px;
+          border-radius: 0;
+          display: block;
         }
         .header-brand span {
           background: var(--brand-gradient);
@@ -920,8 +934,9 @@ function HomeInner() {
           color: transparent;
           -webkit-text-fill-color: transparent;
           font-weight: 700;
-          font-size: 13px;
-          letter-spacing: 1.5px;
+          font-size: 14px;
+          letter-spacing: 0.04em;
+          font-family: var(--font-sans), "Space Grotesk", system-ui, sans-serif;
         }
         .header-search {
           flex: 1;
@@ -1539,7 +1554,7 @@ function HomeInner() {
         <div className="brand-bar" aria-hidden="true" />
         <header className="header">
           <div className="header-brand">
-            <img src="/logo.png" alt="Stocks on Solana" width={26} height={26} fetchPriority="high" style={{ borderRadius: 7 }} />
+            <img src="/logo-mark.png" alt="Stocks on Solana" width={28} height={28} fetchPriority="high" />
             <span>STOCKS ON SOLANA</span>
           </div>
           <div className="header-search">
@@ -1605,7 +1620,7 @@ function HomeInner() {
                 { t: '8. Contact', b: 'Questions? Email privacy@stocksonsolana.com' },
               ].map(({ t, b }) => (
                 <div key={t} style={{ marginBottom: 20 }}>
-                  <div style={{ color: '#ff9900', fontSize: 11, letterSpacing: 2, marginBottom: 6 }}>{t}</div>
+                  <div style={{ color: '#ffb000', fontSize: 11, letterSpacing: 2, marginBottom: 6 }}>{t}</div>
                   <div style={{ color: '#888', fontSize: 12, lineHeight: 1.8 }}>{b}</div>
                 </div>
               ))}
@@ -1632,7 +1647,7 @@ function HomeInner() {
                 { t: '8. Contact', b: 'Questions? Email hello@stocksonsolana.com' },
               ].map(({ t, b }) => (
                 <div key={t} style={{ marginBottom: 20 }}>
-                  <div style={{ color: '#ff9900', fontSize: 11, letterSpacing: 2, marginBottom: 6 }}>{t}</div>
+                  <div style={{ color: '#ffb000', fontSize: 11, letterSpacing: 2, marginBottom: 6 }}>{t}</div>
                   <div style={{ color: '#888', fontSize: 12, lineHeight: 1.8 }}>{b}</div>
                 </div>
               ))}
@@ -1657,16 +1672,16 @@ function HomeInner() {
               ].map(p => (
                 <a key={p.name} href={p.url} target="_blank" rel="noopener noreferrer"
                   style={{ display: 'block', background: '#0d0d0d', border: '1px solid #1e1e1e', borderRadius: 8, padding: '16px 20px', textDecoration: 'none', marginBottom: 10, transition: 'border-color 0.15s' }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = '#ff9900')}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = '#ffb000')}
                   onMouseLeave={e => (e.currentTarget.style.borderColor = '#1e1e1e')}
                 >
-                  <div style={{ fontSize: 13, fontWeight: 700, color: (p as any).color || '#ff9900', letterSpacing: 2, marginBottom: 6 }}>{p.name} ↗</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: (p as any).color || '#ffb000', letterSpacing: 2, marginBottom: 6 }}>{p.name} ↗</div>
                   <div style={{ fontSize: 11, color: '#666', lineHeight: 1.7 }}>{p.desc}</div>
                 </a>
               ))}
               <div style={{ marginTop: 16, padding: '14px', border: '1px dashed #2a2a2a', borderRadius: 8, textAlign: 'center' }}>
                 <div style={{ fontSize: 10, color: '#555', letterSpacing: 1, marginBottom: 8 }}>BECOME A PARTNER</div>
-                <a href="mailto:hello@stocksonsolana.com" style={{ fontSize: 11, color: '#ff9900', letterSpacing: 2, textDecoration: 'none' }}>hello@stocksonsolana.com →</a>
+                <a href="mailto:hello@stocksonsolana.com" style={{ fontSize: 11, color: '#ffb000', letterSpacing: 2, textDecoration: 'none' }}>hello@stocksonsolana.com →</a>
               </div>
             </div>
           </div>
@@ -1677,7 +1692,7 @@ function HomeInner() {
           <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) { setShowSignIn(false); setSignInStatus('idle'); setSignInEmail(''); } }}>
             <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: 8, padding: 32, width: '100%', maxWidth: 400, position: 'relative' }}>
               <button onClick={() => { setShowSignIn(false); setSignInStatus('idle'); setSignInEmail(''); }} style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: 18 }}>✕</button>
-              <div style={{ color: '#ff9900', fontSize: 13, letterSpacing: 3, fontWeight: 700, marginBottom: 8 }}>SIGN IN</div>
+              <div style={{ color: '#ffb000', fontSize: 13, letterSpacing: 3, fontWeight: 700, marginBottom: 8 }}>SIGN IN</div>
               <div style={{ color: '#555', fontSize: 11, letterSpacing: 1, marginBottom: 24 }}>Get a magic link sent to your email</div>
               {signInStatus === 'sent' ? (
                 <div style={{ color: '#00c864', fontSize: 13, letterSpacing: 1, textAlign: 'center', padding: '16px 0' }}>
@@ -1729,7 +1744,7 @@ function HomeInner() {
                 {solPrice && <span className="sb-item"><span className="sb-label">SOL</span><span className="sb-value">${solPrice.toFixed(2)}</span></span>}
                 <span className="sb-item">
                   <button onClick={fetchPrices} style={{background:'none',border:'none',cursor:'pointer',color:'#555',fontFamily:'inherit',fontSize:9,letterSpacing:1,display:'flex',alignItems:'center',gap:4,padding:0}}>
-                    <RefreshCw size={9} className={loading ? 'animate-spin' : ''} style={loading ? {color:'#ff9900'} : {}} />REFRESH
+                    <RefreshCw size={9} className={loading ? 'animate-spin' : ''} style={loading ? {color:'#ffb000'} : {}} />REFRESH
                   </button>
                 </span>
               </>

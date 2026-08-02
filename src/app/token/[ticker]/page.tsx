@@ -209,7 +209,7 @@ export default async function TokenPage({ params }: Props) {
       >
         <div style={{ maxWidth: 720, margin: '0 auto' }}>
           <nav style={{ marginBottom: 32, fontSize: 12, letterSpacing: 1 }}>
-            <a href="/" style={{ color: '#ff9900', textDecoration: 'none' }}>
+            <a href="/" style={{ color: '#ffb000', textDecoration: 'none' }}>
               ← Stocks on Solana
             </a>
             {token.sector && (
@@ -241,7 +241,7 @@ export default async function TokenPage({ params }: Props) {
             style={{
               fontSize: 32,
               fontWeight: 900,
-              color: '#ff9900',
+              color: '#ffb000',
               letterSpacing: 1,
               margin: '0 0 8px',
               lineHeight: 1.15,
@@ -270,7 +270,7 @@ export default async function TokenPage({ params }: Props) {
               style={{
                 display: 'inline-block',
                 padding: '12px 22px',
-                background: '#ff9900',
+                background: '#ffb000',
                 color: '#0a0a0a',
                 fontSize: 12,
                 fontWeight: 700,
@@ -289,8 +289,8 @@ export default async function TokenPage({ params }: Props) {
               style={{
                 display: 'inline-block',
                 padding: '12px 22px',
-                border: '1px solid #ff9900',
-                color: '#ff9900',
+                border: '1px solid #ffb000',
+                color: '#ffb000',
                 fontSize: 12,
                 fontWeight: 700,
                 letterSpacing: 1.5,
@@ -376,7 +376,7 @@ export default async function TokenPage({ params }: Props) {
             </p>
             <p style={body}>
               Full mint address:{' '}
-              <code style={{ color: '#ff9900', fontSize: 12, wordBreak: 'break-all' }}>
+              <code style={{ color: '#ffb000', fontSize: 12, wordBreak: 'break-all' }}>
                 {token.mint}
               </code>
             </p>
@@ -391,21 +391,21 @@ export default async function TokenPage({ params }: Props) {
               </li>
               <li style={{ marginBottom: 10 }}>
                 Open the{' '}
-                <a href={screenerUrl} style={{ color: '#ff9900' }}>
+                <a href={screenerUrl} style={{ color: '#ffb000' }}>
                   live screener
                 </a>{' '}
                 for current price, liquidity, and 24h volume.
               </li>
               <li style={{ marginBottom: 10 }}>
                 Buy or sell via{' '}
-                <a href={jupUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#ff9900' }}>
+                <a href={jupUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#ffb000' }}>
                   Jupiter
                 </a>
                 {flashUrl ? (
                   <>
                     {' '}
                     or trade perps on{' '}
-                    <a href={flashUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#ff9900' }}>
+                    <a href={flashUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#ffb000' }}>
                       Flash Trade
                     </a>
                   </>
@@ -471,7 +471,7 @@ export default async function TokenPage({ params }: Props) {
                         fontSize: 13,
                       }}
                     >
-                      <span style={{ color: '#ff9900', fontWeight: 700 }}>{t.symbol}</span>
+                      <span style={{ color: '#ffb000', fontWeight: 700 }}>{t.symbol}</span>
                       <br />
                       <span style={{ color: '#666', fontSize: 11 }}>{t.name}</span>
                     </a>
@@ -507,7 +507,7 @@ const secondaryBtn: CSSProperties = {
 const h2: CSSProperties = {
   fontSize: 14,
   letterSpacing: 2,
-  color: '#ff9900',
+  color: '#ffb000',
   textTransform: 'uppercase',
   margin: '0 0 14px',
 };

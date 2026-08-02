@@ -21,9 +21,9 @@ export default function PrivacyPage() {
     }}>
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ marginBottom: 40 }}>
-          <a href="/" style={{ color: '#ff9900', fontSize: 12, letterSpacing: 2, textDecoration: 'none' }}>← BACK</a>
+          <a href="/" style={{ color: '#ffb000', fontSize: 12, letterSpacing: 2, textDecoration: 'none' }}>← BACK</a>
         </div>
-        <h1 style={{ color: '#ff9900', fontSize: 22, letterSpacing: 4, marginBottom: 8 }}>PRIVACY POLICY</h1>
+        <h1 style={{ color: '#ffb000', fontSize: 22, letterSpacing: 4, marginBottom: 8 }}>PRIVACY POLICY</h1>
         <p style={{ color: '#555', fontSize: 12, letterSpacing: 2, marginBottom: 48 }}>Last updated: February 28, 2026</p>
 
         {[
@@ -89,7 +89,7 @@ To exercise these rights, contact us at privacy@stocksonsolana.com`,
           },
         ].map(({ title, body }) => (
           <section key={title} style={{ marginBottom: 36 }}>
-            <h2 style={{ color: '#ff9900', fontSize: 13, letterSpacing: 2, marginBottom: 12 }}>{title}</h2>
+            <h2 style={{ color: '#ffb000', fontSize: 13, letterSpacing: 2, marginBottom: 12 }}>{title}</h2>
             <p style={{ color: '#888', fontSize: 13, lineHeight: 1.8, whiteSpace: 'pre-line' }}>{body}</p>
             <div style={{ height: 1, background: '#1a1a1a', marginTop: 28 }} />
           </section>

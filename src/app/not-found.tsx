@@ -17,7 +17,7 @@ export default function NotFound() {
         textAlign: 'center',
       }}
     >
-      <div style={{ fontSize: 72, fontWeight: 900, color: '#ff9900', letterSpacing: 6, lineHeight: 1 }}>
+      <div style={{ fontSize: 72, fontWeight: 900, color: '#ffb000', letterSpacing: 6, lineHeight: 1 }}>
         404
       </div>
       <div style={{ fontSize: 13, color: '#555', letterSpacing: 3, textTransform: 'uppercase' }}>
@@ -31,7 +31,7 @@ export default function NotFound() {
         style={{
           marginTop: 24,
           padding: '10px 28px',
-          background: '#ff9900',
+          background: '#ffb000',
           color: '#0a0a0a',
           fontSize: 12,
           fontWeight: 700,

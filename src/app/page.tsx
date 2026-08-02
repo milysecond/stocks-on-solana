@@ -1457,6 +1457,24 @@ function HomeInner() {
         .footer-pbs:hover { opacity: 1; }
         .footer-link { color: #444; text-decoration: none; letter-spacing: 2px; font-size: 9px; flex-shrink: 0; transition: color 0.15s; }
         .footer-link:hover { color: var(--amber); }
+        .footer-gray {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 10px;
+          letter-spacing: 0.2px;
+          color: #777;
+          text-decoration: none;
+          border: 1px solid #2a2a2a;
+          background: #111;
+          border-radius: 999px;
+          padding: 4px 10px;
+          flex-shrink: 0;
+          transition: color 0.15s, border-color 0.15s, background 0.15s;
+        }
+        .footer-gray strong { color: #ccc; font-weight: 600; }
+        .footer-gray:hover { color: #ddd; border-color: #444; background: #161616; }
+        .footer-gray:hover strong { color: #fff; }
 
         /* ── Responsive ── */
         @media (max-width: 640px) {
@@ -1870,16 +1888,27 @@ function HomeInner() {
           </div>
         )}
 
-        {/* Footer */}
         <footer className="footer">
-          <button onClick={() => setShowPrivacy(true)} className="footer-link" title="Privacy Policy" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}><Shield size={14} /></button>
-          <button onClick={() => setShowPartners(true)} className="footer-link" title="Partners" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}><Handshake size={14} /></button>
-          <a href="https://solana.com" target="_blank" rel="noopener noreferrer" className="footer-pbs" aria-label="Powered by Solana">
-            <img src="/stacked-white.svg" alt="Powered by Solana" style={{ display: 'block', height: 26, width: 'auto', borderRadius: 5 }} />
-          </a>
-          <button onClick={() => setShowTerms(true)} className="footer-link" title="Terms of Service" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}><FileText size={14} /></button>
-          <button onClick={() => { setShowWelcome(true); setWelcomeCountdown(8); }} className="footer-link" title="Info" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', fontSize: 9, letterSpacing: 2 }}>INFO</button>
-        </footer>
+                  <button onClick={() => setShowPrivacy(true)} className="footer-link" title="Privacy Policy" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}><Shield size={14} /></button>
+                  <button onClick={() => setShowPartners(true)} className="footer-link" title="Partners" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}><Handshake size={14} /></button>
+                  <a href="https://solana.com" target="_blank" rel="noopener noreferrer" className="footer-pbs" aria-label="Powered by Solana">
+                    <img src="/stacked-white.svg" alt="Powered by Solana" style={{ display: 'block', height: 26, width: 'auto', borderRadius: 5 }} />
+                  </a>
+                  <a
+                    href="https://graysunderland.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="footer-gray"
+                    aria-label="Design by Gray — opens graysunderland.com"
+                    title="Design by Gray Sunderland"
+                  >
+                    Design by <strong>Gray</strong>
+                  </a>
+                  <a href="/brand" className="footer-link" title="Brand guide" style={{ fontSize: 9, letterSpacing: 2 }}>BRAND</a>
+                  <a href="/press" className="footer-link" title="Press kit" style={{ fontSize: 9, letterSpacing: 2 }}>PRESS</a>
+                  <button onClick={() => setShowTerms(true)} className="footer-link" title="Terms of Service" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}><FileText size={14} /></button>
+                  <button onClick={() => { setShowWelcome(true); setWelcomeCountdown(8); }} className="footer-link" title="Info" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', fontSize: 9, letterSpacing: 2 }}>INFO</button>
+                </footer>
 
         {/* Token detail modal */}
         {selectedToken && (() => {

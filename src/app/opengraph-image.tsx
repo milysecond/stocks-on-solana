@@ -76,7 +76,7 @@ export default async function Image() {
         {/* Grid */}
         <div style={{
           position: 'absolute', inset: 0,
-          backgroundImage: 'linear-gradient(rgba(255,153,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(196,77,255,0.03) 1px, transparent 1px)',
+          backgroundImage: 'linear-gradient(rgba(255,153,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(127,71,221,0.03) 1px, transparent 1px)',
           backgroundSize: '60px 60px',
           display: 'flex',
         }} />
@@ -95,12 +95,12 @@ export default async function Image() {
           position: 'absolute', right: -100, bottom: -100,
           width: 500, height: 500,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(196,77,255,0.10) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(127,71,221,0.10) 0%, transparent 70%)',
           display: 'flex',
         }} />
 
         {/* Top amber bar */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #ffcc33 0%, #ff9900 40%, #ff5a1f 70%, #c44dff 100%)', display: 'flex' }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #f8f700 0%, #fbae17 45%, #7f47dd 100%)', display: 'flex' }} />
 
         {/* LEFT PANEL */}
         <div style={{

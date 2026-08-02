@@ -1440,11 +1440,11 @@ function HomeInner() {
           bottom: 0;
           left: 0;
           right: 0;
-          height: 48px;
+          height: 44px;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 16px;
+          gap: 20px;
           font-size: 9px;
           color: #333;
           letter-spacing: 2px;
@@ -1453,9 +1453,9 @@ function HomeInner() {
           z-index: 40;
           overflow: hidden;
         }
-        .footer-pbs { opacity: 0.6; transition: opacity 0.15s; display: flex; align-items: center; flex-shrink: 0; }
+        .footer-pbs { opacity: 0.55; transition: opacity 0.15s; display: flex; align-items: center; flex-shrink: 0; }
         .footer-pbs:hover { opacity: 1; }
-        .footer-link { color: #444; text-decoration: none; letter-spacing: 2px; font-size: 9px; flex-shrink: 0; transition: color 0.15s; }
+        .footer-link { color: #444; text-decoration: none; letter-spacing: 2px; font-size: 9px; flex-shrink: 0; transition: color 0.15s; background: none; border: none; cursor: pointer; padding: 0; font-family: inherit; }
         .footer-link:hover { color: var(--amber); }
         .footer-gray {
           display: inline-flex;
@@ -1463,18 +1463,15 @@ function HomeInner() {
           gap: 4px;
           font-size: 10px;
           letter-spacing: 0.2px;
-          color: #777;
+          color: #555;
           text-decoration: none;
-          border: 1px solid #2a2a2a;
-          background: #111;
-          border-radius: 999px;
-          padding: 4px 10px;
           flex-shrink: 0;
-          transition: color 0.15s, border-color 0.15s, background 0.15s;
+          transition: color 0.15s;
         }
-        .footer-gray strong { color: #ccc; font-weight: 600; }
-        .footer-gray:hover { color: #ddd; border-color: #444; background: #161616; }
-        .footer-gray:hover strong { color: #fff; }
+        .footer-gray strong { color: #888; font-weight: 600; }
+        .footer-gray:hover,
+        .footer-gray:hover strong { color: #ccc; }
+        .footer-dot { color: #2a2a2a; font-size: 8px; user-select: none; }
 
         /* ── Responsive ── */
         @media (max-width: 640px) {
@@ -1624,6 +1621,13 @@ function HomeInner() {
                 EXPLORE THE SCREENER →
               </button>
               <div className="welcome-note">NO WALLET REQUIRED TO BROWSE · CLOSES IN {welcomeCountdown}s</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px 14px', marginTop: 18, fontSize: 10, letterSpacing: 1.5 }}>
+                <a href="/brand" style={{ color: '#666', textDecoration: 'none' }}>BRAND</a>
+                <a href="/press" style={{ color: '#666', textDecoration: 'none' }}>PRESS</a>
+                <button type="button" onClick={() => { dismissWelcome(); setShowPartners(true); }} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontFamily: 'inherit', fontSize: 10, letterSpacing: 1.5, padding: 0 }}>PARTNERS</button>
+                <button type="button" onClick={() => { dismissWelcome(); setShowPrivacy(true); }} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontFamily: 'inherit', fontSize: 10, letterSpacing: 1.5, padding: 0 }}>PRIVACY</button>
+                <button type="button" onClick={() => { dismissWelcome(); setShowTerms(true); }} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontFamily: 'inherit', fontSize: 10, letterSpacing: 1.5, padding: 0 }}>TERMS</button>
+              </div>
             </div>
           </div>
         )}
@@ -1889,26 +1893,30 @@ function HomeInner() {
         )}
 
         <footer className="footer">
-                  <button onClick={() => setShowPrivacy(true)} className="footer-link" title="Privacy Policy" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}><Shield size={14} /></button>
-                  <button onClick={() => setShowPartners(true)} className="footer-link" title="Partners" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}><Handshake size={14} /></button>
-                  <a href="https://solana.com" target="_blank" rel="noopener noreferrer" className="footer-pbs" aria-label="Powered by Solana">
-                    <img src="/stacked-white.svg" alt="Powered by Solana" style={{ display: 'block', height: 26, width: 'auto', borderRadius: 5 }} />
-                  </a>
-                  <a
-                    href="https://graysunderland.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="footer-gray"
-                    aria-label="Design by Gray — opens graysunderland.com"
-                    title="Design by Gray Sunderland"
-                  >
-                    Design by <strong>Gray</strong>
-                  </a>
-                  <a href="/brand" className="footer-link" title="Brand guide" style={{ fontSize: 9, letterSpacing: 2 }}>BRAND</a>
-                  <a href="/press" className="footer-link" title="Press kit" style={{ fontSize: 9, letterSpacing: 2 }}>PRESS</a>
-                  <button onClick={() => setShowTerms(true)} className="footer-link" title="Terms of Service" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}><FileText size={14} /></button>
-                  <button onClick={() => { setShowWelcome(true); setWelcomeCountdown(8); }} className="footer-link" title="Info" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', fontSize: 9, letterSpacing: 2 }}>INFO</button>
-                </footer>
+          <a href="https://solana.com" target="_blank" rel="noopener noreferrer" className="footer-pbs" aria-label="Powered by Solana">
+            <img src="/stacked-white.svg" alt="Powered by Solana" style={{ display: 'block', height: 22, width: 'auto', borderRadius: 4 }} />
+          </a>
+          <span className="footer-dot" aria-hidden>·</span>
+          <a
+            href="https://graysunderland.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footer-gray"
+            aria-label="Design by Gray — opens graysunderland.com"
+            title="Design by Gray Sunderland"
+          >
+            Design by <strong>Gray</strong>
+          </a>
+          <span className="footer-dot" aria-hidden>·</span>
+          <button
+            type="button"
+            onClick={() => { setShowWelcome(true); setWelcomeCountdown(8); }}
+            className="footer-link"
+            title="Info, legal & partners"
+          >
+            INFO
+          </button>
+        </footer>
 
         {/* Token detail modal */}
         {selectedToken && (() => {

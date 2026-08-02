@@ -1,4 +1,13 @@
-export type TokenProvider = 'xStocks' | 'Ondo' | 'PreStocks' | 'Backpack';
+export type TokenProvider =
+  | 'xStocks'
+  | 'Sunrise'      // Backpack Securities via Sunrise
+  | 'Ondo'
+  | 'PreStocks'
+  | 'Shift'
+  | 'Tessera'
+  | 'Superstate'
+  | 'Backpack'     // legacy alias — prefer Sunrise
+  | 'Other';
 
 export interface StockToken {
   symbol: string;
@@ -151,16 +160,15 @@ export const PRESTOCKS: StockToken[] = [
   { symbol: 'KALSHI', name: 'Kalshi', mint: 'PreLWGkkeqG1s4HEfFZSy9moCrJ7btsHuUtfcCeoRua', provider: 'PreStocks', sector: 'Prediction' },
 ];
 
-// ─── Backpack Securities ───────────────────────────────────────────────────────
-// Tokenized US equities issued by Backpack Securities (regulated broker-dealer).
-// The full list is auto-discovered from Jupiter datapi (stocks=backpack); this
-// static set is the offline fallback.
+// ─── Sunrise (Backpack Securities) ─────────────────────────────────────────────
+// Tokenized US equities issued by Backpack Securities via Sunrise protocol.
+// Full list auto-discovered from Jupiter datapi; this static set is offline fallback.
 
 export const BACKPACK_TOKENS: StockToken[] = [
-  { symbol: 'MU', name: 'Micron Technology', mint: 'MUxEsUKSMACyw5fZf68wxf5FLnZVhtU9CwH8uNNGay1', provider: 'Backpack', sector: 'Tech' },
-  { symbol: 'SPCX', name: 'SpaceX', mint: 'SPCXxcqXj6e5dJDVNovHN8744zkbhM2bYudU45BimGb', provider: 'Backpack', sector: 'Aerospace' },
-  { symbol: 'SNDK', name: 'Sandisk', mint: 'SNDKbwMUQvZhnLnxLduradgLHG5KrPuKwpnrkkGRhfH', provider: 'Backpack', sector: 'Tech' },
-  { symbol: 'DRAM', name: 'Roundhill Memory ETF', mint: 'DRAMjSWR7HRfJKjRkvQWYL2bcaejaVhuxEcjf4pAY4Cw', provider: 'Backpack', sector: 'ETF' },
+  { symbol: 'MU', name: 'Micron Technology', mint: 'MUxEsUKSMACyw5fZf68wxf5FLnZVhtU9CwH8uNNGay1', provider: 'Sunrise', sector: 'Tech' },
+  { symbol: 'SPCX', name: 'SpaceX', mint: 'SPCXxcqXj6e5dJDVNovHN8744zkbhM2bYudU45BimGb', provider: 'Sunrise', sector: 'Aerospace' },
+  { symbol: 'SNDK', name: 'Sandisk', mint: 'SNDKbwMUQvZhnLnxLduradgLHG5KrPuKwpnrkkGRhfH', provider: 'Sunrise', sector: 'Tech' },
+  { symbol: 'DRAM', name: 'Roundhill Memory ETF', mint: 'DRAMjSWR7HRfJKjRkvQWYL2bcaejaVhuxEcjf4pAY4Cw', provider: 'Sunrise', sector: 'ETF' },
 ];
 
 // ─── Ondo (263 tokens) ─────────────────────────────────────────────────────────
@@ -454,12 +462,12 @@ export const BACKPACK_TICKERS = new Set([
 
 export const BACKPACK_REFERRAL_URL = 'https://backpack.exchange/signup?referral=downunder';
 
-/** Returns Backpack referral link for a token tradeable on Backpack, else null */
+/** Returns Backpack referral link for a token tradeable on Backpack/Sunrise, else null */
 export function getBackpackTradeUrl(token: StockToken): string | null {
-  // Backpack-issued tokens are by definition tradeable on Backpack.
-  if (token.provider === 'Backpack') return BACKPACK_REFERRAL_URL;
+  // Sunrise/Backpack-issued tokens are tradeable on Backpack Exchange.
+  if (token.provider === 'Sunrise' || token.provider === 'Backpack') return BACKPACK_REFERRAL_URL;
   // Cross-provider: same ticker is also listed on Backpack.
-  const key = token.company || token.symbol.replace(/x$|on$/, '').toUpperCase();
+  const key = token.company || token.symbol.replace(/x$|on$/i, '').toUpperCase();
   if (BACKPACK_TICKERS.has(key)) return BACKPACK_REFERRAL_URL;
   return null;
 }

@@ -793,7 +793,11 @@ function HomeInner() {
     .filter(r => {
       const matchesSearch = r.name.toLowerCase().includes(search.toLowerCase()) ||
         r.symbol.toLowerCase().includes(search.toLowerCase());
-      const matchesProvider = !providerFilter || r.provider === providerFilter;
+      const matchesProvider = !providerFilter || (
+        r.provider === providerFilter ||
+        (providerFilter === 'Sunrise' && r.provider === 'Backpack') ||
+        (providerFilter === 'Backpack' && r.provider === 'Sunrise')
+      );
       let matchesAge = true;
       if (ageFilter && r.createdAt !== null) {
         const ageDays = (NOW_SEC - r.createdAt) / 86400;
@@ -1670,7 +1674,7 @@ function HomeInner() {
               <div style={{ color: '#555', fontSize: 11, letterSpacing: 1, marginBottom: 24 }}>The ecosystem powering Stocks on Solana.</div>
               {[
                 { name: 'Jupiter', desc: 'The leading DEX aggregator on Solana. All buy orders route through Jupiter for best execution.', url: 'https://jup.ag/?ref=yfgv2ibxy07v' },
-                { name: 'Backpack', desc: 'Regulated exchange for crypto and tokenized equities. Trade, custody, and on-ramp into Solana assets.', url: 'https://backpack.exchange/signup?referral=downunder' },
+                { name: 'Sunrise', desc: 'Tokenized US equities via Backpack Securities + Sunrise — redeemable 1:1 shares on Solana.', url: 'https://backpack.exchange/signup?referral=downunder', color: '#e33e3e' },
                 { name: 'Solana', desc: 'The high-performance blockchain powering tokenized equities with sub-second finality and near-zero fees.', url: 'https://solana.com' },
                 { name: 'xStocks', desc: 'Tokenized equities on Solana — trade 45+ stocks including Apple, Tesla, NVIDIA and more with instant settlement.', url: 'https://defi.xstocks.fi/points?ref=NEWUSER', color: '#ff3b3b' },
                 { name: 'Flash Trade', desc: 'High-performance perpetual futures trading on Solana with up to 100x leverage and deep liquidity.', url: 'https://www.flash.trade?referral=newuser', color: '#ff3b3b' },
@@ -1733,7 +1737,7 @@ function HomeInner() {
                 <span className={`sb-item sb-item-clickable${providerFilter === 'Ondo' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'Ondo' ? null : 'Ondo')} title="Filter Ondo"><span className="sb-label">ONDO</span><span className="sb-value">{rows.filter(r => r.provider === 'Ondo').length}</span></span>
                 <span className={`sb-item sb-item-clickable${providerFilter === 'PreStocks' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'PreStocks' ? null : 'PreStocks')} title="Filter PreStocks"><span className="sb-label">PRESTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'PreStocks').length}</span></span>
                 <span className="sb-item"><a href="https://www.flash.trade?referral=newuser" target="_blank" rel="noopener noreferrer" title="Trade on Flash" style={{color:'#ff6b35',textDecoration:'none',display:'flex',alignItems:'center',gap:4,fontSize:9,letterSpacing:1,fontFamily:'inherit'}}><span className="sb-label" style={{color:'#ff6b35'}}>FLASH</span><ExternalLink size={9} /></a></span>
-                <span className={`sb-item sb-item-clickable${providerFilter === 'Backpack' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'Backpack' ? null : 'Backpack')} title="Filter Backpack"><span className="sb-label" style={{color:'#e33e3e'}}>BACKPACK</span><span className="sb-value">{rows.filter(r => r.provider === 'Backpack').length}</span><a href="https://backpack.exchange/signup?referral=downunder" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} title="Trade on Backpack" style={{color:'#e33e3e',opacity:0.6,lineHeight:1,display:'flex',alignItems:'center'}}><ExternalLink size={9} /></a></span>
+                <span className={`sb-item sb-item-clickable${providerFilter === 'Sunrise' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'Sunrise' ? null : 'Sunrise')} title="Filter Sunrise (Backpack)"><span className="sb-label" style={{color:'#e33e3e'}}>SUNRISE</span><span className="sb-value">{rows.filter(r => r.provider === 'Sunrise' || r.provider === 'Backpack').length}</span><a href="https://backpack.exchange/signup?referral=downunder" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} title="Trade on Backpack / Sunrise" style={{color:'#e33e3e',opacity:0.6,lineHeight:1,display:'flex',alignItems:'center'}}><ExternalLink size={9} /></a></span>
                 <span className="sb-item" style={{gap:4}}>
                   <span className="sb-label">AGE:</span>
                   {([['7d', '<7D'], ['30d', '<30D'], ['90d', '<90D'], ['1y', '<1Y'], ['1y+', '1Y+']] as [AgeFilter, string][]).map(([key, label]) => (
@@ -1928,7 +1932,7 @@ export default function Home() {
         '@type': 'FinancialMarket',
         name: 'Tokenized Stock Market on Solana',
         description:
-          'xStocks, Ondo Finance, PreStocks, and Backpack tokenized equities trading on Solana',
+          'xStocks, Sunrise (Backpack), Ondo, PreStocks and more tokenized equities on Solana via Jupiter',
       },
     },
     {
@@ -1937,7 +1941,7 @@ export default function Home() {
       name: 'Stocks on Solana',
       url: 'https://stocksonsolana.com',
       description:
-        'Real-time screener for tokenized stocks on Solana — xStocks, Ondo Finance, PreStocks, Backpack.',
+        'Real-time screener for tokenized stocks on Solana — xStocks, Sunrise, Ondo, PreStocks.',
       potentialAction: {
         '@type': 'SearchAction',
         target: {

@@ -9,6 +9,7 @@ export interface ScreenerAsset {
   icon?: string;
   usdPrice?: number;
   liquidity?: number;
+  mcap?: number;        // on-chain tokenized market cap
   stockData?: { id: string; price: number; mcap: number; updatedAt: string };
   stats24h?: {
     priceChange?: number;
@@ -91,6 +92,9 @@ export async function discoverTokens(): Promise<StockToken[]> {
 /**
  * Fetch live price data for all tokenized stocks from Jupiter's datapi screener.
  * Returns a map of mint address → price entry.
+ *
+ * mcap = on-chain tokenized market cap (asset.mcap)
+ * underlyingMcap = real-world equity mcap from stockData (trillions) — for dedupe/reference only
  */
 export async function fetchScreenerPrices(): Promise<Record<string, {
   price: number | null;
@@ -99,6 +103,7 @@ export async function fetchScreenerPrices(): Promise<Record<string, {
   liquidity: number | null;
   stockPrice: number | null;
   mcap: number | null;
+  underlyingMcap: number | null;
 }>> {
   try {
     const results = await Promise.all(
@@ -112,6 +117,7 @@ export async function fetchScreenerPrices(): Promise<Record<string, {
       liquidity: number | null;
       stockPrice: number | null;
       mcap: number | null;
+      underlyingMcap: number | null;
     }> = {};
 
     for (const asset of all) {
@@ -124,7 +130,9 @@ export async function fetchScreenerPrices(): Promise<Record<string, {
         volume24h: vol24h,
         liquidity: asset.liquidity ?? null,
         stockPrice: asset.stockData?.price ?? null,
-        mcap: asset.stockData?.mcap ?? null,
+        // CRITICAL: use on-chain token mcap, NOT stockData.mcap (that is equity mcap in $T)
+        mcap: asset.mcap ?? null,
+        underlyingMcap: asset.stockData?.mcap ?? null,
       };
     }
 

@@ -11,6 +11,7 @@ export interface PriceEntry {
   liquidity: number | null;
   stockPrice: number | null;
   mcap: number | null;
+  underlyingMcap: number | null;
 }
 
 export async function GET() {

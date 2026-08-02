@@ -12,6 +12,7 @@ interface PriceEntry {
   liquidity: number | null;
   stockPrice: number | null;
   mcap: number | null;
+  underlyingMcap?: number | null;
 }
 
 interface StockRow extends StockToken {
@@ -21,6 +22,7 @@ interface StockRow extends StockToken {
   liquidity: number | null;
   stockPrice: number | null;
   mcap: number | null;
+  underlyingMcap: number | null;
   createdAt: number | null;
 }
 
@@ -622,6 +624,7 @@ function HomeInner() {
           liquidity: null,
           stockPrice: null,
           mcap: null,
+          underlyingMcap: null,
           createdAt: null,
         })));
       })
@@ -683,6 +686,7 @@ function HomeInner() {
         liquidity: data[row.mint]?.liquidity ?? null,
         stockPrice: data[row.mint]?.stockPrice ?? null,
         mcap: data[row.mint]?.mcap ?? null,
+        underlyingMcap: data[row.mint]?.underlyingMcap ?? null,
         // preserve createdAt — ages endpoint manages it
       })));
       setLastUpdated(new Date());
@@ -842,14 +846,15 @@ function HomeInner() {
   const ondoCount = rows.filter(r => r.provider === 'Ondo' && r.price !== null).length;
   const preCount = rows.filter(r => r.provider === 'PreStocks' && r.price !== null).length;
 
-  // Deduplicated total market cap (same mcap = same underlying company)
+  // Deduplicated underlying equity market cap (same company across providers)
   const totalMcap = (() => {
     const seen = new Set<string>();
     let total = 0;
     for (const r of rows) {
-      if (r.mcap === null || r.mcap === undefined) continue;
-      const key = r.mcap.toFixed(0);
-      if (!seen.has(key)) { seen.add(key); total += r.mcap; }
+      const um = r.underlyingMcap;
+      if (um === null || um === undefined) continue;
+      const key = um.toFixed(0);
+      if (!seen.has(key)) { seen.add(key); total += um; }
     }
     return total;
   })();

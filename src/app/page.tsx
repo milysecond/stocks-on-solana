@@ -859,8 +859,8 @@ function HomeInner() {
   return (
     <>
       <style>{`
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-mono), "JetBrains Mono", monospace; }
-        body { background: var(--bg); }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); font-family: var(--font-sans), "Space Grotesk", system-ui, sans-serif; }
         :root {
           --bg: #0a0a0a;
           --bg-secondary: #111111;
@@ -869,10 +869,30 @@ function HomeInner() {
           --text: #e8e8e8;
           --text-dim: #888;
           --amber: #ff9900;
+          --brand: #ffb000;
+          --brand-end: #c44dff;
+          --brand-gradient: linear-gradient(135deg, #ffcc33 0%, #ff9900 42%, #ff5a1f 68%, #c44dff 100%);
           --green: #22c55e;
           --red: #ef4444;
           --blue: #4488ff;
+          --font-sans: var(--font-sans), "Space Grotesk", system-ui, sans-serif;
+          --font-mono: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
         }
+        .mono, .tbl td.num, .tbl th.num, .tm-mint-addr, code, .price, .chg, .hdr-stat-val {
+          font-family: var(--font-mono);
+        }
+        .brand-text {
+          background: var(--brand-gradient);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+          -webkit-text-fill-color: transparent;
+        }
+        .brand-bg { background: var(--brand-gradient); color: #0a0a0a; }
+        .brand-bar { background: var(--brand-gradient); height: 3px; width: 100%; }
+        .tbl, .tbl th, .tbl td { font-variant-numeric: tabular-nums; }
+        .tbl td:not(:first-child), .tbl .num { font-family: var(--font-mono), "JetBrains Mono", monospace; }
+
 
         /* ── Header ── */
         .header {
@@ -894,10 +914,14 @@ function HomeInner() {
           flex-shrink: 0;
         }
         .header-brand span {
-          color: var(--amber);
+          background: var(--brand-gradient);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+          -webkit-text-fill-color: transparent;
           font-weight: 700;
-          font-size: 12px;
-          letter-spacing: 2px;
+          font-size: 13px;
+          letter-spacing: 1.5px;
         }
         .header-search {
           flex: 1;
@@ -1512,9 +1536,10 @@ function HomeInner() {
           Stocks on Solana — Real-time Stock Screener
         </h1>
         {/* Header */}
+        <div className="brand-bar" aria-hidden="true" />
         <header className="header">
           <div className="header-brand">
-            <img src="/logo.png" alt="Stocks on Solana" width={22} height={22} fetchPriority="high" style={{ borderRadius: 4 }} />
+            <img src="/logo.png" alt="Stocks on Solana" width={26} height={26} fetchPriority="high" style={{ borderRadius: 7 }} />
             <span>STOCKS ON SOLANA</span>
           </div>
           <div className="header-search">
@@ -1668,7 +1693,7 @@ function HomeInner() {
                     onKeyDown={e => e.key === 'Enter' && handleSignIn()}
                     style={{ width: '100%', boxSizing: 'border-box', background: '#0a0a0a', border: '1px solid #2a2a2a', borderRadius: 4, padding: '10px 12px', color: '#ccc', fontFamily: 'inherit', fontSize: 16, outline: 'none' }}
                   />
-                  <button onClick={handleSignIn} disabled={signInStatus === 'sending'} style={{ width: '100%', background: '#ff9900', color: '#000', border: 'none', borderRadius: 4, padding: '12px', fontFamily: 'inherit', fontSize: 12, fontWeight: 700, letterSpacing: 1, cursor: 'pointer' }}>
+                  <button onClick={handleSignIn} disabled={signInStatus === 'sending'} style={{ width: '100%', background: 'linear-gradient(135deg, #ffcc33 0%, #ff9900 42%, #ff5a1f 68%, #c44dff 100%)', color: '#0a0a0a', border: 'none', borderRadius: 6, padding: '12px', fontFamily: 'inherit', fontSize: 12, fontWeight: 700, letterSpacing: 1, cursor: 'pointer' }}>
                     {signInStatus === 'sending' ? '...' : 'SEND MAGIC LINK'}
                   </button>
                 </div>

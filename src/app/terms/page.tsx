@@ -17,7 +17,7 @@ export default function TermsPage() {
   return (
     <main style={{
       background: '#0a0a0a', minHeight: '100vh', color: '#ccc',
-      fontFamily: '"JetBrains Mono", monospace', padding: '60px 24px',
+      fontFamily: 'var(--font-sans), "Space Grotesk", system-ui, sans-serif', padding: '60px 24px',
     }}>
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ marginBottom: 40 }}>

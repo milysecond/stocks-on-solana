@@ -189,7 +189,7 @@ export default async function TokenPage({ params }: Props) {
   ];
 
   const mono: CSSProperties = {
-    fontFamily: 'var(--font-mono), "JetBrains Mono", monospace',
+    fontFamily: 'var(--font-sans), "Space Grotesk", system-ui, sans-serif',
   };
 
   return (

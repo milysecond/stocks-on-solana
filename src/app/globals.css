@@ -5,13 +5,19 @@
   --bg-secondary: #111111;
   --bg-tertiary: #1a1a1a;
   --border: #222222;
-  --amber: #FF9900;
+  /* Brand — solid fallback (text / borders) + gradient (fills / hero) */
+  --amber: #ff9900;
   --amber-dim: #cc7700;
-  --green: #00FF41;
-  --red: #FF3333;
+  --brand: #ffb000;
+  --brand-mid: #ff6a00;
+  --brand-end: #c44dff;
+  --brand-gradient: linear-gradient(135deg, #ffcc33 0%, #ff9900 42%, #ff5a1f 68%, #c44dff 100%);
+  --brand-gradient-soft: linear-gradient(135deg, rgba(255, 204, 51, 0.18), rgba(196, 77, 255, 0.12));
+  --green: #00ff41;
+  --red: #ff3333;
   --text: #e0e0e0;
   --text-dim: #888888;
-  --blue: #4488FF;
+  --blue: #4488ff;
 }
 
 * {
@@ -21,12 +27,42 @@
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  /* next/font injects --font-sans / --font-mono on <html> */
+  font-family: var(--font-sans), "Space Grotesk", system-ui, sans-serif;
   margin: 0;
+  -webkit-font-smoothing: antialiased;
 }
 
 .font-mono {
-  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+}
+
+.font-sans {
+  font-family: var(--font-sans), "Space Grotesk", system-ui, sans-serif;
+}
+
+/* Gradient brand text (hero / titles) */
+.brand-text {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-bg {
+  background: var(--brand-gradient);
+  color: #0a0a0a;
+}
+
+.brand-bar {
+  background: var(--brand-gradient);
+  height: 3px;
+  width: 100%;
+}
+
+.brand-border {
+  border-color: var(--amber);
 }
 
 /* Scrollbar */

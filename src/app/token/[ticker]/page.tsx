@@ -15,19 +15,6 @@ interface Props {
   searchParams?: Promise<{ mint?: string }>;
 }
 
-export async function generateStaticParams() {
-  // Pre-render known static tokens + bare underlying keys for tweet-friendly URLs
-  const { XSTOCKS, ALL_TOKENS } = await import('@/lib/tokens');
-  const set = new Set<string>();
-  for (const t of [...XSTOCKS, ...ALL_TOKENS]) {
-    set.add(t.symbol.toLowerCase());
-    const base = t.symbol.toLowerCase().replace(/pre$/i, '').replace(/on$/i, '').replace(/x$/i, '');
-    if (base && base !== t.symbol.toLowerCase()) set.add(base);
-    if (t.company) set.add(t.company.toLowerCase());
-  }
-  return [...set].map(ticker => ({ ticker }));
-}
-
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { ticker } = await params;
   const sp = searchParams ? await searchParams : {};

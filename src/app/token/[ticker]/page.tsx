@@ -2,53 +2,41 @@ import type { CSSProperties } from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ALL_TOKENS, getFlashTradeUrl, getBackpackTradeUrl, getJupiterTradeUrl, getXStocksTradeUrl, type StockToken } from '@/lib/tokens';
-import { discoverTokens } from '@/lib/discover-tokens';
+import { resolveToken, tokenShareUrl } from '@/lib/resolve-token';
 
-// Note: do not set runtime = 'edge' here — generateStaticParams requires Node SSG
-// for the pre-rendered xStocks set. Dynamic params still work on demand.
+// Always resolve live (Sunrise bare tickers like INTC are not in the static xStocks set)
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+export const revalidate = 0;
 
 interface Props {
   params: Promise<{ ticker: string }>;
+  searchParams?: Promise<{ mint?: string }>;
 }
-
-async function resolveToken(ticker: string): Promise<StockToken | undefined> {
-  const slug = decodeURIComponent(ticker).toLowerCase();
-  const match = (list: StockToken[]) =>
-    list.find(
-      t =>
-        t.symbol.toLowerCase() === slug ||
-        t.symbol.toLowerCase().replace(/[xon]+$/, '') === slug ||
-        t.name.toLowerCase().replace(/\s+/g, '-') === slug
-    );
-
-  const staticHit = match(ALL_TOKENS);
-  if (staticHit) return staticHit;
-
-  try {
-    const discovered = await discoverTokens();
-    return match(discovered);
-  } catch {
-    return undefined;
-  }
-}
-
-export const dynamicParams = true;
 
 export async function generateStaticParams() {
-  // Pre-render xStocks to stay within CF Pages limits; rest on-demand
-  const { XSTOCKS } = await import('@/lib/tokens');
-  return XSTOCKS.map(t => ({ ticker: t.symbol.toLowerCase() }));
+  // Pre-render known static tokens + bare underlying keys for tweet-friendly URLs
+  const { XSTOCKS, ALL_TOKENS } = await import('@/lib/tokens');
+  const set = new Set<string>();
+  for (const t of [...XSTOCKS, ...ALL_TOKENS]) {
+    set.add(t.symbol.toLowerCase());
+    const base = t.symbol.toLowerCase().replace(/pre$/i, '').replace(/on$/i, '').replace(/x$/i, '');
+    if (base && base !== t.symbol.toLowerCase()) set.add(base);
+    if (t.company) set.add(t.company.toLowerCase());
+  }
+  return [...set].map(ticker => ({ ticker }));
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { ticker } = await params;
-  const token = await resolveToken(ticker);
+  const sp = searchParams ? await searchParams : {};
+  const token = await resolveToken(ticker, sp.mint);
   if (!token) return { title: 'Token Not Found' };
 
   const slug = token.symbol.toLowerCase();
   const title = `${token.name} (${token.symbol}) — Tokenized Stock on Solana`;
   const description = `Trade ${token.name} (${token.symbol}) as a tokenized stock on Solana via ${token.provider}. Real-time price, liquidity, and discount vs the real stock. Buy on Jupiter.`;
-  const url = `https://stocksonsolana.com/token/${encodeURIComponent(slug)}`;
+  const url = tokenShareUrl(token);
 
   return {
     title,
@@ -80,15 +68,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 // Server-rendered indexable token page (no soft redirect / meta refresh).
 // Soft redirects were the primary reason GSC had 587 submitted / 0 token pages indexed.
-export default async function TokenPage({ params }: Props) {
+export default async function TokenPage({ params, searchParams }: Props) {
   const { ticker } = await params;
-  const token = await resolveToken(ticker);
+  const sp = searchParams ? await searchParams : {};
+  const token = await resolveToken(ticker, sp.mint);
   if (!token) notFound();
 
   const slug = token.symbol.toLowerCase();
-  const tokenUrl = `https://stocksonsolana.com/token/${encodeURIComponent(slug)}`;
-  const screenerUrl = `/?t=${encodeURIComponent(token.symbol)}`; // home modal deep link
-  const tokenCanonical = `/token/${encodeURIComponent(slug)}`;
+  const tokenUrl = tokenShareUrl(token);
+  const screenerUrl = `/?t=${encodeURIComponent(token.symbol)}&mint=${encodeURIComponent(token.mint)}`;
+  const tokenCanonical = `/token/${encodeURIComponent(slug)}?mint=${encodeURIComponent(token.mint)}`;
   const jupUrl = getJupiterTradeUrl(token);
   const xstocksUrl = getXStocksTradeUrl(token);
   const flashUrl = getFlashTradeUrl(token);

@@ -251,7 +251,17 @@ async function postTweet(text: string, env: Env): Promise<boolean> {
 }
 
 function cashTag(symbol: string): string {
-  return `$${symbol.replace(/[^A-Za-z0-9.]/g, '')}`;
+  // Prefer underlying cash tag ($INTC) when symbol is INTCx / INTCon
+  const base = symbol.replace(/pre$/i, '').replace(/on$/i, '').replace(/x$/i, '');
+  const tag = (base || symbol).replace(/[^A-Za-z0-9.]/g, '');
+  return `$${tag}`;
+}
+
+/** Canonical share URL — always includes mint so bare tickers resolve */
+function tokenUrl(token: TokenInfo): string {
+  const sym = encodeURIComponent(token.symbol.toLowerCase());
+  const mint = encodeURIComponent(token.mint);
+  return `https://stocksonsolana.com/token/${sym}?mint=${mint}`;
 }
 
 function buildNewTokenTweet(token: TokenInfo): string {
@@ -259,7 +269,7 @@ function buildNewTokenTweet(token: TokenInfo): string {
   return [
     `New tokenized stock on Solana: ${token.name} (${cashTag(token.symbol)})${priceStr}`,
     `Provider: ${token.provider}`,
-    `https://stocksonsolana.com/token/${token.symbol.toLowerCase()}`,
+    tokenUrl(token),
   ].join('\n');
 }
 
@@ -270,7 +280,7 @@ function buildGainerTweet(token: TokenInfo): string {
   return [
     `Biggest gainer today: ${token.name} (${cashTag(token.symbol)}) ${change}`,
     `${formatPrice(token.price)} | Liq ${liq}`,
-    `https://stocksonsolana.com/token/${token.symbol.toLowerCase()}`,
+    tokenUrl(token),
   ].join('\n');
 }
 
@@ -281,7 +291,7 @@ function buildLoserTweet(token: TokenInfo): string {
   return [
     `Biggest loser today: ${token.name} (${cashTag(token.symbol)}) ${change}`,
     `${formatPrice(token.price)} | Liq ${liq}`,
-    `https://stocksonsolana.com/token/${token.symbol.toLowerCase()}`,
+    tokenUrl(token),
   ].join('\n');
 }
 

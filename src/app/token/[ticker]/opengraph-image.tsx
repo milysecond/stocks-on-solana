@@ -12,14 +12,9 @@ interface Props {
   params: Promise<{ ticker: string }>;
 }
 
-function findToken(ticker: string) {
-  const slug = ticker.toLowerCase();
-  return ALL_TOKENS.find(
-    (t) =>
-      t.symbol.toLowerCase() === slug ||
-      t.symbol.toLowerCase().replace(/[xon]+$/, '') === slug ||
-      t.name.toLowerCase().replace(/\s+/g, '-') === slug,
-  );
+async function findToken(ticker: string) {
+  const { resolveToken } = await import('@/lib/resolve-token');
+  return (await resolveToken(ticker)) || ALL_TOKENS.find(t => t.symbol.toLowerCase() === ticker.toLowerCase());
 }
 
 async function fetchLiveData(symbol: string) {
@@ -62,7 +57,7 @@ function fmtMcap(m: number) {
 /** Token OG — brand guide: ink/panel, bare mark, exact gradient, mono numbers */
 export default async function Image({ params }: Props) {
   const { ticker } = await params;
-  const token = findToken(ticker);
+  const token = await findToken(ticker);
 
   if (!token) {
     return new ImageResponse(

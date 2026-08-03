@@ -1,11 +1,11 @@
 import { permanentRedirect, notFound } from 'next/navigation';
-import { ALL_TOKENS } from '@/lib/tokens';
-import { discoverTokens } from '@/lib/discover-tokens';
+import { resolveToken, tokenSharePath } from '@/lib/resolve-token';
 
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 interface Props {
   params: Promise<{ ticker: string }>;
+  searchParams?: Promise<{ mint?: string }>;
 }
 
 // Reserved app routes — don't treat as tickers
@@ -22,37 +22,23 @@ const RESERVED = new Set([
   'robots.txt',
   'flash',
   'opengraph-image',
+  'twitter-image',
   'favicon.ico',
 ]);
 
 /**
- * Short /TICKER URLs permanently redirect to /token/TICKER so GSC sees a
- * single canonical path (sitemap + metadata already use /token/...).
+ * Short /TICKER URLs permanently redirect to /token/TICKER?mint=…
+ * so tweets and shares hit a single canonical path that always resolves.
  */
-export default async function TickerRedirectPage({ params }: Props) {
+export default async function TickerRedirectPage({ params, searchParams }: Props) {
   const { ticker } = await params;
+  const sp = searchParams ? await searchParams : {};
   const raw = decodeURIComponent(ticker).toLowerCase();
 
   if (RESERVED.has(raw)) notFound();
 
-  const match = (list: typeof ALL_TOKENS) =>
-    list.find(
-      t =>
-        t.symbol.toLowerCase() === raw ||
-        t.symbol.toLowerCase().replace(/[xon]+$/, '') === raw
-    );
-
-  let token = match(ALL_TOKENS);
-  if (!token) {
-    try {
-      const discovered = await discoverTokens();
-      token = match(discovered);
-    } catch {
-      // fall through
-    }
-  }
-
+  const token = await resolveToken(raw, sp.mint);
   if (!token) notFound();
 
-  permanentRedirect(`/token/${encodeURIComponent(token.symbol.toLowerCase())}`);
+  permanentRedirect(tokenSharePath(token));
 }

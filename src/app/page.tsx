@@ -205,9 +205,9 @@ function TokenIcon({ symbol, mint, size = 28 }: { symbol: string; mint: string; 
   );
 }
 
-function ShareBar({ symbol, name, price, change }: { symbol: string; name: string; price: number | null; change: number | null }) {
+function ShareBar({ symbol, name, price, change, mint }: { symbol: string; name: string; price: number | null; change: number | null; mint?: string }) {
   const [copied, setCopied] = useState(false);
-  const url = getTokenPageUrl({ symbol });
+  const url = getTokenPageUrl({ symbol, mint });
   const text = `${name} (${symbol})${price !== null ? ` — $${price.toFixed(2)}` : ''}${change !== null ? ` ${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toFixed(2)}%` : ''} on Stocks on Solana @StocksOnSolana`;
 
   const copy = () => {
@@ -427,7 +427,7 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
         </div>
 
         {/* Share */}
-        <ShareBar symbol={row.symbol} name={row.name} price={row.price} change={row.change24h} />
+        <ShareBar symbol={row.symbol} name={row.name} price={row.price} change={row.change24h} mint={row.mint} />
 
         {/* Nav */}
         <div className="tm-nav">
@@ -805,7 +805,13 @@ function HomeInner() {
       setSearch(prev => prev || sectorParam);
     }
     if (tParam) {
-      const row = rows.find(r => r.symbol.toLowerCase() === tParam.toLowerCase());
+      const mintParam = searchParams.get('mint');
+      let row = mintParam
+        ? rows.find(r => r.mint === mintParam)
+        : undefined;
+      if (!row) {
+        row = rows.find(r => r.symbol.toLowerCase() === tParam.toLowerCase());
+      }
       if (row) setSelectedToken(row);
     }
     // Browser back/forward for modal deep links

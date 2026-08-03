@@ -439,37 +439,80 @@ export const ONDO_TOKENS: StockToken[] = [
   { symbol: 'IBITon', name: "iShares Bitcoin Trust", mint: '6JLG8iUkAuqiBhL3j2ckDMDf5oWAa6awmyaWezKondo', provider: 'Ondo', sector: 'Crypto' },
 ];
 
-// ─── Flash Trade Equities (perps, deep link map) ──────────────────────────────
-// URL pattern: https://www.flash.trade/USDC-{TICKER}?referral=newuser
-export const FLASH_TICKERS = new Set([
-  'SPY', 'NVDA', 'TSLA', 'AAPL', 'AMD', 'AMZN',
-]);
+// ─── Trade deep links (always include referral + stock target) ────────────────
 
-/** Returns Flash Trade deep link for a token, or null if not available */
-export function getFlashTradeUrl(token: StockToken): string | null {
-  // Map token symbol/company to Flash ticker
-  const key = token.company || token.symbol.replace(/x$|on$/, '').toUpperCase();
-  if (FLASH_TICKERS.has(key)) {
-    return `https://www.flash.trade/USDC-${key}?referral=newuser`;
-  }
-  return null;
+export const JUP_REFERRER = 'yfgv2ibxy07v';
+export const FLASH_REFERRAL = 'newuser';
+export const XSTOCKS_REF = 'NEWUSER';
+export const BACKPACK_REFERRAL = 'downunder';
+
+/** Underlying ticker used by Flash / Backpack pair names */
+export function underlyingTicker(token: StockToken): string {
+  if (token.company) return token.company.toUpperCase();
+  return token.symbol.replace(/x$/i, '').replace(/on$/i, '').replace(/pre$/i, '').toUpperCase();
 }
 
-// Tickers Backpack Securities issues as tokenized US equities.
-export const BACKPACK_TICKERS = new Set([
-  'MU', 'SPCX', 'SNDK', 'DRAM',
+/** Jupiter swap deep link for this mint + referral */
+export function getJupiterTradeUrl(token: StockToken): string {
+  return `https://jup.ag/swap/SOL-${token.mint}?referrer=${JUP_REFERRER}`;
+}
+
+/** Jupiter token page (info) + referral */
+export function getJupiterTokenUrl(token: StockToken): string {
+  return `https://jup.ag/tokens/${token.mint}?referrer=${JUP_REFERRER}`;
+}
+
+// Flash Trade equities (perps). Deep-link any underlying; UI only shows when listed.
+// URL: https://www.flash.trade/USDC-{TICKER}?referral=newuser
+export const FLASH_TICKERS = new Set([
+  'SPY', 'NVDA', 'TSLA', 'AAPL', 'AMD', 'AMZN', 'MSFT', 'META', 'GOOGL', 'GOOG',
+  'COIN', 'MSTR', 'HOOD', 'NFLX', 'INTC', 'ORCL', 'AVGO', 'QQQ', 'CRCL',
 ]);
 
-export const BACKPACK_REFERRAL_URL = 'https://backpack.exchange/signup?referral=downunder';
+/** Flash Trade deep link for this stock, or null if not a known Flash market */
+export function getFlashTradeUrl(token: StockToken): string | null {
+  const key = underlyingTicker(token);
+  if (!FLASH_TICKERS.has(key)) return null;
+  return `https://www.flash.trade/USDC-${key}?referral=${FLASH_REFERRAL}`;
+}
 
-/** Returns Backpack referral link for a token tradeable on Backpack/Sunrise, else null */
+/** xStocks app deep link to this token + referral */
+export function getXStocksTradeUrl(token: StockToken): string | null {
+  if (token.provider !== 'xStocks') return null;
+  return `https://defi.xstocks.fi/trade/${encodeURIComponent(token.symbol)}?ref=${XSTOCKS_REF}`;
+}
+
+// Backpack / Sunrise spot pairs
+export const BACKPACK_TICKERS = new Set([
+  'MU', 'SPCX', 'SNDK', 'DRAM', 'SKHY', 'INTC', 'HOOD', 'MSTR', 'BOT',
+]);
+
+export const BACKPACK_REFERRAL_URL =
+  `https://backpack.exchange/signup?referral=${BACKPACK_REFERRAL}`;
+
+/**
+ * Backpack trade deep link for Sunrise/Backpack listings.
+ * Falls back to signup referral if we only know it's tradeable there.
+ */
 export function getBackpackTradeUrl(token: StockToken): string | null {
-  // Sunrise/Backpack-issued tokens are tradeable on Backpack Exchange.
-  if (token.provider === 'Sunrise' || token.provider === 'Backpack') return BACKPACK_REFERRAL_URL;
-  // Cross-provider: same ticker is also listed on Backpack.
-  const key = token.company || token.symbol.replace(/x$|on$/i, '').toUpperCase();
-  if (BACKPACK_TICKERS.has(key)) return BACKPACK_REFERRAL_URL;
-  return null;
+  const isIssuer =
+    token.provider === 'Sunrise' || token.provider === 'Backpack';
+  const key = underlyingTicker(token);
+  const known = BACKPACK_TICKERS.has(key) || BACKPACK_TICKERS.has(token.symbol.toUpperCase());
+  if (!isIssuer && !known) return null;
+
+  // Spot pair deep link (verified: /trade/MU_USDC → live trade UI)
+  const pair = `${token.symbol.replace(/[^A-Za-z0-9]/g, '')}_USDC`;
+  return `https://backpack.exchange/trade/${pair}?referral=${BACKPACK_REFERRAL}`;
+}
+
+/** Canonical in-app deep link for a token page */
+export function getTokenPagePath(token: { symbol: string }): string {
+  return `/token/${encodeURIComponent(token.symbol.toLowerCase())}`;
+}
+
+export function getTokenPageUrl(token: { symbol: string }): string {
+  return `https://stocksonsolana.com${getTokenPagePath(token)}`;
 }
 
 // ─── Combined ──────────────────────────────────────────────────────────────────

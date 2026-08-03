@@ -1,6 +1,7 @@
 import { permanentRedirect, notFound } from 'next/navigation';
 import { resolveToken, tokenSharePath } from '@/lib/resolve-token';
 
+export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 interface Props {

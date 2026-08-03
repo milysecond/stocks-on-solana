@@ -5,6 +5,7 @@ import { ALL_TOKENS, getFlashTradeUrl, getBackpackTradeUrl, getJupiterTradeUrl, 
 import { resolveToken, tokenShareUrl } from '@/lib/resolve-token';
 
 // Always resolve live (Sunrise bare tickers like INTC are not in the static xStocks set)
+export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 export const dynamicParams = true;
 export const revalidate = 0;

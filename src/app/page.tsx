@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, ExternalLink, Search, X, TrendingUp, TrendingDown, Droplets, BarChart2, ChevronLeft, ChevronRight, Star, LogOut, Shield, FileText, Handshake } from 'lucide-react';
-import { StockToken, getFlashTradeUrl, getBackpackTradeUrl } from '@/lib/tokens';
+import { StockToken, getFlashTradeUrl, getBackpackTradeUrl, getJupiterTradeUrl, getXStocksTradeUrl, getTokenPagePath, getTokenPageUrl } from '@/lib/tokens';
 
 interface PriceEntry {
   price: number;
@@ -207,7 +207,7 @@ function TokenIcon({ symbol, mint, size = 28 }: { symbol: string; mint: string; 
 
 function ShareBar({ symbol, name, price, change }: { symbol: string; name: string; price: number | null; change: number | null }) {
   const [copied, setCopied] = useState(false);
-  const url = `https://stocksonsolana.com?t=${symbol}`;
+  const url = getTokenPageUrl({ symbol });
   const text = `${name} (${symbol})${price !== null ? ` — $${price.toFixed(2)}` : ''}${change !== null ? ` ${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toFixed(2)}%` : ''} on Stocks on Solana @StocksOnSolana`;
 
   const copy = () => {
@@ -379,7 +379,7 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
         {/* Actions */}
         <div className="tm-actions">
           <a
-            href={`https://jup.ag/tokens/${row.mint}?ref=yfgv2ibxy07v`}
+            href={getJupiterTradeUrl(row)}
             target="_blank"
             rel="noopener noreferrer"
             className="tm-buy-btn tm-buy-btn-icon"
@@ -390,7 +390,7 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
           </a>
           {row.provider === 'xStocks' && (
             <a
-              href="https://defi.xstocks.fi/points?ref=NEWUSER"
+              href={getXStocksTradeUrl(row) || 'https://defi.xstocks.fi/points?ref=NEWUSER'}
               target="_blank"
               rel="noopener noreferrer"
               className="tm-buy-btn tm-buy-btn-secondary tm-buy-btn-icon"
@@ -540,7 +540,7 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
                     <Star size={12} />
                   </button>
                   <a
-                    href={`https://jup.ag/tokens/${row.mint}?ref=yfgv2ibxy07v`}
+                    href={getJupiterTradeUrl(row)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="buy-btn buy-btn-jup buy-btn-icon"
@@ -551,7 +551,7 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
                   </a>
                   {row.provider === 'xStocks' && (
                     <a
-                      href="https://defi.xstocks.fi/points?ref=NEWUSER"
+                      href={getXStocksTradeUrl(row) || 'https://defi.xstocks.fi/points?ref=NEWUSER'}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="buy-btn buy-btn-xstocks buy-btn-icon"
@@ -613,8 +613,17 @@ function HomeInner() {
   const [selectedToken, setSelectedToken] = useState<StockRow | null>(null);
   const openToken = (row: StockRow | null) => {
     setSelectedToken(row);
-    if (row) window.history.replaceState(null, '', `/${row.symbol.toLowerCase()}`);
-    else window.history.replaceState(null, '', '/');
+    if (row) {
+      window.history.pushState({ sosModal: row.symbol }, '', getTokenPagePath(row));
+      return;
+    }
+    // Close modal → home (preserve search q=)
+    const url = new URL(window.location.href);
+    if (url.pathname.startsWith('/token/')) {
+      url.pathname = '/';
+    }
+    url.searchParams.delete('t');
+    window.history.pushState({}, '', url.pathname + (url.searchParams.toString() ? `?${url.searchParams}` : ''));
   };
   const [solPrice, setSolPrice] = useState<number | null>(null);
   const [tickerScrolling, setTickerScrolling] = useState(false);
@@ -784,14 +793,47 @@ function HomeInner() {
     return () => clearInterval(iv);
   }, []);
 
-  // Handle ?t=TICKER query param (from /token/[ticker] redirect)
+  // Deep links: ?t=TICKER | ?q=search | ?sector= | /token/TICKER when client-routed back
   useEffect(() => {
-    const t = searchParams.get('t');
-    if (t && rows.length > 0) {
-      const row = rows.find(r => r.symbol.toLowerCase() === t.toLowerCase());
-      if (row) openToken(row);
+    if (rows.length === 0) return;
+    const tParam = searchParams.get('t');
+    const qParam = searchParams.get('q');
+    const sectorParam = searchParams.get('sector');
+    if (qParam) setSearch(qParam);
+    if (sectorParam) {
+      // soft-filter via search if sector matches provider-like names; else leave in search
+      setSearch(prev => prev || sectorParam);
     }
+    if (tParam) {
+      const row = rows.find(r => r.symbol.toLowerCase() === tParam.toLowerCase());
+      if (row) setSelectedToken(row);
+    }
+    // Browser back/forward for modal deep links
+    const onPop = () => {
+      const m = window.location.pathname.match(/^\/token\/([^/]+)/i);
+      if (m) {
+        const slug = decodeURIComponent(m[1]).toLowerCase();
+        const row = rows.find(r => r.symbol.toLowerCase() === slug);
+        setSelectedToken(row ?? null);
+      } else {
+        setSelectedToken(null);
+      }
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
   }, [searchParams, rows]);
+
+  // Keep ?q= in URL for shareable search (debounced via effect on search)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.location.pathname !== '/') return;
+    const url = new URL(window.location.href);
+    if (search) url.searchParams.set('q', search);
+    else url.searchParams.delete('q');
+    // preserve other params except empty
+    const next = url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '');
+    window.history.replaceState(window.history.state, '', next);
+  }, [search]);
 
   const { isOpen, timeLabel } = getMarketStatus();
 
@@ -1022,10 +1064,17 @@ function HomeInner() {
         .header-search {
           flex: 1;
           position: relative;
-          max-width: 280px;
+          max-width: 320px;
           min-width: 0;
+          margin-left: 12px;
+          margin-right: 12px;
+        }
+        .header-right {
           margin-left: auto;
-          margin-right: 0;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-shrink: 0;
         }
         .header-pbs {
           display: flex;
@@ -1650,6 +1699,11 @@ function HomeInner() {
             width: 100%;
             margin: 0;
           }
+          .header-right {
+            margin-left: auto;
+            order: 2;
+          }
+          .header-brand { order: 1; }
           .header-search input {
             font-size: 16px;
             padding: 12px 40px 12px 40px;
@@ -1788,19 +1842,21 @@ function HomeInner() {
               </button>
             ) : null}
           </div>
-          <a href="https://x.com/stocksonsolana" target="_blank" rel="noopener noreferrer" className="header-x-link" aria-label="Follow on X">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-          </a>
-          {user ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 9, color: 'var(--text-dim)', letterSpacing: 1 }}>{user.email.split('@')[0].toUpperCase()}</span>
-              <button className="signin-btn" onClick={handleLogout} title="Sign out" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <LogOut size={10} />
-              </button>
-            </div>
-          ) : (
-            <button className="signin-btn" onClick={() => setShowSignIn(true)}>SIGN IN</button>
-          )}
+          <div className="header-right">
+            <a href="https://x.com/stocksonsolana" target="_blank" rel="noopener noreferrer" className="header-x-link" aria-label="Follow on X">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            {user ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 9, color: 'var(--text-dim)', letterSpacing: 1 }}>{user.email.split('@')[0].toUpperCase()}</span>
+                <button className="signin-btn" onClick={handleLogout} title="Sign out" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <LogOut size={10} />
+                </button>
+              </div>
+            ) : (
+              <button className="signin-btn" onClick={() => setShowSignIn(true)}>SIGN IN</button>
+            )}
+          </div>
         </header>
 
         {/* Welcome Modal — first-time visitors */}
@@ -2055,7 +2111,7 @@ function HomeInner() {
                   </div>
                   <span onClick={e => e.stopPropagation()} style={{display:'flex',gap:4}}>
                     <a
-                      href={`https://jup.ag/tokens/${row.mint}?ref=yfgv2ibxy07v`}
+                      href={getJupiterTradeUrl(row)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="buy-btn buy-btn-jup buy-btn-icon"
@@ -2066,7 +2122,7 @@ function HomeInner() {
                     </a>
                     {row.provider === 'xStocks' && (
                       <a
-                        href="https://defi.xstocks.fi/points?ref=NEWUSER"
+                        href={getXStocksTradeUrl(row) || 'https://defi.xstocks.fi/points?ref=NEWUSER'}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="buy-btn buy-btn-xstocks buy-btn-icon"

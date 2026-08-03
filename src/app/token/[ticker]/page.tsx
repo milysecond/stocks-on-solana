@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { ALL_TOKENS, getFlashTradeUrl, getBackpackTradeUrl, type StockToken } from '@/lib/tokens';
+import { ALL_TOKENS, getFlashTradeUrl, getBackpackTradeUrl, getJupiterTradeUrl, getXStocksTradeUrl, type StockToken } from '@/lib/tokens';
 import { discoverTokens } from '@/lib/discover-tokens';
 
 // Note: do not set runtime = 'edge' here — generateStaticParams requires Node SSG
@@ -87,8 +87,10 @@ export default async function TokenPage({ params }: Props) {
 
   const slug = token.symbol.toLowerCase();
   const tokenUrl = `https://stocksonsolana.com/token/${encodeURIComponent(slug)}`;
-  const screenerUrl = `/?t=${encodeURIComponent(token.symbol)}`;
-  const jupUrl = `https://jup.ag/tokens/${token.mint}?ref=yfgv2ibxy07v`;
+  const screenerUrl = `/?t=${encodeURIComponent(token.symbol)}`; // home modal deep link
+  const tokenCanonical = `/token/${encodeURIComponent(slug)}`;
+  const jupUrl = getJupiterTradeUrl(token);
+  const xstocksUrl = getXStocksTradeUrl(token);
   const flashUrl = getFlashTradeUrl(token);
   const backpackUrl = getBackpackTradeUrl(token);
   const shortMint = `${token.mint.slice(0, 4)}…${token.mint.slice(-4)}`;
@@ -299,8 +301,35 @@ export default async function TokenPage({ params }: Props) {
                 borderRadius: 4,
               }}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/partners/jupiter.png" alt="" width={18} height={18} style={{ verticalAlign: 'middle', marginRight: 8 }} />
               Buy on Jupiter
             </a>
+            {xstocksUrl && (
+              <a
+                href={xstocksUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '12px 18px',
+                  border: '1px solid #00c2ff',
+                  color: '#00c2ff',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: 1.5,
+                  textTransform: 'uppercase',
+                  textDecoration: 'none',
+                  borderRadius: 4,
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/partners/xstocks.png" alt="" width={18} height={18} />
+                xStocks
+              </a>
+            )}
             {flashUrl && (
               <a
                 href={flashUrl}
@@ -308,7 +337,7 @@ export default async function TokenPage({ params }: Props) {
                 rel="noopener noreferrer"
                 style={secondaryBtn}
               >
-                Trade on Flash
+                ⚡ Flash
               </a>
             )}
             {backpackUrl && (

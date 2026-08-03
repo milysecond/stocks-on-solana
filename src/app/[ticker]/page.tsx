@@ -13,6 +13,8 @@ const RESERVED = new Set([
   'privacy',
   'terms',
   'partners',
+  'brand',
+  'press',
   'api',
   'dashboard',
   'token',

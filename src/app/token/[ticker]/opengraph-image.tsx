@@ -95,15 +95,31 @@ export default async function Image({ params }: Props) {
   ]);
 
   const logo = `data:image/png;base64,${Buffer.from(logoData).toString('base64')}`;
-  const price = live?.usdPrice != null ? fmtPrice(live.usdPrice) : '—';
-  const mcap = live?.mcap != null ? fmtMcap(live.mcap) : '—';
-  const liq = live?.liquidity != null ? fmtMcap(live.liquidity) : '—';
-  const chg24h = live?.stats24h?.priceChange ?? null;
-  const chgStr = chg24h !== null ? `${chg24h >= 0 ? '+' : ''}${chg24h.toFixed(2)}%` : '—';
-  const isUp = chg24h === null || chg24h >= 0;
-  const stockPrice = live?.stockData?.price != null ? fmtPrice(live.stockData.price) : null;
+
+  const rawPrice = live?.usdPrice != null ? Number(live.usdPrice) : null;
+  const stockPx = live?.stockData?.price != null ? Number(live.stockData.price) : null;
+  const liqN = live?.liquidity != null ? Number(live.liquidity) : 0;
+  const reliable =
+    rawPrice != null &&
+    liqN >= 1000 &&
+    (stockPx == null || stockPx <= 0 || (rawPrice / stockPx <= 3 && rawPrice / stockPx >= 1 / 3));
+
+  const price = reliable && rawPrice != null
+    ? fmtPrice(rawPrice)
+    : stockPx != null
+      ? fmtPrice(stockPx)
+      : rawPrice != null
+        ? fmtPrice(rawPrice)
+        : '—';
+  const mcap = reliable && live?.mcap != null ? fmtMcap(Number(live.mcap)) : '—';
+  const liq = live?.liquidity != null ? fmtMcap(Number(live.liquidity)) : '—';
+  const chg24h = reliable ? (live?.stats24h?.priceChange ?? null) : null;
+  const chgStr = chg24h !== null ? `${chg24h >= 0 ? '+' : ''}${Number(chg24h).toFixed(2)}%` : '—';
+  const isUp = chg24h === null || Number(chg24h) >= 0;
+  const stockPrice = stockPx != null ? fmtPrice(stockPx) : null;
   const cleanSymbol = token.symbol.replace(/[xX]$/, '').replace(/on$/i, '').replace(/pre$/i, '');
   const provider = token.provider === 'Backpack' ? 'SUNRISE' : token.provider.toUpperCase();
+  const priceLabel = reliable ? null : 'STOCK MARK';
 
   return new ImageResponse(
     (
@@ -222,6 +238,9 @@ export default async function Image({ params }: Props) {
             >
               {price}
             </span>
+            {priceLabel ? (
+              <span style={{ fontSize: 14, color: BRAND.muted, letterSpacing: 2, fontWeight: 600 }}>{priceLabel}</span>
+            ) : null}
             <span
               style={{
                 fontSize: 24,

@@ -3,37 +3,53 @@ import { ALL_TOKENS } from '@/lib/tokens';
 import { BRAND } from '@/lib/brand';
 
 export const runtime = 'edge';
-export const revalidate = 900;
-export const alt = 'Stock on Solana';
+export const revalidate = 300;
+export const alt = 'Tokenized stock on Solana — Stocks on Solana';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 interface Props {
   params: Promise<{ ticker: string }>;
+  searchParams?: Promise<{ mint?: string }>;
 }
 
-async function findToken(ticker: string) {
+async function findToken(ticker: string, mint?: string | null) {
   const { resolveToken } = await import('@/lib/resolve-token');
-  return (await resolveToken(ticker)) || ALL_TOKENS.find(t => t.symbol.toLowerCase() === ticker.toLowerCase());
+  return (
+    (await resolveToken(ticker, mint)) ||
+    ALL_TOKENS.find((t) => t.symbol.toLowerCase() === ticker.toLowerCase())
+  );
 }
 
-async function fetchLiveData(symbol: string) {
+type Live = {
+  symbol?: string;
+  icon?: string;
+  usdPrice?: number;
+  liquidity?: number;
+  mcap?: number;
+  stockData?: { price?: number; mcap?: number } | null;
+  stats24h?: { priceChange?: number; buyVolume?: number; sellVolume?: number } | null;
+};
+
+async function fetchLiveData(symbol: string, mint?: string): Promise<Live | null> {
   try {
+    // Prefer unfiltered feed then provider feeds
     const urls = [
       'https://datapi.jup.ag/v2/assets/stocks/24h?offset=0&includeOndoStatus=false',
-      'https://datapi.jup.ag/v2/assets/stocks/24h?stocks=xstocks&offset=0&includeOndoStatus=false',
       'https://datapi.jup.ag/v2/assets/stocks/24h?stocks=backpack&offset=0&includeOndoStatus=false',
+      'https://datapi.jup.ag/v2/assets/stocks/24h?stocks=xstocks&offset=0&includeOndoStatus=false',
       'https://datapi.jup.ag/v2/assets/stocks/24h?stocks=ondo&offset=0&includeOndoStatus=false',
       'https://datapi.jup.ag/v2/assets/stocks/24h?stocks=prestocks&offset=0&includeOndoStatus=false',
     ];
     for (const url of urls) {
-      const res = await fetch(url);
+      const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) continue;
-      const data = await res.json();
-      const found = (data.assets || []).find(
-        (a: { symbol?: string }) => a.symbol?.toLowerCase() === symbol.toLowerCase(),
-      );
-      if (found) return found;
+      const data = (await res.json()) as { assets?: Live & { id?: string; symbol?: string }[] };
+      const assets = data.assets || [];
+      const found =
+        (mint && assets.find((a) => a.id === mint)) ||
+        assets.find((a) => a.symbol?.toLowerCase() === symbol.toLowerCase());
+      if (found) return found as Live;
     }
   } catch {
     /* ignore */
@@ -42,22 +58,46 @@ async function fetchLiveData(symbol: string) {
 }
 
 function fmtPrice(p: number) {
-  if (p >= 1000) return `$${(p / 1000).toFixed(1)}K`;
+  if (p >= 1000) return `$${(p / 1000).toFixed(2)}K`;
   if (p >= 1) return `$${p.toFixed(2)}`;
   return `$${p.toFixed(4)}`;
 }
 
-function fmtMcap(m: number) {
-  if (m >= 1e9) return `$${(m / 1e9).toFixed(1)}B`;
-  if (m >= 1e6) return `$${(m / 1e6).toFixed(1)}M`;
-  if (m >= 1e3) return `$${(m / 1e3).toFixed(0)}K`;
+function fmtVol(m: number) {
+  if (m >= 1e9) return `$${(m / 1e9).toFixed(2)}B`;
+  if (m >= 1e6) return `$${(m / 1e6).toFixed(2)}M`;
+  if (m >= 1e3) return `$${(m / 1e3).toFixed(1)}K`;
   return `$${m.toFixed(0)}`;
 }
 
-/** Token OG — brand guide: ink/panel, bare mark, exact gradient, mono numbers */
-export default async function Image({ params }: Props) {
+const PROVIDER_COLOR: Record<string, string> = {
+  SUNRISE: '#E33E3E',
+  BACKPACK: '#E33E3E',
+  XSTOCKS: '#00C2FF',
+  ONDO: '#6C5CE7',
+  PRESTOCKS: '#A855F7',
+  SHIFT: '#FBAE17',
+  TESSERA: '#22C55E',
+  SUPERSTATE: '#FFB000',
+};
+
+/** Premium token OG card — brand gradient, giant ticker, live mark */
+export default async function Image({ params, searchParams }: Props) {
   const { ticker } = await params;
-  const token = await findToken(ticker);
+  const sp = searchParams ? await searchParams : {};
+  const token = await findToken(ticker, sp.mint);
+
+  const fontBase = BRAND.site;
+  const [sgBold, sgMed, jbBold, logoData] = await Promise.all([
+    fetch(`${fontBase}/fonts/SpaceGrotesk-Bold.ttf`).then((r) => r.arrayBuffer()),
+    fetch(`${fontBase}/fonts/SpaceGrotesk-Medium.ttf`)
+      .then((r) => (r.ok ? r.arrayBuffer() : fetch(`${fontBase}/fonts/SpaceGrotesk-Bold.ttf`).then((x) => x.arrayBuffer())))
+      .catch(() => fetch(`${fontBase}/fonts/SpaceGrotesk-Bold.ttf`).then((x) => x.arrayBuffer())),
+    fetch(`${fontBase}/fonts/JetBrainsMono-Bold.ttf`).then((r) => r.arrayBuffer()),
+    fetch(`${fontBase}/logo-mark.png`).then((r) => r.arrayBuffer()),
+  ]);
+
+  const logo = `data:image/png;base64,${Buffer.from(logoData).toString('base64')}`;
 
   if (!token) {
     return new ImageResponse(
@@ -68,53 +108,75 @@ export default async function Image({ params }: Props) {
             height: '100%',
             background: BRAND.ink,
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            color: BRAND.muted,
-            fontSize: 28,
-            fontFamily: 'sans-serif',
+            fontFamily: '"Space Grotesk"',
           }}
         >
-          Stock not found
+          <div style={{ width: '100%', height: 8, background: BRAND.gradient, position: 'absolute', top: 0, left: 0, display: 'flex' }} />
+          <img src={logo} width={72} height={72} />
+          <div style={{ fontSize: 28, color: BRAND.muted, marginTop: 24, letterSpacing: 4 }}>TOKEN NOT FOUND</div>
         </div>
       ),
-      { ...size },
+      {
+        ...size,
+        fonts: [{ name: 'Space Grotesk', data: sgBold, weight: 700 }],
+      },
     );
   }
 
-  const [sgBold, jbBold, logoData, live] = await Promise.all([
-    fetch(new URL('/fonts/SpaceGrotesk-Bold.ttf', BRAND.site)).then((r) => r.arrayBuffer()),
-    fetch(new URL('/fonts/JetBrainsMono-Bold.ttf', BRAND.site)).then((r) => r.arrayBuffer()),
-    fetch(new URL('/logo-mark.png', BRAND.site)).then((r) => r.arrayBuffer()),
-    fetchLiveData(token.symbol),
-  ]);
-
-  const logo = `data:image/png;base64,${Buffer.from(logoData).toString('base64')}`;
+  const live = await fetchLiveData(token.symbol, token.mint);
 
   const rawPrice = live?.usdPrice != null ? Number(live.usdPrice) : null;
   const stockPx = live?.stockData?.price != null ? Number(live.stockData.price) : null;
   const liqN = live?.liquidity != null ? Number(live.liquidity) : 0;
+  const volN =
+    (live?.stats24h?.buyVolume != null ? Number(live.stats24h.buyVolume) : 0) +
+    (live?.stats24h?.sellVolume != null ? Number(live.stats24h.sellVolume) : 0);
   const reliable =
     rawPrice != null &&
     liqN >= 1000 &&
     (stockPx == null || stockPx <= 0 || (rawPrice / stockPx <= 3 && rawPrice / stockPx >= 1 / 3));
 
-  const price = reliable && rawPrice != null
-    ? fmtPrice(rawPrice)
-    : stockPx != null
-      ? fmtPrice(stockPx)
-      : rawPrice != null
-        ? fmtPrice(rawPrice)
+  const price =
+    reliable && rawPrice != null
+      ? fmtPrice(rawPrice)
+      : stockPx != null
+        ? fmtPrice(stockPx)
+        : rawPrice != null
+          ? fmtPrice(rawPrice)
+          : '—';
+  const mcap =
+    reliable && live?.mcap != null
+      ? fmtVol(Number(live.mcap))
+      : live?.stockData?.mcap != null
+        ? fmtVol(Number(live.stockData.mcap))
         : '—';
-  const mcap = reliable && live?.mcap != null ? fmtMcap(Number(live.mcap)) : '—';
-  const liq = live?.liquidity != null ? fmtMcap(Number(live.liquidity)) : '—';
+  const liq = liqN > 0 ? fmtVol(liqN) : '—';
+  const vol = volN > 0 ? fmtVol(volN) : '—';
   const chg24h = reliable ? (live?.stats24h?.priceChange ?? null) : null;
-  const chgStr = chg24h !== null ? `${chg24h >= 0 ? '+' : ''}${Number(chg24h).toFixed(2)}%` : '—';
-  const isUp = chg24h === null || Number(chg24h) >= 0;
-  const stockPrice = stockPx != null ? fmtPrice(stockPx) : null;
-  const cleanSymbol = token.symbol.replace(/[xX]$/, '').replace(/on$/i, '').replace(/pre$/i, '');
+  const chgNum = chg24h != null ? Number(chg24h) : null;
+  const isUp = chgNum === null || chgNum >= 0;
+  const chgStr = chgNum !== null ? `${chgNum >= 0 ? '+' : ''}${chgNum.toFixed(2)}%` : '—';
+
+  const cleanSymbol = token.symbol.replace(/pre$/i, '').replace(/on$/i, '').replace(/x$/i, '') || token.symbol;
   const provider = token.provider === 'Backpack' ? 'SUNRISE' : token.provider.toUpperCase();
-  const priceLabel = reliable ? null : 'STOCK MARK';
+  const providerColor = PROVIDER_COLOR[provider] || BRAND.brandAmber;
+  const stockPrice = stockPx != null ? fmtPrice(stockPx) : null;
+  const premium =
+    reliable && rawPrice != null && stockPx != null && stockPx > 0
+      ? ((rawPrice - stockPx) / stockPx) * 100
+      : null;
+  const premiumStr =
+    premium != null ? `${premium >= 0 ? '+' : ''}${premium.toFixed(2)}% vs stock` : null;
+
+  // Decorative “spark” bars for visual energy (deterministic from symbol)
+  const bars = Array.from({ length: 24 }, (_, i) => {
+    const seed = (cleanSymbol.charCodeAt(i % cleanSymbol.length) || 1) * (i + 3);
+    const h = 20 + (seed % 70);
+    return h;
+  });
 
   return new ImageResponse(
     (
@@ -123,16 +185,43 @@ export default async function Image({ params }: Props) {
           width: '100%',
           height: '100%',
           display: 'flex',
-          flexDirection: 'column',
           background: BRAND.ink,
           fontFamily: '"Space Grotesk"',
           overflow: 'hidden',
+          position: 'relative',
         }}
       >
+        {/* Soft brand wash (not fighting the logo) */}
         <div
           style={{
-            width: '100%',
-            height: 6,
+            position: 'absolute',
+            right: -120,
+            top: -80,
+            width: 520,
+            height: 520,
+            borderRadius: 999,
+            background: 'rgba(127,71,221,0.18)',
+            display: 'flex',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            left: -140,
+            bottom: -160,
+            width: 480,
+            height: 480,
+            borderRadius: 999,
+            background: 'rgba(248,247,0,0.08)',
+            display: 'flex',
+          }}
+        />
+
+        {/* Left accent rail */}
+        <div
+          style={{
+            width: 10,
+            height: '100%',
             background: BRAND.gradient,
             display: 'flex',
             flexShrink: 0,
@@ -144,134 +233,277 @@ export default async function Image({ params }: Props) {
             display: 'flex',
             flexDirection: 'column',
             flex: 1,
-            padding: '44px 56px 40px',
+            padding: '40px 52px 36px 48px',
+            position: 'relative',
           }}
         >
-          {/* Header — bare mark */}
+          {/* Top bar */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: 36,
+              marginBottom: 28,
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <img src={logo} width={44} height={44} />
-              <span
-                style={{
-                  fontSize: 15,
-                  letterSpacing: 3,
-                  fontWeight: 700,
-                  backgroundImage: BRAND.gradient,
-                  backgroundClip: 'text',
-                  color: 'transparent',
-                }}
-              >
-                STOCKS ON SOLANA
-              </span>
+              <img src={logo} width={48} height={48} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 700,
+                    letterSpacing: 3,
+                    backgroundImage: BRAND.gradient,
+                    backgroundClip: 'text',
+                    color: 'transparent',
+                  }}
+                >
+                  STOCKS ON SOLANA
+                </span>
+                <span style={{ fontSize: 13, color: BRAND.muted, letterSpacing: 1 }}>
+                  Tokenized equity · 24/7
+                </span>
+              </div>
             </div>
+
             <div
               style={{
-                fontSize: 12,
-                fontWeight: 700,
-                letterSpacing: 2,
-                padding: '7px 14px',
-                borderRadius: 4,
-                background: BRAND.panel,
-                border: `1px solid ${BRAND.border}`,
-                color: BRAND.body,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
               }}
             >
-              {provider}
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  letterSpacing: 2,
+                  padding: '8px 16px',
+                  borderRadius: 999,
+                  background: `${providerColor}22`,
+                  border: `1px solid ${providerColor}66`,
+                  color: providerColor,
+                }}
+              >
+                {provider}
+              </div>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: 2,
+                  padding: '8px 14px',
+                  borderRadius: 999,
+                  background: BRAND.panel,
+                  border: `1px solid ${BRAND.border}`,
+                  color: BRAND.body,
+                }}
+              >
+                SOLANA
+              </div>
             </div>
           </div>
 
-          {/* Ticker */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 8 }}>
+          {/* Hero row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 28, marginBottom: 8 }}>
             {live?.icon ? (
-              <img src={live.icon} width={72} height={72} style={{ borderRadius: 10 }} />
-            ) : null}
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  width: 96,
+                  height: 96,
+                  borderRadius: 20,
+                  overflow: 'hidden',
+                  border: `2px solid ${BRAND.border}`,
+                  background: BRAND.panel,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <img src={live.icon} width={96} height={96} />
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: 'flex',
+                  width: 96,
+                  height: 96,
+                  borderRadius: 20,
+                  background: BRAND.gradient,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: BRAND.ink,
+                  fontSize: 36,
+                  fontWeight: 700,
+                }}
+              >
+                {cleanSymbol.slice(0, 2)}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
                 <span
                   style={{
-                    fontSize: 60,
+                    fontSize: 72,
                     fontWeight: 700,
                     color: BRAND.body,
                     lineHeight: 1,
-                    letterSpacing: -1,
+                    letterSpacing: -2,
                   }}
                 >
-                  {cleanSymbol}
+                  ${cleanSymbol}
                 </span>
-                <span style={{ fontSize: 20, color: BRAND.muted, fontFamily: '"JetBrains Mono"' }}>
+                <span
+                  style={{
+                    fontSize: 22,
+                    color: BRAND.muted,
+                    fontFamily: '"JetBrains Mono"',
+                  }}
+                >
                   {token.symbol}
                 </span>
               </div>
-              <span style={{ fontSize: 20, color: BRAND.muted, marginTop: 8 }}>{token.name}</span>
+              <span
+                style={{
+                  fontSize: 26,
+                  color: BRAND.muted,
+                  marginTop: 10,
+                  fontWeight: 500,
+                  fontFamily: '"Space Grotesk Med"',
+                }}
+              >
+                {token.name}
+              </span>
+            </div>
+
+            {/* Mini spark bars */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                gap: 4,
+                height: 88,
+                paddingBottom: 4,
+              }}
+            >
+              {bars.map((h, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: 7,
+                    height: h,
+                    borderRadius: 3,
+                    background:
+                      i > 16
+                        ? isUp
+                          ? BRAND.green
+                          : BRAND.red
+                        : i % 3 === 0
+                          ? BRAND.violet
+                          : i % 2 === 0
+                            ? BRAND.amber
+                            : BRAND.gold,
+                    opacity: 0.35 + (i / bars.length) * 0.65,
+                    display: 'flex',
+                  }}
+                />
+              ))}
             </div>
           </div>
 
-          {/* Price */}
+          {/* Price block */}
           <div
             style={{
               display: 'flex',
-              alignItems: 'baseline',
-              gap: 20,
-              marginTop: 28,
-              marginBottom: 32,
+              alignItems: 'flex-end',
+              gap: 22,
+              marginTop: 22,
+              marginBottom: 28,
             }}
           >
             <span
               style={{
-                fontSize: 52,
+                fontSize: 64,
                 fontWeight: 700,
                 fontFamily: '"JetBrains Mono"',
                 color: BRAND.brandAmber,
+                lineHeight: 1,
               }}
             >
               {price}
             </span>
-            {priceLabel ? (
-              <span style={{ fontSize: 14, color: BRAND.muted, letterSpacing: 2, fontWeight: 600 }}>{priceLabel}</span>
-            ) : null}
-            <span
+            <div
               style={{
-                fontSize: 24,
-                fontWeight: 700,
-                fontFamily: '"JetBrains Mono"',
-                color: isUp ? BRAND.green : BRAND.red,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '10px 18px',
+                borderRadius: 12,
+                background: isUp ? 'rgba(0,200,100,0.12)' : 'rgba(220,60,60,0.12)',
+                border: `1px solid ${isUp ? 'rgba(0,200,100,0.35)' : 'rgba(220,60,60,0.35)'}`,
+                marginBottom: 6,
               }}
             >
-              {`${isUp ? '+' : ''}${chgStr}`.replace('++', '+')}
-            </span>
+              <span
+                style={{
+                  fontSize: 28,
+                  fontWeight: 700,
+                  fontFamily: '"JetBrains Mono"',
+                  color: isUp ? BRAND.green : BRAND.red,
+                }}
+              >
+                {chgStr}
+              </span>
+              <span style={{ fontSize: 14, color: BRAND.muted, letterSpacing: 1 }}>24H</span>
+            </div>
+            {premiumStr ? (
+              <span
+                style={{
+                  fontSize: 16,
+                  color: BRAND.muted,
+                  marginBottom: 12,
+                  fontFamily: '"JetBrains Mono"',
+                }}
+              >
+                {premiumStr}
+              </span>
+            ) : !reliable && stockPrice ? (
+              <span style={{ fontSize: 14, color: BRAND.muted, marginBottom: 12, letterSpacing: 2 }}>
+                STOCK MARK
+              </span>
+            ) : null}
           </div>
 
-          {/* Stats panels */}
-          <div style={{ display: 'flex', gap: 12 }}>
+          {/* Stats row */}
+          <div style={{ display: 'flex', gap: 14 }}>
             {[
               ['ON-CHAIN MCAP', mcap],
               ['LIQUIDITY', liq],
-              ...(stockPrice ? [['STOCK', stockPrice]] : []),
+              ['24H VOL', vol],
+              ...(stockPrice ? [['UNDERLYING', stockPrice] as const] : []),
             ].map(([label, val]) => (
               <div
-                key={label as string}
+                key={label}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 6,
+                  gap: 8,
                   padding: '16px 20px',
-                  borderRadius: 8,
-                  background: BRAND.panel,
+                  borderRadius: 14,
+                  background: 'rgba(17,17,17,0.92)',
                   border: `1px solid ${BRAND.border}`,
                   minWidth: 150,
+                  flex: 1,
                 }}
               >
-                <span style={{ fontSize: 11, color: BRAND.muted, letterSpacing: 2 }}>{label}</span>
+                <span style={{ fontSize: 12, color: BRAND.muted, letterSpacing: 2, fontWeight: 700 }}>
+                  {label}
+                </span>
                 <span
                   style={{
-                    fontSize: 24,
+                    fontSize: 26,
                     fontWeight: 700,
                     color: BRAND.body,
                     fontFamily: '"JetBrains Mono"',
@@ -283,18 +515,40 @@ export default async function Image({ params }: Props) {
             ))}
           </div>
 
+          {/* Footer */}
           <div
             style={{
               display: 'flex',
               marginTop: 'auto',
               justifyContent: 'space-between',
               alignItems: 'center',
+              paddingTop: 22,
             }}
           >
-            <span style={{ fontSize: 13, color: BRAND.brandAmber, letterSpacing: 1, fontWeight: 600 }}>
-              {`stocksonsolana.com/token/${token.symbol.toLowerCase()}`}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div
+                style={{
+                  width: 120,
+                  height: 4,
+                  borderRadius: 4,
+                  background: BRAND.gradient,
+                  display: 'flex',
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 16,
+                  color: BRAND.brandAmber,
+                  letterSpacing: 0.5,
+                  fontWeight: 700,
+                }}
+              >
+                stocksonsolana.com/token/{token.symbol.toLowerCase()}
+              </span>
+            </div>
+            <span style={{ fontSize: 14, color: BRAND.dim, letterSpacing: 1 }}>
+              {BRAND.tagline}
             </span>
-            <span style={{ fontSize: 12, color: BRAND.dim }}>Design by Gray</span>
           </div>
         </div>
       </div>
@@ -303,6 +557,7 @@ export default async function Image({ params }: Props) {
       ...size,
       fonts: [
         { name: 'Space Grotesk', data: sgBold, weight: 700 },
+        { name: 'Space Grotesk Med', data: sgMed, weight: 500 },
         { name: 'JetBrains Mono', data: jbBold, weight: 700 },
       ],
     },

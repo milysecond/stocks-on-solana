@@ -8,6 +8,13 @@ const partners = [
     logo: '/partners/jupiter.png',
   },
   {
+    name: 'xStocks',
+    description: 'Tokenized equities on Solana — trade stocks including Apple, Tesla, NVIDIA and more with instant settlement.',
+    url: 'https://defi.xstocks.fi/points?ref=NEWUSER',
+    logo: '/partners/xstocks.png',
+    color: '#00c2ff',
+  },
+  {
     name: 'Backpack',
     description: 'Regulated exchange and Sunrise tokenized equities. Trade, custody, and on-ramp into Solana assets.',
     url: 'https://backpack.exchange/signup?referral=downunder',
@@ -20,6 +27,20 @@ const partners = [
     url: 'https://www.flash.trade?referral=newuser',
     logo: '/partners/flash.png',
     color: '#ff3b3b',
+  },
+  {
+    name: 'Ondo',
+    description: 'Tokenized stocks and funds on Solana via Ondo Global Markets.',
+    url: 'https://ondo.finance',
+    logo: '/partners/ondo.png',
+    color: '#6c5ce7',
+  },
+  {
+    name: 'PreStocks',
+    description: 'Pre-IPO tokenized equity exposure on Solana.',
+    url: 'https://prestocks.com',
+    logo: '/partners/prestocks.png',
+    color: '#a855f7',
   },
   {
     name: 'Solana',

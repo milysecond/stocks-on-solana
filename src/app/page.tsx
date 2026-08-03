@@ -1022,7 +1022,8 @@ function HomeInner() {
         .header-search {
           flex: 1;
           position: relative;
-          max-width: 220px;
+          max-width: 280px;
+          min-width: 0;
           margin-left: auto;
           margin-right: 0;
         }
@@ -1034,24 +1035,55 @@ function HomeInner() {
           transition: opacity 0.15s;
         }
         .header-pbs:hover { opacity: 1; }
-        .header-search svg {
+        .header-search .search-icon {
           position: absolute;
-          left: 8px;
+          left: 12px;
           top: 50%;
           transform: translateY(-50%);
           color: var(--text-dim);
+          pointer-events: none;
+          z-index: 1;
         }
         .header-search input {
           width: 100%;
           background: var(--bg-tertiary);
           border: 1px solid var(--border);
-          border-radius: 4px;
-          padding: 5px 8px 5px 26px;
+          border-radius: 8px;
+          padding: 10px 36px 10px 36px;
           color: var(--text);
-          font-size: 11px;
+          /* ≥16px prevents iOS Safari auto-zoom on focus */
+          font-size: 16px;
+          line-height: 1.25;
           outline: none;
+          -webkit-appearance: none;
+          appearance: none;
+          touch-action: manipulation;
         }
-        .header-search input::placeholder { color: var(--text-dim); }
+        .header-search input:focus {
+          border-color: rgba(255,176,0,0.45);
+          box-shadow: 0 0 0 2px rgba(255,176,0,0.12);
+        }
+        .header-search input::placeholder { color: var(--text-dim); font-size: 15px; }
+        .header-search .search-clear {
+          position: absolute;
+          right: 6px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 32px;
+          height: 32px;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          background: none;
+          border: none;
+          color: var(--text-dim);
+          cursor: pointer;
+          border-radius: 6px;
+          padding: 0;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .header-search .search-clear:active { color: var(--amber); background: rgba(255,176,0,0.08); }
+        .header-search.has-value .search-clear { display: flex; }
         .header-x-link { color: var(--text-dim); display: flex; align-items: center; flex-shrink: 0; transition: color 0.15s; }
         .header-x-link:hover { color: var(--amber); }
         .signin-btn { background: none; border: 1px solid #2a2a2a; color: var(--text-dim); font-family: inherit; font-size: 9px; letter-spacing: 2px; padding: 5px 10px; border-radius: 4px; cursor: pointer; flex-shrink: 0; transition: all 0.15s; }
@@ -1602,8 +1634,32 @@ function HomeInner() {
         @media (max-width: 640px) {
           .desktop-table { display: block; }
           .mobile-cards { display: none; }
-          .header-brand span { font-size: 11px; }
+          .header {
+            height: auto;
+            min-height: 52px;
+            padding: 8px 10px;
+            gap: 8px;
+            flex-wrap: wrap;
+          }
+          .header-brand span { font-size: 11px; max-width: 42vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
           .header-pbs { display: none; }
+          .header-search {
+            order: 10;
+            flex: 1 1 100%;
+            max-width: none;
+            width: 100%;
+            margin: 0;
+          }
+          .header-search input {
+            font-size: 16px;
+            padding: 12px 40px 12px 40px;
+            border-radius: 10px;
+            min-height: 48px;
+          }
+          .header-search .search-icon { left: 14px; width: 16px; height: 16px; }
+          .header-search .search-clear { width: 40px; height: 40px; right: 4px; }
+          .header-x-link { padding: 8px; }
+          .signin-btn { padding: 8px 10px; font-size: 10px; min-height: 40px; }
         }
         @media (min-width: 641px) {
           .sort-bar { display: none; }
@@ -1706,14 +1762,31 @@ function HomeInner() {
             <img src="/logo-mark.png" alt="Stocks on Solana" width={28} height={28} fetchPriority="high" />
             <span>STOCKS ON SOLANA</span>
           </div>
-          <div className="header-search">
-            <Search size={12} />
+          <div className={`header-search${search ? ' has-value' : ''}`}>
+            <Search size={16} className="search-icon" aria-hidden />
             <input
-              type="text"
+              type="search"
+              inputMode="search"
+              enterKeyHint="search"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
               placeholder="Search stocks..."
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1); }}
+              aria-label="Search stocks"
             />
+            {search ? (
+              <button
+                type="button"
+                className="search-clear"
+                aria-label="Clear search"
+                onClick={() => { setSearch(''); setPage(1); }}
+              >
+                <X size={16} />
+              </button>
+            ) : null}
           </div>
           <a href="https://x.com/stocksonsolana" target="_blank" rel="noopener noreferrer" className="header-x-link" aria-label="Follow on X">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>

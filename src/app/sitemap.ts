@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { discoverTokens } from '@/lib/discover-tokens';
 import { ALL_TOKENS } from '@/lib/tokens';
+export const runtime = 'edge';
 
 const BASE = 'https://stocksonsolana.com';
 

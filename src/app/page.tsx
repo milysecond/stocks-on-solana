@@ -48,6 +48,46 @@ function fmtVol(n: number | null) {
   return `$${n.toFixed(2)}`;
 }
 
+/** Thin / broken pools print nonsense marks — prefer underlying when unreliable */
+const MIN_LIQ_RELIABLE = 1000;
+const MAX_MARK_RATIO = 3;
+
+function isReliableMark(row: {
+  price: number | null;
+  stockPrice: number | null;
+  liquidity: number | null;
+}): boolean {
+  if (row.price === null) return false;
+  if ((row.liquidity ?? 0) < MIN_LIQ_RELIABLE) return false;
+  if (row.stockPrice != null && row.stockPrice > 0) {
+    const r = row.price / row.stockPrice;
+    if (r > MAX_MARK_RATIO || r < 1 / MAX_MARK_RATIO) return false;
+  }
+  return true;
+}
+
+/** Display price: on-chain when liquid+sane, else underlying stock mark */
+function displayPrice(row: {
+  price: number | null;
+  stockPrice: number | null;
+  liquidity: number | null;
+}): { value: number | null; stale: boolean } {
+  if (isReliableMark(row)) return { value: row.price, stale: false };
+  if (row.stockPrice != null) return { value: row.stockPrice, stale: true };
+  return { value: row.price, stale: (row.liquidity ?? 0) < MIN_LIQ_RELIABLE };
+}
+
+/** 24h change only trustworthy on liquid books */
+function displayChange(row: {
+  change24h: number | null;
+  price: number | null;
+  stockPrice: number | null;
+  liquidity: number | null;
+}): number | null {
+  if (!isReliableMark(row)) return null;
+  return row.change24h;
+}
+
 function fmtAge(ts: number | null): string {
   if (ts === null) return '—';
   const now = Date.now() / 1000;
@@ -235,8 +275,9 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
   starred: Set<string>;
   toggleStar: (mint: string) => void;
 }) {
-  const change = fmtChange(row.change24h);
-  const disc = row.price !== null && row.stockPrice !== null
+  const shown = displayPrice(row);
+  const change = fmtChange(displayChange(row));
+  const disc = isReliableMark(row) && row.price !== null && row.stockPrice !== null
     ? ((row.price - row.stockPrice) / row.stockPrice) * 100
     : null;
 
@@ -276,7 +317,10 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
 
         {/* Price hero */}
         <div className="tm-price-row">
-          <div className="tm-price">{row.price !== null ? fmt(row.price, row.price > 100 ? 2 : 4) : '—'}</div>
+          <div className="tm-price" title={shown.stale ? 'Thin book — showing underlying stock mark' : undefined}>
+            {shown.value !== null ? fmt(shown.value, shown.value > 100 ? 2 : 4) : '—'}
+            {shown.stale ? <span style={{ fontSize: 11, color: 'var(--text-dim)', marginLeft: 8, letterSpacing: 1 }}>STOCK</span> : null}
+          </div>
           {change && (
             <span className={`tm-change ${change.positive ? 'pos' : 'neg'}`}>
               {change.positive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
@@ -315,7 +359,7 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
           </div>
           <div className="tm-stat">
             <div className="tm-stat-label">MARKET CAP</div>
-            <div className="tm-stat-value">{fmtVol(row.mcap)}</div>
+            <div className="tm-stat-value">{isReliableMark(row) ? fmtVol(row.mcap) : '—'}</div>
           </div>
           <div className="tm-stat" style={{ gridColumn: '1 / -1' }}>
             <div className="tm-stat-label">TOKEN AGE</div>
@@ -428,7 +472,8 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
         </thead>
         <tbody>
           {sorted.map((row, i) => {
-            const change = fmtChange(row.change24h);
+            const shown = displayPrice(row);
+            const change = fmtChange(displayChange(row));
             return (
               <tr
                 key={row.mint}
@@ -446,7 +491,11 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
                   </div>
                 </td>
                 <td className="text-right price-val">
-                  {row.price !== null ? fmt(row.price, row.price > 100 ? 2 : 4) : <span className="loading-cell" />}
+                  {shown.value !== null ? (
+                    <span title={shown.stale ? 'Thin book — underlying stock mark' : undefined} style={shown.stale ? { color: 'var(--text-dim)' } : undefined}>
+                      {fmt(shown.value, shown.value > 100 ? 2 : 4)}{shown.stale ? ' *' : ''}
+                    </span>
+                  ) : <span className="loading-cell" />}
                 </td>
                 <td className="text-right">
                   {change
@@ -1821,7 +1870,8 @@ function HomeInner() {
         {/* Mobile cards */}
         <div className="mobile-cards">
           {paged.map(row => {
-            const change = fmtChange(row.change24h);
+            const shown = displayPrice(row);
+            const change = fmtChange(displayChange(row));
             return (
               <div key={row.mint} className="card" onClick={() => openToken(row)}>
                 <div className="card-top">
@@ -1834,7 +1884,7 @@ function HomeInner() {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div className="card-price">
-                      {row.price !== null ? fmt(row.price, row.price > 100 ? 2 : 4) : <span className="loading-cell" style={{ width: 70, height: 14 }} />}
+                      {shown.value !== null ? <span style={shown.stale ? { color: 'var(--text-dim)' } : undefined}>{fmt(shown.value, shown.value > 100 ? 2 : 4)}{shown.stale ? ' *' : ''}</span> : <span className="loading-cell" style={{ width: 70, height: 14 }} />}
                     </div>
                     {change ? (
                       <div style={{ fontSize: 11, marginTop: 2 }}>

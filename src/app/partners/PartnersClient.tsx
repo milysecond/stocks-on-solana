@@ -5,16 +5,21 @@ const partners = [
     name: 'Jupiter',
     description: 'The leading DEX aggregator on Solana. All buy orders route through Jupiter for best execution.',
     url: 'https://jup.ag/?ref=yfgv2ibxy07v',
+    logo: '/partners/jupiter.png',
   },
   {
     name: 'Backpack',
-    description: 'Regulated exchange for crypto and tokenized equities. Trade, custody, and on-ramp into Solana assets.',
+    description: 'Regulated exchange and Sunrise tokenized equities. Trade, custody, and on-ramp into Solana assets.',
     url: 'https://backpack.exchange/signup?referral=downunder',
+    logo: '/partners/backpack.png',
+    color: '#e33e3e',
   },
   {
     name: 'Flash Trade',
     description: 'High-performance perpetual futures trading on Solana with up to 100x leverage and deep liquidity.',
     url: 'https://www.flash.trade?referral=newuser',
+    logo: '/partners/flash.png',
+    color: '#ff3b3b',
   },
   {
     name: 'Solana',
@@ -30,37 +35,45 @@ const partners = [
 
 export default function PartnersClient() {
   return (
-    <main style={{ minHeight: '100vh', background: '#0a0a0a', color: '#e8e8e8', fontFamily: 'monospace', padding: '60px 24px' }}>
+    <main style={{ minHeight: '100vh', background: '#0a0a0a', color: '#e8e8e8', fontFamily: 'var(--font-sans), "Space Grotesk", system-ui, sans-serif', padding: '60px 24px' }}>
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
-        <a href="/" style={{ color: '#555', textDecoration: 'none', fontSize: 10, letterSpacing: 2 }}>← BACK</a>
+        <div style={{ height: 3, width: '100%', marginBottom: 28, background: 'linear-gradient(135deg, #f8f700 0%, #fbae17 45%, #7f47dd 100%)', borderRadius: 2 }} />
+        <a href="/" style={{ color: '#555', textDecoration: 'none', fontSize: 11, letterSpacing: 2 }}>← BACK</a>
 
-        <h1 style={{ fontSize: 22, fontWeight: 900, color: '#ffb000', letterSpacing: 3, marginTop: 32, marginBottom: 8 }}>
-          PARTNERS
+        <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: 1, marginTop: 28, marginBottom: 8, background: 'linear-gradient(135deg, #f8f700 0%, #fbae17 45%, #7f47dd 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>
+          Partners
         </h1>
-        <p style={{ fontSize: 11, color: '#555', letterSpacing: 1, marginBottom: 48 }}>
+        <p style={{ fontSize: 14, color: '#888', letterSpacing: 0.2, marginBottom: 40 }}>
           The ecosystem powering Stocks on Solana.
         </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {partners.map(p => (
             <a
               key={p.name}
               href={p.url}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ display: 'block', background: '#111', border: '1px solid #1e1e1e', borderRadius: 8, padding: '20px 24px', textDecoration: 'none', transition: 'border-color 0.15s' }}
+              style={{ display: 'flex', gap: 16, alignItems: 'flex-start', background: '#111', border: '1px solid #1e1e1e', borderRadius: 10, padding: '20px 22px', textDecoration: 'none', transition: 'border-color 0.15s' }}
               onMouseEnter={e => (e.currentTarget.style.borderColor = '#ffb000')}
               onMouseLeave={e => (e.currentTarget.style.borderColor = '#1e1e1e')}
             >
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#ffb000', letterSpacing: 2, marginBottom: 8 }}>{p.name}</div>
-              <div style={{ fontSize: 11, color: '#666', lineHeight: 1.7, letterSpacing: 0.5 }}>{p.description}</div>
+              {p.logo ? (
+                <img src={p.logo} alt="" width={36} height={36} style={{ objectFit: 'contain', flexShrink: 0 }} />
+              ) : (
+                <div style={{ width: 36, height: 36, flexShrink: 0 }} />
+              )}
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: p.color || '#ffb000', letterSpacing: 1.5, marginBottom: 8 }}>{p.name}</div>
+                <div style={{ fontSize: 13, color: '#777', lineHeight: 1.65 }}>{p.description}</div>
+              </div>
             </a>
           ))}
         </div>
 
-        <div style={{ marginTop: 64, padding: '24px', border: '1px dashed #2a2a2a', borderRadius: 8, textAlign: 'center' }}>
+        <div style={{ marginTop: 56, padding: 24, border: '1px dashed #2a2a2a', borderRadius: 10, textAlign: 'center' }}>
           <div style={{ fontSize: 11, color: '#555', letterSpacing: 1, marginBottom: 12 }}>BECOME A PARTNER</div>
-          <a href="mailto:hello@stocksonsolana.com" style={{ fontSize: 11, color: '#ffb000', letterSpacing: 2, textDecoration: 'none' }}>
+          <a href="mailto:hello@stocksonsolana.com" style={{ fontSize: 12, color: '#ffb000', letterSpacing: 1, textDecoration: 'none' }}>
             hello@stocksonsolana.com →
           </a>
         </div>

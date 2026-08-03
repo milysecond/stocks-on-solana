@@ -506,12 +506,14 @@ export function getBackpackTradeUrl(token: StockToken): string | null {
   return `https://backpack.exchange/trade/${pair}?referral=${BACKPACK_REFERRAL}`;
 }
 
-/** Canonical in-app deep link for a token page */
-export function getTokenPagePath(token: { symbol: string }): string {
-  return `/token/${encodeURIComponent(token.symbol.toLowerCase())}`;
+/** Canonical in-app deep link for a token page (mint disambiguates bare tickers) */
+export function getTokenPagePath(token: { symbol: string; mint?: string }): string {
+  const base = `/token/${encodeURIComponent(token.symbol.toLowerCase())}`;
+  if (token.mint) return `${base}?mint=${encodeURIComponent(token.mint)}`;
+  return base;
 }
 
-export function getTokenPageUrl(token: { symbol: string }): string {
+export function getTokenPageUrl(token: { symbol: string; mint?: string }): string {
   return `https://stocksonsolana.com${getTokenPagePath(token)}`;
 }
 

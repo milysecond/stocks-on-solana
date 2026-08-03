@@ -64,7 +64,7 @@ function providerFromAsset(asset: ScreenerAsset): TokenProvider {
 async function fetchAllScreenerAssets(): Promise<ScreenerAsset[]> {
   const fetchPage = async (offset: number) => {
     const url = `${DATAPI_BASE}?offset=${offset}&includeOndoStatus=false`;
-    const res = await fetch(url, { next: { revalidate: 60 } });
+    const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) throw new Error(`datapi returned ${res.status}`);
     return res.json() as Promise<{ assets: ScreenerAsset[]; total: number }>;
   };
@@ -96,7 +96,7 @@ async function fetchAllScreenerAssets(): Promise<ScreenerAsset[]> {
 async function fetchScreener(key: string): Promise<ScreenerAsset[]> {
   const fetchPage = async (offset: number) => {
     const url = `${DATAPI_BASE}?stocks=${key}&offset=${offset}&includeOndoStatus=false`;
-    const res = await fetch(url, { next: { revalidate: 60 } });
+    const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) throw new Error(`datapi ${key} returned ${res.status}`);
     return res.json() as Promise<{ assets: ScreenerAsset[]; total: number }>;
   };

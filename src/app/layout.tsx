@@ -100,7 +100,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" data-theme="dark" className={`dark ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
       <head>
         <link rel="preconnect" href="https://api.jup.ag" />
         <link rel="dns-prefetch" href="https://api.jup.ag" />

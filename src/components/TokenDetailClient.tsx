@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import LoadingOrb from '@/components/LoadingOrb';
 
 export type TokenDetailProps = {
   symbol: string;
@@ -302,9 +303,12 @@ export default function TokenDetailClient(props: TokenDetailProps) {
               fontFamily: 'var(--font-mono), "JetBrains Mono", monospace',
               color: '#ffb000',
               lineHeight: 1,
+              minHeight: 48,
+              display: 'flex',
+              alignItems: 'center',
             }}
           >
-            {fmt(price)}
+            {price == null ? <LoadingOrb state="searching" size={64} /> : fmt(price)}
           </div>
         </div>
 

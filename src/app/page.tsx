@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, ExternalLink, Search, X, TrendingUp, TrendingDown, Droplets, BarChart2, ChevronLeft, ChevronRight, Star, LogOut, Shield, FileText, Handshake } from 'lucide-react';
 import { StockToken, getFlashTradeUrl, getBackpackTradeUrl, getJupiterTradeUrl, getXStocksTradeUrl, getTokenPagePath, getTokenPageUrl } from '@/lib/tokens';
+import LoadingOrb from '@/components/LoadingOrb';
 
 interface PriceEntry {
   price: number;
@@ -1363,6 +1364,19 @@ function HomeInner() {
         .card-vol { font-size: 10px; color: var(--text-dim); }
 
         /* ── Loading ── */
+        .orb-live-banner {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          height: 32px;
+          font-size: 10px;
+          letter-spacing: 1.5px;
+          color: #888;
+          border-bottom: 1px solid var(--border);
+          background: rgba(10,10,10,0.9);
+        }
+
         @keyframes shimmer {
           0% { background-position: -200% center; }
           100% { background-position: 200% center; }
@@ -2043,8 +2057,9 @@ function HomeInner() {
                 {totalLiq > 0 && <span className="sb-item"><span className="sb-label">LIQUIDITY</span><span className="sb-value">{fmtVol(totalLiq)}</span></span>}
                 {solPrice && <span className="sb-item"><span className="sb-label">SOL</span><span className="sb-value">${solPrice.toFixed(2)}</span></span>}
                 <span className="sb-item">
-                  <button onClick={fetchPrices} style={{background:'none',border:'none',cursor:'pointer',color:'#555',fontFamily:'inherit',fontSize:9,letterSpacing:1,display:'flex',alignItems:'center',gap:4,padding:0}}>
-                    <RefreshCw size={9} className={loading ? 'animate-spin' : ''} style={loading ? {color:'#ffb000'} : {}} />REFRESH
+                  <button onClick={fetchPrices} style={{background:'none',border:'none',cursor:'pointer',color:'#555',fontFamily:'inherit',fontSize:9,letterSpacing:1,display:'flex',alignItems:'center',gap:5,padding:0}} title="Refresh prices">
+                    {loading ? <LoadingOrb state="working" size={20} /> : <RefreshCw size={9} />}
+                    REFRESH
                   </button>
                 </span>
               </>
@@ -2056,6 +2071,19 @@ function HomeInner() {
             );
           })()}
         </div>
+
+        {loading && rows.length > 0 && (
+          <div className="orb-live-banner" aria-live="polite">
+            <LoadingOrb state="solving" size={20} />
+            <span>Updating marks…</span>
+          </div>
+        )}
+        {/* Initial load — thinking orbs (https://orbs.jakubantalik.com) */}
+        {rows.length === 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '52vh', flexDirection: 'column', gap: 8 }}>
+            <LoadingOrb state="searching" size={64} label="Scanning Solana stocks" />
+          </div>
+        )}
 
         {/* Sort bar (mobile) */}
         <div className="sort-bar">

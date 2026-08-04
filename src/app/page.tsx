@@ -1882,7 +1882,7 @@ function HomeInner() {
               </button>
               <div className="welcome-note">NO WALLET REQUIRED TO BROWSE · CLOSES IN {welcomeCountdown}s</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px 14px', marginTop: 18, fontSize: 10, letterSpacing: 1.5 }}>
-                <a href="/brand" style={{ color: '#666', textDecoration: 'none' }}>BRAND</a>
+                <a href="/exchanges" style={{ color: '#888', textDecoration: 'none', marginRight: 12 }}>EXCHANGES</a><a href="/brand" style={{ color: '#666', textDecoration: 'none' }}>BRAND</a>
                 <a href="/press" style={{ color: '#666', textDecoration: 'none' }}>PRESS</a>
                 <button type="button" onClick={() => { dismissWelcome(); setShowPartners(true); }} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontFamily: 'inherit', fontSize: 10, letterSpacing: 1.5, padding: 0 }}>PARTNERS</button>
                 <button type="button" onClick={() => { dismissWelcome(); setShowPrivacy(true); }} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontFamily: 'inherit', fontSize: 10, letterSpacing: 1.5, padding: 0 }}>PRIVACY</button>

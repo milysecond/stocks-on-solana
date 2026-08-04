@@ -16,6 +16,7 @@ const RESERVED = new Set([
   'partners',
   'brand',
   'press',
+  'exchanges',
   'api',
   'dashboard',
   'token',

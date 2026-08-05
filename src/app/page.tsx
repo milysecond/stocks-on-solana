@@ -698,17 +698,18 @@ function HomeInner() {
   };
 
 
-  // Fetch token ages once on mount (creation dates never change)
+  // Ages also available via /api/token-ages (Jupiter createdAt) — merge if screener omitted
   useEffect(() => {
     fetch('/api/token-ages')
       .then(r => r.json())
       .then((ages: Record<string, number>) => {
+        if (!ages || !Object.keys(ages).length) return;
         setRows(prev => prev.map(row => ({
           ...row,
-          createdAt: ages[row.mint] ?? null,
+          createdAt: row.createdAt ?? ages[row.mint] ?? null,
         })));
       })
-      .catch(err => console.error('[token-ages] failed to load:', err));
+      .catch(() => { /* non-fatal */ });
   }, []);
 
   const toggleStar = useCallback((mint: string) => {
@@ -749,8 +750,10 @@ function HomeInner() {
       const data = await res.json() as {
         tokens: StockToken[];
         prices: Record<string, PriceEntry>;
+        ages?: Record<string, number>;
       };
       const prices = data.prices || {};
+      const ages = data.ages || {};
       const tokens = (data.tokens?.length ? data.tokens : ALL_TOKENS).filter(t => t.mint);
       setRows(prev => {
         const ageByMint = new Map(prev.map(r => [r.mint, r.createdAt] as const));
@@ -763,7 +766,8 @@ function HomeInner() {
           stockPrice: prices[t.mint]?.stockPrice ?? null,
           mcap: prices[t.mint]?.mcap ?? null,
           underlyingMcap: prices[t.mint]?.underlyingMcap ?? null,
-          createdAt: ageByMint.get(t.mint) ?? null,
+          // Prefer fresh Jupiter ages; keep prior if missing
+          createdAt: ages[t.mint] ?? ageByMint.get(t.mint) ?? null,
         }));
       });
       setLastUpdated(new Date());

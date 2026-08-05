@@ -11,6 +11,9 @@ export interface ScreenerAsset {
   liquidity?: number;
   mcap?: number;
   tags?: string[];
+  /** ISO mint / listing time from Jupiter */
+  createdAt?: string;
+  firstPool?: { id?: string; createdAt?: string };
   stockData?: { id: string; price: number; mcap: number; updatedAt: string };
   stats24h?: {
     priceChange?: number;
@@ -33,6 +36,8 @@ export type PriceEntry = {
 export type ScreenerBundle = {
   tokens: StockToken[];
   prices: Record<string, PriceEntry>;
+  /** mint → unix seconds (from Jupiter createdAt / firstPool) */
+  ages: Record<string, number>;
   updatedAt: number;
 };
 
@@ -52,6 +57,24 @@ const CACHE_TTL_MS = 25_000;
 
 let memCache: { at: number; assets: ScreenerAsset[] } | null = null;
 let inflight: Promise<ScreenerAsset[]> | null = null;
+
+/** Prefer token createdAt, else first pool time → unix seconds */
+function assetAgeUnix(asset: ScreenerAsset): number | null {
+  const raw = asset.createdAt || asset.firstPool?.createdAt;
+  if (!raw) return null;
+  const ms = Date.parse(raw);
+  if (Number.isNaN(ms)) return null;
+  return Math.floor(ms / 1000);
+}
+
+function assetsToAges(assets: ScreenerAsset[]): Record<string, number> {
+  const ages: Record<string, number> = {};
+  for (const a of assets) {
+    const ts = assetAgeUnix(a);
+    if (ts != null) ages[a.id] = ts;
+  }
+  return ages;
+}
 
 function cleanName(name: string): string {
   return name
@@ -216,11 +239,23 @@ export async function fetchScreenerBundle(): Promise<ScreenerBundle> {
     return {
       tokens: tokens.length > 0 ? tokens : ALL_TOKENS,
       prices: assetsToPrices(assets),
+      ages: assetsToAges(assets),
       updatedAt: Date.now(),
     };
   } catch (e) {
     console.error('[discover-tokens] bundle failed:', e);
-    return { tokens: ALL_TOKENS, prices: {}, updatedAt: Date.now() };
+    return { tokens: ALL_TOKENS, prices: {}, ages: {}, updatedAt: Date.now() };
+  }
+}
+
+/** Ages only — same Jupiter crawl/cache, no RPC history walks */
+export async function fetchTokenAges(): Promise<Record<string, number>> {
+  try {
+    const assets = await fetchAllScreenerAssets();
+    return assetsToAges(assets);
+  } catch (e) {
+    console.error('[discover-tokens] ages failed:', e);
+    return {};
   }
 }
 

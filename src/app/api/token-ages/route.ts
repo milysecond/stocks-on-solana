@@ -1,19 +1,19 @@
 import { NextResponse } from 'next/server';
+import { fetchTokenAges } from '@/lib/discover-tokens';
 
 export const runtime = 'edge';
-export const revalidate = 86400;
+export const revalidate = 3600;
 
 /**
- * Token ages are optional UI sugar. Never block the screener on RPC history walks.
- * Returns empty map quickly — age filter degrades gracefully until a background job exists.
+ * Token ages from Jupiter `createdAt` / `firstPool.createdAt` (unix seconds).
+ * Fast — shares the screener crawl cache. No Solana RPC history walks.
  */
 export async function GET() {
-  return NextResponse.json(
-    {},
-    {
-      headers: {
-        'Cache-Control': 'public, max-age=3600, s-maxage=86400',
-      },
+  const ages = await fetchTokenAges();
+  return NextResponse.json(ages, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400, max-age=300',
+      'CDN-Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
     },
-  );
+  });
 }

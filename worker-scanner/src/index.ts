@@ -22,6 +22,8 @@ interface JupiterAsset {
   usdPrice?: number | string | null;
   mcap?: number | string | null;
   liquidity?: number | string | null;
+  createdAt?: string | null;
+  firstPool?: { id?: string; createdAt?: string | null } | null;
   stockData?: {
     price?: number | string | null;
     mcap?: number | string | null;
@@ -51,6 +53,7 @@ interface TokenInfo {
   liquidity: number;
   volume24h: number;
   priceChange24h: number | null;
+  createdAt: number | null; // unix sec
 }
 
 const DATAPI_BASE = 'https://datapi.jup.ag/v2/assets/stocks/24h';
@@ -73,6 +76,7 @@ const PROVIDERS: Array<{ key: string; label: string }> = [
 const KV_KNOWN_MINTS = 'known_mints';
 const KV_LAST_NEW_TOKEN_TIME = 'last_new_token_time';
 const KV_LAST_GAINER_LOSER = 'last_gainer_loser_tweet';
+const KV_TOKEN_AGES = 'token_ages'; // mint -> unix sec
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 
 function formatPrice(value: number | null): string {
@@ -136,6 +140,8 @@ async function fetchProvider(key: string, label: string): Promise<TokenInfo[]> {
     for (const a of page) {
       const buy = toNumber(a.stats24h?.buyVolume) ?? 0;
       const sell = toNumber(a.stats24h?.sellVolume) ?? 0;
+      const createdRaw = a.createdAt || a.firstPool?.createdAt || null;
+      const createdMs = createdRaw ? Date.parse(createdRaw) : NaN;
       tokens.push({
         mint: a.id,
         symbol: a.symbol ?? '',
@@ -148,6 +154,7 @@ async function fetchProvider(key: string, label: string): Promise<TokenInfo[]> {
         liquidity: toNumber(a.liquidity) ?? 0,
         volume24h: buy + sell,
         priceChange24h: toNumber(a.stats24h?.priceChange),
+        createdAt: Number.isFinite(createdMs) ? Math.floor(createdMs / 1000) : null,
       });
     }
 
@@ -402,6 +409,19 @@ async function runScan(env: Env): Promise<void> {
 
   const updatedMints = new Set([...knownMints, ...allTokens.map((t) => t.mint)]);
   await saveKnownMints(kv, updatedMints);
+  // Store ages map in KV for durable site reads (mint → unix sec)
+  try {
+    const prevRaw = await kv.get(KV_TOKEN_AGES);
+    const ages: Record<string, number> = prevRaw ? JSON.parse(prevRaw) : {};
+    for (const tok of allTokens) {
+      if (tok.createdAt != null) ages[tok.mint] = tok.createdAt;
+    }
+    await kv.put(KV_TOKEN_AGES, JSON.stringify(ages));
+    console.log(`[scanner] Persisted ${Object.keys(ages).length} token ages to KV`);
+  } catch (e) {
+    console.error('[scanner] ages KV write failed', e);
+  }
+
   console.log(`[scanner] Saved ${updatedMints.size} known mints`);
   console.log(`[scanner] Scan complete at ${new Date().toISOString()}`);
 }

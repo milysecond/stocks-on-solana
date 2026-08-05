@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import LoadingOrb from '@/components/LoadingOrb';
+import TradingViewChart, { toTradingViewSymbol } from '@/components/TradingViewChart';
 
 export type TokenDetailProps = {
   symbol: string;
@@ -84,7 +85,7 @@ export default function TokenDetailClient(props: TokenDetailProps) {
   const [underlyingMcap, setUnderlyingMcap] = useState<number | null>(initial?.underlyingMcap ?? null);
   const [icon, setIcon] = useState<string | null>(initial?.icon ?? null);
   const [copied, setCopied] = useState(false);
-  const [chartSrc, setChartSrc] = useState<'gecko' | 'dex'>('gecko');
+  const [chartSrc, setChartSrc] = useState<'stock' | 'token' | 'dex'>('stock');
 
   const providerLogo = PROVIDER_LOGO[provider] || null;
   const providerColor = PROVIDER_COLOR[provider] || '#ffb000';
@@ -161,6 +162,7 @@ export default function TokenDetailClient(props: TokenDetailProps) {
 
   const geckoUrl = `https://www.geckoterminal.com/solana/tokens/${mint}?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=price&resolution=15m&bg_color=0a0a0a`;
   const dexUrl = `https://dexscreener.com/solana/${mint}?embed=1&theme=dark&trades=0&info=0`;
+  const tvSymbol = toTradingViewSymbol(underlying);
 
   const solscan = `https://solscan.io/token/${mint}`;
   const companySearch = `https://www.google.com/search?q=${encodeURIComponent(name + ' stock ' + underlying)}`;
@@ -464,7 +466,7 @@ export default function TokenDetailClient(props: TokenDetailProps) {
         </div>
       </div>
 
-      {/* Chart */}
+      {/* Chart — STOCK (TradingView) default · TOKEN (Gecko) · DEX */}
       <div style={{ marginBottom: 28 }}>
         <div
           style={{
@@ -480,8 +482,9 @@ export default function TokenDetailClient(props: TokenDetailProps) {
           <div style={{ display: 'flex', gap: 6 }}>
             {(
               [
-                ['gecko', 'GeckoTerminal'],
-                ['dex', 'DexScreener'],
+                ['stock', 'STOCK'],
+                ['token', 'TOKEN'],
+                ['dex', 'DEX'],
               ] as const
             ).map(([key, label]) => (
               <button
@@ -515,16 +518,37 @@ export default function TokenDetailClient(props: TokenDetailProps) {
             height: 420,
           }}
         >
-          <iframe
-            title={`${symbol} chart`}
-            src={chartSrc === 'gecko' ? geckoUrl : dexUrl}
-            style={{ width: '100%', height: '100%', border: 0 }}
-            allow="clipboard-write"
-            loading="lazy"
-          />
+          {chartSrc === 'stock' ? (
+            <TradingViewChart symbol={tvSymbol} height={420} />
+          ) : (
+            <iframe
+              title={`${symbol} on-chain chart`}
+              src={chartSrc === 'token' ? geckoUrl : dexUrl}
+              style={{ width: '100%', height: '100%', border: 0 }}
+              allow="clipboard-write"
+              loading="lazy"
+            />
+          )}
         </div>
-        <div style={{ marginTop: 8, fontSize: 11, color: '#555' }}>
-          Chart via {chartSrc === 'gecko' ? 'GeckoTerminal' : 'DexScreener'} · not affiliated
+        <div style={{ marginTop: 8, fontSize: 11, color: '#555', display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <span>
+            {chartSrc === 'stock'
+              ? `TradingView · ${tvSymbol} (underlying)`
+              : chartSrc === 'token'
+                ? 'GeckoTerminal · on-chain token'
+                : 'DexScreener · on-chain pool'}
+            {' '}· not affiliated
+          </span>
+          {chartSrc === 'stock' ? (
+            <a
+              href={`https://www.tradingview.com/chart/?symbol=${encodeURIComponent(tvSymbol)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#888', textDecoration: 'none' }}
+            >
+              Open in TradingView ↗
+            </a>
+          ) : null}
         </div>
       </div>
 

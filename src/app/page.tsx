@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, ExternalLink, Search, X, TrendingUp, TrendingDown, Droplets, BarChart2, ChevronLeft, ChevronRight, Star, LogOut, Shield, FileText, Handshake } from 'lucide-react';
-import { StockToken, getFlashTradeUrl, getBackpackTradeUrl, getJupiterTradeUrl, getXStocksTradeUrl, getTokenPagePath, getTokenPageUrl } from '@/lib/tokens';
+import { ALL_TOKENS, StockToken, getFlashTradeUrl, getBackpackTradeUrl, getJupiterTradeUrl, getXStocksTradeUrl, getTokenPagePath, getTokenPageUrl } from '@/lib/tokens';
 import LoadingOrb from '@/components/LoadingOrb';
 
 interface PriceEntry {
@@ -599,7 +599,19 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
 function HomeInner() {
   const searchParams = useSearchParams();
 
-  const [rows, setRows] = useState<StockRow[]>([]);
+  const [rows, setRows] = useState<StockRow[]>(() =>
+    ALL_TOKENS.filter(t => t.mint).map(t => ({
+      ...t,
+      price: null,
+      change24h: null,
+      volume24h: null,
+      liquidity: null,
+      stockPrice: null,
+      mcap: null,
+      underlyingMcap: null,
+      createdAt: null,
+    }))
+  );
   const [sortKey, setSortKey] = useState<SortKey>('volume24h');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   /** Hide illiquid ghosts when sorting by 24h % (thin books print nonsense marks) */
@@ -685,25 +697,6 @@ function HomeInner() {
     try { localStorage.setItem('sos-welcomed', '1'); } catch { /* */ }
   };
 
-  // Fetch token list dynamically — auto-discovers new tokens from Jupiter
-  useEffect(() => {
-    fetch('/api/token-list')
-      .then(r => r.json())
-      .then((tokens: StockToken[]) => {
-        setRows(tokens.map(t => ({
-          ...t,
-          price: null,
-          change24h: null,
-          volume24h: null,
-          liquidity: null,
-          stockPrice: null,
-          mcap: null,
-          underlyingMcap: null,
-          createdAt: null,
-        })));
-      })
-      .catch(err => console.error('[token-list] failed to load:', err));
-  }, []);
 
   // Fetch token ages once on mount (creation dates never change)
   useEffect(() => {
@@ -747,35 +740,65 @@ function HomeInner() {
     }
   };
 
-  const fetchPrices = useCallback(async () => {
-    setLoading(true);
+  // One-shot screener bootstrap (tokens + prices) — replaces token-list + prices waterfall
+  const fetchScreener = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true);
     try {
-      const res = await fetch('/api/prices');
-      const data: Record<string, PriceEntry> = await res.json();
-      setRows(prev => prev.map(row => ({
-        ...row,
-        price: data[row.mint]?.price ?? null,
-        change24h: data[row.mint]?.change24h ?? null,
-        volume24h: data[row.mint]?.volume24h ?? null,
-        liquidity: data[row.mint]?.liquidity ?? null,
-        stockPrice: data[row.mint]?.stockPrice ?? null,
-        mcap: data[row.mint]?.mcap ?? null,
-        underlyingMcap: data[row.mint]?.underlyingMcap ?? null,
-        // preserve createdAt — ages endpoint manages it
-      })));
+      const res = await fetch('/api/screener', { cache: 'no-cache' });
+      if (!res.ok) throw new Error(`screener ${res.status}`);
+      const data = await res.json() as {
+        tokens: StockToken[];
+        prices: Record<string, PriceEntry>;
+      };
+      const prices = data.prices || {};
+      const tokens = (data.tokens?.length ? data.tokens : ALL_TOKENS).filter(t => t.mint);
+      setRows(prev => {
+        const ageByMint = new Map(prev.map(r => [r.mint, r.createdAt] as const));
+        return tokens.map(t => ({
+          ...t,
+          price: prices[t.mint]?.price ?? null,
+          change24h: prices[t.mint]?.change24h ?? null,
+          volume24h: prices[t.mint]?.volume24h ?? null,
+          liquidity: prices[t.mint]?.liquidity ?? null,
+          stockPrice: prices[t.mint]?.stockPrice ?? null,
+          mcap: prices[t.mint]?.mcap ?? null,
+          underlyingMcap: prices[t.mint]?.underlyingMcap ?? null,
+          createdAt: ageByMint.get(t.mint) ?? null,
+        }));
+      });
       setLastUpdated(new Date());
     } catch (e) {
-      console.error(e);
+      console.error('[screener]', e);
+      // Fallback: prices-only so static shell still hydrates
+      try {
+        const res = await fetch('/api/prices');
+        const prices: Record<string, PriceEntry> = await res.json();
+        setRows(prev => prev.map(row => ({
+          ...row,
+          price: prices[row.mint]?.price ?? row.price,
+          change24h: prices[row.mint]?.change24h ?? row.change24h,
+          volume24h: prices[row.mint]?.volume24h ?? row.volume24h,
+          liquidity: prices[row.mint]?.liquidity ?? row.liquidity,
+          stockPrice: prices[row.mint]?.stockPrice ?? row.stockPrice,
+          mcap: prices[row.mint]?.mcap ?? row.mcap,
+          underlyingMcap: prices[row.mint]?.underlyingMcap ?? row.underlyingMcap,
+        })));
+        setLastUpdated(new Date());
+      } catch (e2) {
+        console.error(e2);
+      }
     } finally {
-      setLoading(false);
+      if (!opts?.silent) setLoading(false);
     }
   }, []);
 
+  const fetchPrices = fetchScreener;
+
   useEffect(() => {
-    const t = setTimeout(fetchPrices, 100);
-    const interval = setInterval(fetchPrices, 30000);
-    return () => { clearTimeout(t); clearInterval(interval); };
-  }, [fetchPrices]);
+    void fetchScreener();
+    const interval = setInterval(() => void fetchScreener({ silent: true }), 30000);
+    return () => clearInterval(interval);
+  }, [fetchScreener]);
 
   // SOL price — fetch once and refresh every 30s
   useEffect(() => {
@@ -2057,7 +2080,7 @@ function HomeInner() {
                 {totalLiq > 0 && <span className="sb-item"><span className="sb-label">LIQUIDITY</span><span className="sb-value">{fmtVol(totalLiq)}</span></span>}
                 {solPrice && <span className="sb-item"><span className="sb-label">SOL</span><span className="sb-value">${solPrice.toFixed(2)}</span></span>}
                 <span className="sb-item">
-                  <button onClick={fetchPrices} style={{background:'none',border:'none',cursor:'pointer',color:'#555',fontFamily:'inherit',fontSize:9,letterSpacing:1,display:'flex',alignItems:'center',gap:5,padding:0}} title="Refresh prices">
+                  <button onClick={() => void fetchPrices()} style={{background:'none',border:'none',cursor:'pointer',color:'#555',fontFamily:'inherit',fontSize:9,letterSpacing:1,display:'flex',alignItems:'center',gap:5,padding:0}} title="Refresh prices">
                     {loading ? <LoadingOrb state="working" size={20} /> : <RefreshCw size={9} />}
                     REFRESH
                   </button>

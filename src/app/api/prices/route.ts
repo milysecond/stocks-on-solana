@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { fetchScreenerPrices } from '@/lib/discover-tokens';
 
 export const runtime = 'edge';
-export const revalidate = 30;
+export const revalidate = 20;
 
 export interface PriceEntry {
   price: number;
@@ -16,5 +16,10 @@ export interface PriceEntry {
 
 export async function GET() {
   const result = await fetchScreenerPrices();
-  return NextResponse.json(result);
+  return NextResponse.json(result, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=20, stale-while-revalidate=60, max-age=10',
+      'CDN-Cache-Control': 'public, s-maxage=20, stale-while-revalidate=60',
+    },
+  });
 }

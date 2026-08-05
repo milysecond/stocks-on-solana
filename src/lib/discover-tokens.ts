@@ -3,13 +3,13 @@ import { ALL_TOKENS, StockToken, TokenProvider } from './tokens';
 const DATAPI_BASE = 'https://datapi.jup.ag/v2/assets/stocks/24h';
 
 export interface ScreenerAsset {
-  id: string;           // mint address
+  id: string;
   name: string;
   symbol: string;
   icon?: string;
   usdPrice?: number;
   liquidity?: number;
-  mcap?: number;        // on-chain tokenized market cap
+  mcap?: number;
   tags?: string[];
   stockData?: { id: string; price: number; mcap: number; updatedAt: string };
   stats24h?: {
@@ -20,10 +20,24 @@ export interface ScreenerAsset {
   };
 }
 
-/** Jupiter stockData.id → UI provider label */
+export type PriceEntry = {
+  price: number | null;
+  change24h: number | null;
+  volume24h: number | null;
+  liquidity: number | null;
+  stockPrice: number | null;
+  mcap: number | null;
+  underlyingMcap: number | null;
+};
+
+export type ScreenerBundle = {
+  tokens: StockToken[];
+  prices: Record<string, PriceEntry>;
+  updatedAt: number;
+};
+
 const PROVIDER_LABEL: Record<string, TokenProvider> = {
   xstocks: 'xStocks',
-  // Backpack Securities issued via Sunrise protocol
   backpack: 'Sunrise',
   ondo: 'Ondo',
   prestocks: 'PreStocks',
@@ -33,8 +47,12 @@ const PROVIDER_LABEL: Record<string, TokenProvider> = {
 };
 
 const PAGE_SIZE = 50;
+/** Shared edge-isolate cache — one Jupiter crawl for token-list + prices */
+const CACHE_TTL_MS = 25_000;
 
-/** Strip issuer suffixes from display names */
+let memCache: { at: number; assets: ScreenerAsset[] } | null = null;
+let inflight: Promise<ScreenerAsset[]> | null = null;
+
 function cleanName(name: string): string {
   return name
     .replace(/\s*[-–—]\s*Backpack Securities\s*$/i, '')
@@ -48,99 +66,131 @@ function cleanName(name: string): string {
 function providerFromAsset(asset: ScreenerAsset): TokenProvider {
   const sid = (asset.stockData?.id || '').toLowerCase();
   if (sid && PROVIDER_LABEL[sid]) return PROVIDER_LABEL[sid];
-  const tags = (asset.tags || []).map(t => t.toLowerCase());
+  const tags = (asset.tags || []).map((t) => t.toLowerCase());
   for (const [key, label] of Object.entries(PROVIDER_LABEL)) {
     if (tags.includes(key)) return label;
   }
-  // backpack tag sometimes missing stockData id path
   if (tags.includes('backpack')) return 'Sunrise';
   return 'Other';
 }
 
-/**
- * Fetch ALL tokenized stocks Jupiter indexes (no stocks= filter).
- * Covers xStocks, Sunrise/Backpack, Ondo, PreStocks, Shift, Tessera, Superstate.
- */
-async function fetchAllScreenerAssets(): Promise<ScreenerAsset[]> {
-  const fetchPage = async (offset: number) => {
-    const url = `${DATAPI_BASE}?offset=${offset}&includeOndoStatus=false`;
-    const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`datapi returned ${res.status}`);
-    return res.json() as Promise<{ assets: ScreenerAsset[]; total: number }>;
-  };
-
-  const first = await fetchPage(0);
-  const assets = [...(first.assets ?? [])];
-  const total = first.total ?? 0;
-
-  if (total > PAGE_SIZE) {
-    const pageCount = Math.ceil(total / PAGE_SIZE);
-    const pages = await Promise.all(
-      Array.from({ length: pageCount - 1 }, (_, i) => fetchPage((i + 1) * PAGE_SIZE))
-    );
-    for (const page of pages) assets.push(...(page.assets ?? []));
-  }
-
-  // de-dupe by mint
-  const seen = new Set<string>();
-  const unique: ScreenerAsset[] = [];
-  for (const a of assets) {
-    if (!a.id || seen.has(a.id)) continue;
-    seen.add(a.id);
-    unique.push(a);
-  }
-  return unique;
+async function fetchPage(offset: number): Promise<{ assets: ScreenerAsset[]; total: number }> {
+  const url = `${DATAPI_BASE}?offset=${offset}&includeOndoStatus=false`;
+  // Prefer short CDN cache at fetch layer when platform supports it
+  const res = await fetch(url, {
+    headers: { Accept: 'application/json' },
+    next: { revalidate: 20 },
+  });
+  if (!res.ok) throw new Error(`datapi returned ${res.status}`);
+  return res.json() as Promise<{ assets: ScreenerAsset[]; total: number }>;
 }
 
-/** @deprecated prefer fetchAllScreenerAssets — kept for scripts that pass a key */
+/**
+ * Fetch ALL tokenized stocks Jupiter indexes.
+ * Single-flight + 25s memory cache so concurrent API routes share one crawl.
+ */
+async function fetchAllScreenerAssets(): Promise<ScreenerAsset[]> {
+  const now = Date.now();
+  if (memCache && now - memCache.at < CACHE_TTL_MS) {
+    return memCache.assets;
+  }
+  if (inflight) return inflight;
+
+  inflight = (async () => {
+    try {
+      const first = await fetchPage(0);
+      const assets = [...(first.assets ?? [])];
+      const total = first.total ?? assets.length;
+
+      if (total > PAGE_SIZE) {
+        const pageCount = Math.ceil(total / PAGE_SIZE);
+        // Cap concurrency bursts — still parallel but chunked
+        const offsets = Array.from({ length: pageCount - 1 }, (_, i) => (i + 1) * PAGE_SIZE);
+        const CHUNK = 6;
+        for (let i = 0; i < offsets.length; i += CHUNK) {
+          const slice = offsets.slice(i, i + CHUNK);
+          const pages = await Promise.all(slice.map((o) => fetchPage(o)));
+          for (const page of pages) assets.push(...(page.assets ?? []));
+        }
+      }
+
+      const seen = new Set<string>();
+      const unique: ScreenerAsset[] = [];
+      for (const a of assets) {
+        if (!a.id || seen.has(a.id)) continue;
+        seen.add(a.id);
+        unique.push(a);
+      }
+
+      memCache = { at: Date.now(), assets: unique };
+      return unique;
+    } finally {
+      inflight = null;
+    }
+  })();
+
+  return inflight;
+}
+
+/** @deprecated prefer fetchAllScreenerAssets */
 async function fetchScreener(key: string): Promise<ScreenerAsset[]> {
-  const fetchPage = async (offset: number) => {
+  const fetchP = async (offset: number) => {
     const url = `${DATAPI_BASE}?stocks=${key}&offset=${offset}&includeOndoStatus=false`;
-    const res = await fetch(url, { cache: 'no-store' });
+    const res = await fetch(url, { next: { revalidate: 20 } } as RequestInit);
     if (!res.ok) throw new Error(`datapi ${key} returned ${res.status}`);
     return res.json() as Promise<{ assets: ScreenerAsset[]; total: number }>;
   };
-
-  const first = await fetchPage(0);
+  const first = await fetchP(0);
   const assets = [...(first.assets ?? [])];
   const total = first.total ?? 0;
-
   if (total > PAGE_SIZE) {
     const pageCount = Math.ceil(total / PAGE_SIZE);
     const pages = await Promise.all(
-      Array.from({ length: pageCount - 1 }, (_, i) => fetchPage((i + 1) * PAGE_SIZE))
+      Array.from({ length: pageCount - 1 }, (_, i) => fetchP((i + 1) * PAGE_SIZE)),
     );
     for (const page of pages) assets.push(...(page.assets ?? []));
   }
-
   return assets;
 }
 
-/**
- * Fetch all tokenized stock tokens from Jupiter's datapi screener.
- * Returns full list with metadata, merging in sector/company from tokens.ts.
- * Falls back to static list on error.
- */
-export async function discoverTokens(): Promise<StockToken[]> {
-  const knownMints = new Map<string, StockToken>(
-    ALL_TOKENS.map(t => [t.mint, t])
-  );
+function assetsToTokens(assets: ScreenerAsset[]): StockToken[] {
+  const knownMints = new Map<string, StockToken>(ALL_TOKENS.map((t) => [t.mint, t]));
+  return assets.map((asset): StockToken => {
+    const known = knownMints.get(asset.id);
+    return {
+      mint: asset.id,
+      symbol: asset.symbol,
+      name: known?.name ?? cleanName(asset.name),
+      provider: providerFromAsset(asset),
+      sector: known?.sector ?? 'Other',
+      company: known?.company,
+    };
+  });
+}
 
+function assetsToPrices(assets: ScreenerAsset[]): Record<string, PriceEntry> {
+  const priceMap: Record<string, PriceEntry> = {};
+  for (const asset of assets) {
+    const vol24h = asset.stats24h
+      ? (asset.stats24h.buyVolume ?? 0) + (asset.stats24h.sellVolume ?? 0)
+      : null;
+    priceMap[asset.id] = {
+      price: asset.usdPrice ?? null,
+      change24h: asset.stats24h?.priceChange ?? null,
+      volume24h: vol24h,
+      liquidity: asset.liquidity ?? null,
+      stockPrice: asset.stockData?.price ?? null,
+      mcap: asset.mcap ?? null,
+      underlyingMcap: asset.stockData?.mcap ?? null,
+    };
+  }
+  return priceMap;
+}
+
+export async function discoverTokens(): Promise<StockToken[]> {
   try {
     const assets = await fetchAllScreenerAssets();
-    const discovered = assets.map((asset): StockToken => {
-      const known = knownMints.get(asset.id);
-      const provider = providerFromAsset(asset);
-      return {
-        mint: asset.id,
-        symbol: asset.symbol,
-        name: known?.name ?? cleanName(asset.name),
-        provider,
-        sector: known?.sector ?? 'Other',
-        company: known?.company,
-      };
-    });
-
+    const discovered = assetsToTokens(assets);
     return discovered.length > 0 ? discovered : ALL_TOKENS;
   } catch (e) {
     console.error('[discover-tokens] Falling back to static list:', e);
@@ -148,54 +198,29 @@ export async function discoverTokens(): Promise<StockToken[]> {
   }
 }
 
-/**
- * Fetch live price data for all tokenized stocks from Jupiter's datapi screener.
- * Returns a map of mint address → price entry.
- *
- * mcap = on-chain tokenized market cap (asset.mcap)
- * underlyingMcap = real-world equity mcap from stockData (trillions) — for dedupe/reference only
- */
-export async function fetchScreenerPrices(): Promise<Record<string, {
-  price: number | null;
-  change24h: number | null;
-  volume24h: number | null;
-  liquidity: number | null;
-  stockPrice: number | null;
-  mcap: number | null;
-  underlyingMcap: number | null;
-}>> {
+export async function fetchScreenerPrices(): Promise<Record<string, PriceEntry>> {
   try {
     const all = await fetchAllScreenerAssets();
-    const priceMap: Record<string, {
-      price: number | null;
-      change24h: number | null;
-      volume24h: number | null;
-      liquidity: number | null;
-      stockPrice: number | null;
-      mcap: number | null;
-      underlyingMcap: number | null;
-    }> = {};
-
-    for (const asset of all) {
-      const vol24h = asset.stats24h
-        ? (asset.stats24h.buyVolume ?? 0) + (asset.stats24h.sellVolume ?? 0)
-        : null;
-      priceMap[asset.id] = {
-        price: asset.usdPrice ?? null,
-        change24h: asset.stats24h?.priceChange ?? null,
-        volume24h: vol24h,
-        liquidity: asset.liquidity ?? null,
-        stockPrice: asset.stockData?.price ?? null,
-        // on-chain token mcap — NOT stockData.mcap (equity $T)
-        mcap: asset.mcap ?? null,
-        underlyingMcap: asset.stockData?.mcap ?? null,
-      };
-    }
-
-    return priceMap;
+    return assetsToPrices(all);
   } catch (e) {
     console.error('[discover-tokens] fetchScreenerPrices failed:', e);
     return {};
+  }
+}
+
+/** One crawl → tokens + prices (preferred bootstrap) */
+export async function fetchScreenerBundle(): Promise<ScreenerBundle> {
+  try {
+    const assets = await fetchAllScreenerAssets();
+    const tokens = assetsToTokens(assets);
+    return {
+      tokens: tokens.length > 0 ? tokens : ALL_TOKENS,
+      prices: assetsToPrices(assets),
+      updatedAt: Date.now(),
+    };
+  } catch (e) {
+    console.error('[discover-tokens] bundle failed:', e);
+    return { tokens: ALL_TOKENS, prices: {}, updatedAt: Date.now() };
   }
 }
 

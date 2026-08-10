@@ -83,31 +83,51 @@ export function PageShell({
             justifyContent: 'space-between',
           }}
         >
-          <a
-            href="https://graysunderland.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Design by Gray — opens graysunderland.com"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              borderRadius: 999,
-              border: '1px solid #2a2a2a',
-              background: '#111',
-              padding: '6px 12px',
-              fontSize: 12,
-              color: '#aaa',
-              textDecoration: 'none',
-            }}
-          >
-            Design by <span style={{ color: '#e8e8e8', fontWeight: 600, marginLeft: 4 }}>Gray</span>
-          </a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <a
+              href="https://graysunderland.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Design by Gray — opens graysunderland.com"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                borderRadius: 999,
+                border: '1px solid #2a2a2a',
+                background: '#111',
+                padding: '6px 12px',
+                fontSize: 12,
+                color: '#aaa',
+                textDecoration: 'none',
+              }}
+            >
+              Design by <span style={{ color: '#e8e8e8', fontWeight: 600, marginLeft: 4 }}>Gray</span>
+            </a>
+            <a
+              href="https://milysec.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Made by Milysec — opens milysec.com"
+              style={{ display: 'inline-flex', alignItems: 'center', opacity: 0.85, lineHeight: 0 }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/brand/made-by-milysec-white.png"
+                alt="Made by Milysec"
+                height={24}
+                style={{ height: 24, width: 'auto' }}
+              />
+            </a>
+          </div>
           <div style={{ display: 'flex', gap: 16, fontSize: 11, letterSpacing: 1 }}>
             <Link href="/brand" style={{ color: '#666', textDecoration: 'none' }}>
               BRAND
             </Link>
             <Link href="/press" style={{ color: '#666', textDecoration: 'none' }}>
               PRESS
+            </Link>
+            <Link href="/exchanges" style={{ color: '#666', textDecoration: 'none' }}>
+              EXCHANGES
             </Link>
             <Link href="/partners" style={{ color: '#666', textDecoration: 'none' }}>
               PARTNERS

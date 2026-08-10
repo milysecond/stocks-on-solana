@@ -293,6 +293,38 @@ export default function ExchangesPage() {
           Informational only — not financial advice. Exchange listings change; always verify venue status,
           jurisdiction, and eligibility before trading.
         </p>
+
+        <div
+          style={{
+            marginTop: 40,
+            paddingTop: 20,
+            borderTop: '1px solid #1a1a1a',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 16,
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <a
+            href="https://graysunderland.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontSize: 12, color: '#888', textDecoration: 'none' }}
+          >
+            Design by <strong style={{ color: '#ccc' }}>Gray</strong>
+          </a>
+          <a
+            href="https://milysec.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Made by Milysec"
+            style={{ display: 'inline-flex', opacity: 0.85, lineHeight: 0 }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/made-by-milysec-white.png" alt="Made by Milysec" height={24} style={{ height: 24, width: 'auto' }} />
+          </a>
+        </div>
       </div>
     </main>
   );

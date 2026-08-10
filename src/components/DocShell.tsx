@@ -112,7 +112,7 @@ export function PageShell({
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/brand/made-by-milysec-black.png"
+                src="/made-by-milysec.png"
                 alt="Made by Milysec"
                 height={24}
                 style={{ height: 24, width: 'auto' }}

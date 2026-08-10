@@ -101,7 +101,7 @@ export default function PartnersClient() {
         <div style={{ marginTop: 40, display: 'flex', justifyContent: 'center' }}>
           <a href="https://milysec.com" target="_blank" rel="noopener noreferrer" aria-label="Made by Milysec" style={{ opacity: 0.85, lineHeight: 0 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/made-by-milysec-black.png" alt="Made by Milysec" height={28} style={{ height: 28, width: 'auto' }} />
+            <img src="/made-by-milysec.png" alt="Made by Milysec" height={28} style={{ height: 28, width: 'auto' }} />
           </a>
         </div>
       </div>

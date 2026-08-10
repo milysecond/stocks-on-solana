@@ -2271,7 +2271,7 @@ function HomeInner() {
             aria-label="Made by Milysec — opens milysec.com"
             title="Made by Milysec"
           >
-            <img src="/brand/made-by-milysec-white.png" alt="Made by Milysec" height={22} />
+            <img src="/brand/made-by-milysec-black.png" alt="Made by Milysec" height={22} />
           </a>
           <span className="footer-dot" aria-hidden>·</span>
           <button

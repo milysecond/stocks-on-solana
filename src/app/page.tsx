@@ -1725,6 +1725,20 @@ function HomeInner() {
         .footer-gray:hover,
         .footer-gray:hover strong { color: #ccc; }
         .footer-dot { color: #2a2a2a; font-size: 8px; user-select: none; }
+        .footer-milysec {
+          display: inline-flex;
+          align-items: center;
+          flex-shrink: 0;
+          opacity: 0.7;
+          transition: opacity 0.15s;
+          line-height: 0;
+        }
+        .footer-milysec:hover { opacity: 1; }
+        .footer-milysec img {
+          display: block;
+          height: 22px;
+          width: auto;
+        }
 
         /* ── Responsive ── */
         @media (max-width: 640px) {
@@ -2247,6 +2261,17 @@ function HomeInner() {
             title="Design by Gray Sunderland"
           >
             Design by <strong>Gray</strong>
+          </a>
+          <span className="footer-dot" aria-hidden>·</span>
+          <a
+            href="https://milysec.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footer-milysec"
+            aria-label="Made by Milysec — opens milysec.com"
+            title="Made by Milysec"
+          >
+            <img src="/brand/made-by-milysec-white.png" alt="Made by Milysec" height={22} />
           </a>
           <span className="footer-dot" aria-hidden>·</span>
           <button

@@ -4,7 +4,7 @@ import type { CSSProperties } from 'react';
 export const metadata: Metadata = {
   title: 'Exchanges — Trade Stocks on Solana Worldwide',
   description:
-    'Every venue to trade tokenized stocks on Solana — Jupiter, Backpack, Flash, xStocks — plus the world equity exchanges those assets track (NYSE, NASDAQ, LSE, TSE, HKEX and more).',
+    'Every venue to trade tokenized stocks on Solana — Jupiter, Backpack, xStocks — plus the world equity exchanges those assets track (NYSE, NASDAQ, LSE, TSE, HKEX and more).',
   alternates: { canonical: 'https://stocksonsolana.com/exchanges' },
   openGraph: {
     title: 'Exchanges — Stocks on Solana',
@@ -53,16 +53,6 @@ const SOLANA_VENUES: Venue[] = [
     logo: '/partners/backpack.png',
     color: '#e33e3e',
     tag: 'CEX · SUNRISE',
-    referral: true,
-  },
-  {
-    name: 'Flash Trade',
-    kind: 'solana',
-    blurb: 'Perpetual futures on Solana equities — leverage on NVDA, TSLA, AAPL and more.',
-    url: 'https://www.flash.trade?referral=newuser',
-    logo: '/partners/flash.png',
-    color: '#ff3b3b',
-    tag: 'PERPS',
     referral: true,
   },
   {

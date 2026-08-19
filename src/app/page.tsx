@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, ExternalLink, Search, X, TrendingUp, TrendingDown, Droplets, BarChart2, ChevronLeft, ChevronRight, Star, LogOut, Shield, FileText, Handshake } from 'lucide-react';
-import { ALL_TOKENS, StockToken, getFlashTradeUrl, getBackpackTradeUrl, getJupiterTradeUrl, getXStocksTradeUrl, getTokenPagePath, getTokenPageUrl } from '@/lib/tokens';
+import { ALL_TOKENS, StockToken, getBackpackTradeUrl, getJupiterTradeUrl, getXStocksTradeUrl, getTokenPagePath, getTokenPageUrl } from '@/lib/tokens';
 import LoadingOrb from '@/components/LoadingOrb';
 
 interface PriceEntry {
@@ -401,18 +401,6 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
               <img src="/partners/xstocks.png" alt="" className="partner-logo" />
             </a>
           )}
-          {getFlashTradeUrl(row) && (
-            <a
-              href={getFlashTradeUrl(row)!}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tm-buy-btn tm-buy-btn-flash tm-buy-btn-icon"
-              title="Trade on Flash"
-              aria-label="Trade on Flash"
-            >
-              <img src="/partners/flash.png" alt="" className="partner-logo" />
-            </a>
-          )}
           {getBackpackTradeUrl(row) && (
             <a
               href={getBackpackTradeUrl(row)!}
@@ -560,18 +548,6 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
                       aria-label="Trade on xStocks"
                     >
                       <img src="/partners/xstocks.png" alt="" className="partner-logo" />
-                    </a>
-                  )}
-                  {getFlashTradeUrl(row) && (
-                    <a
-                      href={getFlashTradeUrl(row)!}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="buy-btn buy-btn-flash buy-btn-icon"
-                      title="Trade on Flash"
-                      aria-label="Trade on Flash"
-                    >
-                      <img src="/partners/flash.png" alt="" className="partner-logo" />
                     </a>
                   )}
                   {getBackpackTradeUrl(row) && (
@@ -1305,8 +1281,7 @@ function HomeInner() {
         .buy-btn:hover { background: rgba(255,153,0,0.1); border-color: rgba(255,153,0,0.3); }
         .buy-btn-xstocks { color: #00c2ff; }
         .buy-btn-xstocks:hover { background: rgba(0,194,255,0.08); border-color: rgba(0,194,255,0.3); }
-        .buy-btn-flash { color: #ff3b3b; }
-        .buy-btn-flash:hover { background: rgba(255,59,59,0.08); border-color: rgba(255,59,59,0.3); }
+
 
         .partner-logo {
           width: 14px;
@@ -1668,8 +1643,7 @@ function HomeInner() {
         .tm-buy-btn:hover { opacity: 0.9; }
         .tm-buy-btn-secondary { background: transparent; border: 1px solid rgba(0,194,255,0.4); color: #00c2ff; flex: none; padding: 10px 14px; }
         .tm-buy-btn-secondary:hover { background: rgba(0,194,255,0.08); opacity: 1; }
-        .tm-buy-btn-flash { background: transparent; border: 1px solid rgba(255,59,59,0.4); color: #ff3b3b; flex: none; padding: 10px 14px; }
-        .tm-buy-btn-flash:hover { background: rgba(255,59,59,0.08); opacity: 1; }
+
         .tm-link-btn {
           display: inline-flex;
           align-items: center;
@@ -2013,7 +1987,6 @@ function HomeInner() {
                 { name: 'Jupiter', desc: 'The leading DEX aggregator on Solana. All buy orders route through Jupiter for best execution.', url: 'https://jup.ag/?ref=yfgv2ibxy07v', logo: '/partners/jupiter.png' },
                 { name: 'xStocks', desc: 'Tokenized equities on Solana — trade stocks including Apple, Tesla, NVIDIA and more with instant settlement.', url: 'https://defi.xstocks.fi/points?ref=NEWUSER', color: '#00c2ff', logo: '/partners/xstocks.png' },
                 { name: 'Backpack', desc: 'Regulated exchange + Sunrise tokenized equities — redeemable 1:1 shares on Solana.', url: 'https://backpack.exchange/signup?referral=downunder', color: '#e33e3e', logo: '/partners/backpack.png' },
-                { name: 'Flash Trade', desc: 'High-performance perpetual futures trading on Solana with up to 100x leverage and deep liquidity.', url: 'https://www.flash.trade?referral=newuser', color: '#ff3b3b', logo: '/partners/flash.png' },
                 { name: 'Ondo', desc: 'Tokenized stocks and funds on Solana via Ondo Global Markets.', url: 'https://ondo.finance', color: '#6c5ce7', logo: '/partners/ondo.png' },
                 { name: 'PreStocks', desc: 'Pre-IPO tokenized equity exposure on Solana.', url: 'https://prestocks.com', color: '#a855f7', logo: '/partners/prestocks.png' },
                 { name: 'Solana', desc: 'The high-performance blockchain powering tokenized equities with sub-second finality and near-zero fees.', url: 'https://solana.com' },
@@ -2082,7 +2055,6 @@ function HomeInner() {
                 <span className={`sb-item sb-item-clickable${providerFilter === 'xStocks' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'xStocks' ? null : 'xStocks')} title="Filter xStocks"><span className="sb-label">XSTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'xStocks').length}</span><a href="https://defi.xstocks.fi/points?ref=NEWUSER" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} title="Trade on xStocks" style={{color:'inherit',opacity:0.9,lineHeight:1,display:'flex',alignItems:'center'}}><img src="/partners/xstocks.png" alt="" className="partner-logo partner-logo-sm" style={{marginLeft:4}} /></a></span>
                 <span className={`sb-item sb-item-clickable${providerFilter === 'Ondo' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'Ondo' ? null : 'Ondo')} title="Filter Ondo"><span className="sb-label">ONDO</span><span className="sb-value">{rows.filter(r => r.provider === 'Ondo').length}</span></span>
                 <span className={`sb-item sb-item-clickable${providerFilter === 'PreStocks' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'PreStocks' ? null : 'PreStocks')} title="Filter PreStocks"><span className="sb-label">PRESTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'PreStocks').length}</span></span>
-                <span className="sb-item"><a href="https://www.flash.trade?referral=newuser" target="_blank" rel="noopener noreferrer" title="Trade on Flash" aria-label="Flash Trade" style={{display:'flex',alignItems:'center'}}><img src="/partners/flash.png" alt="" className="partner-logo" style={{width:16,height:16}} /></a></span>
                 <span className={`sb-item sb-item-clickable${providerFilter === 'Sunrise' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'Sunrise' ? null : 'Sunrise')} title="Filter Sunrise (Backpack)"><span className="sb-label" style={{color:'#e33e3e'}}>SUNRISE</span><span className="sb-value">{rows.filter(r => r.provider === 'Sunrise' || r.provider === 'Backpack').length}</span><a href="https://backpack.exchange/signup?referral=downunder" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} title="Trade on Backpack / Sunrise" style={{color:'#e33e3e',opacity:0.85,lineHeight:1,display:'flex',alignItems:'center'}}><img src="/partners/backpack.png" alt="" className="partner-logo partner-logo-sm" style={{marginLeft:4}} /></a></span>
                 <span className="sb-item" style={{gap:4}}>
                   <span className="sb-label">AGE:</span>
@@ -2205,18 +2177,6 @@ function HomeInner() {
                         aria-label="Trade on xStocks"
                       >
                         <img src="/partners/xstocks.png" alt="" className="partner-logo" />
-                      </a>
-                    )}
-                    {getFlashTradeUrl(row) && (
-                      <a
-                        href={getFlashTradeUrl(row)!}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="buy-btn buy-btn-flash buy-btn-icon"
-                        title="Trade on Flash"
-                        aria-label="Trade on Flash"
-                      >
-                        <img src="/partners/flash.png" alt="" className="partner-logo" />
                       </a>
                     )}
                     {getBackpackTradeUrl(row) && (

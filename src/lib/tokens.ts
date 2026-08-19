@@ -442,11 +442,10 @@ export const ONDO_TOKENS: StockToken[] = [
 // ─── Trade deep links (always include referral + stock target) ────────────────
 
 export const JUP_REFERRER = 'yfgv2ibxy07v';
-export const FLASH_REFERRAL = 'newuser';
 export const XSTOCKS_REF = 'NEWUSER';
 export const BACKPACK_REFERRAL = 'downunder';
 
-/** Underlying ticker used by Flash / Backpack pair names */
+/** Underlying ticker used by Backpack pair names */
 export function underlyingTicker(token: StockToken): string {
   if (token.company) return token.company.toUpperCase();
   return token.symbol.replace(/x$/i, '').replace(/on$/i, '').replace(/pre$/i, '').toUpperCase();
@@ -460,20 +459,6 @@ export function getJupiterTradeUrl(token: StockToken): string {
 /** Jupiter token page (info) + referral */
 export function getJupiterTokenUrl(token: StockToken): string {
   return `https://jup.ag/tokens/${token.mint}?referrer=${JUP_REFERRER}`;
-}
-
-// Flash Trade equities (perps). Deep-link any underlying; UI only shows when listed.
-// URL: https://www.flash.trade/USDC-{TICKER}?referral=newuser
-export const FLASH_TICKERS = new Set([
-  'SPY', 'NVDA', 'TSLA', 'AAPL', 'AMD', 'AMZN', 'MSFT', 'META', 'GOOGL', 'GOOG',
-  'COIN', 'MSTR', 'HOOD', 'NFLX', 'INTC', 'ORCL', 'AVGO', 'QQQ', 'CRCL',
-]);
-
-/** Flash Trade deep link for this stock, or null if not a known Flash market */
-export function getFlashTradeUrl(token: StockToken): string | null {
-  const key = underlyingTicker(token);
-  if (!FLASH_TICKERS.has(key)) return null;
-  return `https://www.flash.trade/USDC-${key}?referral=${FLASH_REFERRAL}`;
 }
 
 /** xStocks app deep link to this token + referral */

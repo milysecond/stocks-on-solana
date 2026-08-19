@@ -3,7 +3,6 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import {
   ALL_TOKENS,
-  getFlashTradeUrl,
   getBackpackTradeUrl,
   getJupiterTradeUrl,
   getXStocksTradeUrl,
@@ -66,7 +65,6 @@ export default async function TokenPage({ params, searchParams }: Props) {
   const screenerUrl = `/?t=${encodeURIComponent(token.symbol)}&mint=${encodeURIComponent(token.mint)}`;
   const jupUrl = getJupiterTradeUrl(token);
   const xstocksUrl = getXStocksTradeUrl(token);
-  const flashUrl = getFlashTradeUrl(token);
   const backpackUrl = getBackpackTradeUrl(token);
   const underlying =
     token.company || token.symbol.replace(/pre$/i, '').replace(/on$/i, '').replace(/x$/i, '').toUpperCase();
@@ -150,7 +148,6 @@ export default async function TokenPage({ params, searchParams }: Props) {
           underlying={underlying}
           jupUrl={jupUrl}
           xstocksUrl={xstocksUrl}
-          flashUrl={flashUrl}
           backpackUrl={backpackUrl}
           screenerUrl={screenerUrl}
           initial={initial}

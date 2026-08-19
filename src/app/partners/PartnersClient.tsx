@@ -22,13 +22,6 @@ const partners = [
     color: '#e33e3e',
   },
   {
-    name: 'Flash Trade',
-    description: 'High-performance perpetual futures trading on Solana with up to 100x leverage and deep liquidity.',
-    url: 'https://www.flash.trade?referral=newuser',
-    logo: '/partners/flash.png',
-    color: '#ff3b3b',
-  },
-  {
     name: 'Ondo',
     description: 'Tokenized stocks and funds on Solana via Ondo Global Markets.',
     url: 'https://ondo.finance',

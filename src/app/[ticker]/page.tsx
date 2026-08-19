@@ -22,7 +22,6 @@ const RESERVED = new Set([
   'token',
   'sitemap.xml',
   'robots.txt',
-  'flash',
   'opengraph-image',
   'twitter-image',
   'favicon.ico',

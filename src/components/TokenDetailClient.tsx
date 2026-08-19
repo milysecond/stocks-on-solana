@@ -14,7 +14,6 @@ export type TokenDetailProps = {
   underlying: string;
   jupUrl: string;
   xstocksUrl: string | null;
-  flashUrl: string | null;
   backpackUrl: string | null;
   screenerUrl: string;
   initial?: {
@@ -70,7 +69,6 @@ export default function TokenDetailClient(props: TokenDetailProps) {
     underlying,
     jupUrl,
     xstocksUrl,
-    flashUrl,
     backpackUrl,
     screenerUrl,
     initial,
@@ -575,13 +573,7 @@ export default function TokenDetailClient(props: TokenDetailProps) {
               Backpack
             </a>
           )}
-          {flashUrl && (
-            <a href={flashUrl} target="_blank" rel="noopener noreferrer" style={tradeBtn('#ff3b3b')}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/partners/flash.png" alt="" width={20} height={20} />
-              Flash
-            </a>
-          )}
+          
           <a href={screenerUrl} style={tradeBtn('#ffb000')}>
             Screener
           </a>

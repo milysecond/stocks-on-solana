@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 const SHORT_BOILERPLATE = `Stocks on Solana (stocksonsolana.com) is a real-time screener for tokenized US equities trading on Solana. Track prices, 24h volume, liquidity, and discount to the underlying stock across xStocks, Sunrise (Backpack Securities), Ondo, PreStocks, and other issuers — routed via Jupiter. The stock market never closes here.`;
 
-const LONG_BOILERPLATE = `Stocks on Solana is a live market screener for tokenized stocks on Solana. The product aggregates listings and market data from Jupiter’s stocks datapi so traders can compare on-chain prices against underlying equity marks, filter by issuer (xStocks, Sunrise / Backpack Securities, Ondo Finance, PreStocks, Shift, Tessera, and more), and jump into trade venues including Jupiter, Flash Trade, and Backpack Exchange.
+const LONG_BOILERPLATE = `Stocks on Solana is a live market screener for tokenized stocks on Solana. The product aggregates listings and market data from Jupiter’s stocks datapi so traders can compare on-chain prices against underlying equity marks, filter by issuer (xStocks, Sunrise / Backpack Securities, Ondo Finance, PreStocks, Shift, Tessera, and more), and jump into trade venues including Jupiter and Backpack Exchange.
 
 The brand identity and logo system were designed by Gray Sunderland (graysunderland.com). The product is built and operated with a focus on speed, clarity, and honest liquidity — illiquid marks stay visible, but tradable market cap prefers pools with real depth.
 

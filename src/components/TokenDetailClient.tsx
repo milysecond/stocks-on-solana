@@ -13,6 +13,7 @@ export type TokenDetailProps = {
   company?: string;
   underlying: string;
   jupUrl: string;
+  stonkUrl: string;
   xstocksUrl: string | null;
   backpackUrl: string | null;
   screenerUrl: string;
@@ -68,6 +69,7 @@ export default function TokenDetailClient(props: TokenDetailProps) {
     sector,
     underlying,
     jupUrl,
+    stonkUrl,
     xstocksUrl,
     backpackUrl,
     screenerUrl,
@@ -558,6 +560,11 @@ export default function TokenDetailClient(props: TokenDetailProps) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/partners/jupiter.png" alt="" width={20} height={20} />
             Jupiter
+          </a>
+          <a href={stonkUrl} target="_blank" rel="noopener noreferrer" style={tradeBtn('#ccff00')}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/partners/stonkscreener.png" alt="" width={20} height={20} />
+            StonkScreener
           </a>
           {xstocksUrl && (
             <a href={xstocksUrl} target="_blank" rel="noopener noreferrer" style={tradeBtn('#00c2ff')}>

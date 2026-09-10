@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, ExternalLink, Search, X, TrendingUp, TrendingDown, Droplets, BarChart2, ChevronLeft, ChevronRight, Star, LogOut, Shield, FileText, Handshake } from 'lucide-react';
-import { ALL_TOKENS, StockToken, getBackpackTradeUrl, getJupiterTradeUrl, getXStocksTradeUrl, getTokenPagePath, getTokenPageUrl } from '@/lib/tokens';
+import { ALL_TOKENS, StockToken, getBackpackTradeUrl, getJupiterTradeUrl, getStonkScreenerUrl, getXStocksTradeUrl, getTokenPagePath, getTokenPageUrl } from '@/lib/tokens';
 import LoadingOrb from '@/components/LoadingOrb';
 
 interface PriceEntry {
@@ -389,6 +389,16 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
           >
             <img src="/partners/jupiter.png" alt="" className="partner-logo" />
           </a>
+          <a
+            href={getStonkScreenerUrl(row)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="tm-buy-btn tm-buy-btn-stonk tm-buy-btn-icon"
+            title="Open on StonkScreener"
+            aria-label="Open on StonkScreener"
+          >
+            <img src="/partners/stonkscreener.png" alt="" className="partner-logo" />
+          </a>
           {row.provider === 'xStocks' && (
             <a
               href={getXStocksTradeUrl(row) || 'https://defi.xstocks.fi/points?ref=NEWUSER'}
@@ -537,6 +547,16 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
                     aria-label="Trade on Jupiter"
                   >
                     <img src="/partners/jupiter.png" alt="" className="partner-logo" />
+                  </a>
+                  <a
+                    href={getStonkScreenerUrl(row)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="buy-btn buy-btn-stonk buy-btn-icon"
+                    title="Open on StonkScreener"
+                    aria-label="Open on StonkScreener"
+                  >
+                    <img src="/partners/stonkscreener.png" alt="" className="partner-logo" />
                   </a>
                   {row.provider === 'xStocks' && (
                     <a
@@ -1984,6 +2004,7 @@ function HomeInner() {
               <div className="welcome-headline" style={{ fontSize: 18 }}>Partners</div>
               <div style={{ color: '#555', fontSize: 11, letterSpacing: 1, marginBottom: 24 }}>The ecosystem powering Stocks on Solana.</div>
               {[
+                { name: 'StonkScreener', desc: 'Live Solana stonk screener — charts, wallets, and launches.', url: 'https://stonkscreener.com', color: '#ccff00', logo: '/partners/stonkscreener.png' },
                 { name: 'Jupiter', desc: 'The leading DEX aggregator on Solana. All buy orders route through Jupiter for best execution.', url: 'https://jup.ag/?ref=yfgv2ibxy07v', logo: '/partners/jupiter.png' },
                 { name: 'xStocks', desc: 'Tokenized equities on Solana — trade stocks including Apple, Tesla, NVIDIA and more with instant settlement.', url: 'https://defi.xstocks.fi/points?ref=NEWUSER', color: '#00c2ff', logo: '/partners/xstocks.png' },
                 { name: 'Backpack', desc: 'Regulated exchange + Sunrise tokenized equities — redeemable 1:1 shares on Solana.', url: 'https://backpack.exchange/signup?referral=downunder', color: '#e33e3e', logo: '/partners/backpack.png' },
@@ -2051,6 +2072,7 @@ function HomeInner() {
             const items = (
               <>
                 <span className={`sb-item sb-item-clickable${providerFilter === null ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(null)} title="Show all"><span className="sb-label">STOCKS</span><span className="sb-value">{rows.length}</span></span>
+                <span className="sb-item"><a href="https://stonkscreener.com" target="_blank" rel="noopener noreferrer" title="StonkScreener" aria-label="StonkScreener" style={{display:'flex',alignItems:'center',gap:6,color:'inherit'}}><img src="/partners/stonkscreener.png" alt="" className="partner-logo partner-logo-sm" /><span className="sb-label">STONKSCREENER</span></a></span>
                 <span className="sb-item"><span className={isOpen ? 'sb-status-open' : 'sb-status-closed'}>● NYSE/NASDAQ {isOpen ? 'OPEN' : 'CLOSED'}</span><span className="sb-label" style={{fontSize:9}}>{timeLabel}</span></span>
                 <span className={`sb-item sb-item-clickable${providerFilter === 'xStocks' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'xStocks' ? null : 'xStocks')} title="Filter xStocks"><span className="sb-label">XSTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'xStocks').length}</span><a href="https://defi.xstocks.fi/points?ref=NEWUSER" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} title="Trade on xStocks" style={{color:'inherit',opacity:0.9,lineHeight:1,display:'flex',alignItems:'center'}}><img src="/partners/xstocks.png" alt="" className="partner-logo partner-logo-sm" style={{marginLeft:4}} /></a></span>
                 <span className={`sb-item sb-item-clickable${providerFilter === 'Ondo' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'Ondo' ? null : 'Ondo')} title="Filter Ondo"><span className="sb-label">ONDO</span><span className="sb-value">{rows.filter(r => r.provider === 'Ondo').length}</span></span>
@@ -2166,6 +2188,16 @@ function HomeInner() {
                       aria-label="Trade on Jupiter"
                     >
                       <img src="/partners/jupiter.png" alt="" className="partner-logo" />
+                    </a>
+                    <a
+                      href={getStonkScreenerUrl(row)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="buy-btn buy-btn-stonk buy-btn-icon"
+                      title="Open on StonkScreener"
+                      aria-label="Open on StonkScreener"
+                    >
+                      <img src="/partners/stonkscreener.png" alt="" className="partner-logo" />
                     </a>
                     {row.provider === 'xStocks' && (
                       <a

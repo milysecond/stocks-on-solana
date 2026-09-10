@@ -36,6 +36,15 @@ type Venue = {
 
 const SOLANA_VENUES: Venue[] = [
   {
+    name: 'StonkScreener',
+    kind: 'solana',
+    blurb: 'Sister screener for Solana stonks — live tape, charts, and token pages.',
+    url: 'https://stonkscreener.com',
+    logo: '/partners/stonkscreener.png',
+    color: '#ccff00',
+    tag: 'SCREENER',
+  },
+  {
     name: 'Jupiter',
     kind: 'solana',
     blurb: 'Leading Solana aggregator. Best-route swaps for every tokenized stock mint.',

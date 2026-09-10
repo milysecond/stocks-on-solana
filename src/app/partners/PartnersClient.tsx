@@ -2,6 +2,13 @@
 
 const partners = [
   {
+    name: 'StonkScreener',
+    description: 'Live Solana stonk screener — charts, wallets, and launches.',
+    url: 'https://stonkscreener.com',
+    logo: '/partners/stonkscreener.png',
+    color: '#ccff00',
+  },
+  {
     name: 'Jupiter',
     description: 'The leading DEX aggregator on Solana. All buy orders route through Jupiter for best execution.',
     url: 'https://jup.ag/?ref=yfgv2ibxy07v',

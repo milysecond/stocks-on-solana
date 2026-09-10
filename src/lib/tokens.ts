@@ -461,6 +461,11 @@ export function getJupiterTokenUrl(token: StockToken): string {
   return `https://jup.ag/tokens/${token.mint}?referrer=${JUP_REFERRER}`;
 }
 
+/** StonkScreener token page (sister screener) */
+export function getStonkScreenerUrl(token: StockToken): string {
+  return `https://stonkscreener.com/token/${token.mint}`;
+}
+
 /** xStocks app deep link to this token + referral */
 export function getXStocksTradeUrl(token: StockToken): string | null {
   if (token.provider !== 'xStocks') return null;

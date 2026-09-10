@@ -5,6 +5,7 @@ import {
   ALL_TOKENS,
   getBackpackTradeUrl,
   getJupiterTradeUrl,
+  getStonkScreenerUrl,
   getXStocksTradeUrl,
 } from '@/lib/tokens';
 import { resolveToken, tokenShareUrl } from '@/lib/resolve-token';
@@ -64,6 +65,7 @@ export default async function TokenPage({ params, searchParams }: Props) {
   const tokenUrl = tokenShareUrl(token);
   const screenerUrl = `/?t=${encodeURIComponent(token.symbol)}&mint=${encodeURIComponent(token.mint)}`;
   const jupUrl = getJupiterTradeUrl(token);
+  const stonkUrl = getStonkScreenerUrl(token);
   const xstocksUrl = getXStocksTradeUrl(token);
   const backpackUrl = getBackpackTradeUrl(token);
   const underlying =
@@ -147,6 +149,7 @@ export default async function TokenPage({ params, searchParams }: Props) {
           company={token.company}
           underlying={underlying}
           jupUrl={jupUrl}
+          stonkUrl={stonkUrl}
           xstocksUrl={xstocksUrl}
           backpackUrl={backpackUrl}
           screenerUrl={screenerUrl}

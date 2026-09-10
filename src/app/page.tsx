@@ -1206,6 +1206,14 @@ function HomeInner() {
         .sb-value { color: var(--amber); font-weight: 600; }
         .sb-status-open { color: var(--green); }
         .sb-status-closed { color: var(--red); }
+        .sb-stonk-open {
+          color: #ccff00;
+          text-decoration: none;
+          letter-spacing: 1px;
+          font-size: 10px;
+          font-weight: 700;
+        }
+        .sb-stonk-open:hover { color: #e8ff66; }
         .refresh-btn {
           background: transparent;
           border: none;
@@ -1920,11 +1928,11 @@ function HomeInner() {
             <div className="welcome-modal">
               <button className="welcome-close" onClick={dismissWelcome}>✕</button>
               <div className="welcome-sub">TOKENIZED EQUITY · SOLANA</div>
-              <div className="welcome-headline">The stock market never closes here.</div>
+              <div className="welcome-headline">Stock market closed.<br />Stonk market open.</div>
               <div className="welcome-body">
-                <strong>Tokenized stocks are real equity exposure, wrapped as Solana tokens.</strong><br />
-                Buy Apple at 3am. Trade Tesla on a Sunday. No brokerage account. No waiting for market open.<br /><br />
-                This screener tracks every tokenized stock on Solana — live prices, liquidity, and discount to real-world price.
+                <strong>NYSE sleeps. Solana does not.</strong><br />
+                Buy Apple at 3am. Trade Tesla on a Sunday. No brokerage. No waiting for the bell.<br /><br />
+                This screener tracks every tokenized stock on Solana. Stonks live at <a href="https://stonkscreener.com" target="_blank" rel="noopener noreferrer" style={{color:'#ccff00'}}>stonkscreener.com</a>.
               </div>
               <button className="welcome-cta" onClick={dismissWelcome}>
                 EXPLORE THE SCREENER →
@@ -2073,7 +2081,12 @@ function HomeInner() {
               <>
                 <span className={`sb-item sb-item-clickable${providerFilter === null ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(null)} title="Show all"><span className="sb-label">STOCKS</span><span className="sb-value">{rows.length}</span></span>
                 <span className="sb-item"><a href="https://stonkscreener.com" target="_blank" rel="noopener noreferrer" title="StonkScreener" aria-label="StonkScreener" style={{display:'flex',alignItems:'center',gap:6,color:'inherit'}}><img src="/partners/stonkscreener.png" alt="" className="partner-logo partner-logo-sm" /><span className="sb-label">STONKSCREENER</span></a></span>
-                <span className="sb-item"><span className={isOpen ? 'sb-status-open' : 'sb-status-closed'}>● NYSE/NASDAQ {isOpen ? 'OPEN' : 'CLOSED'}</span><span className="sb-label" style={{fontSize:9}}>{timeLabel}</span></span>
+                <span className="sb-item"><span className={isOpen ? 'sb-status-open' : 'sb-status-closed'}>● STOCK {isOpen ? 'OPEN' : 'CLOSED'}</span><span className="sb-label" style={{fontSize:9}}>{timeLabel}</span></span>
+                <span className="sb-item">
+                  <a href="https://stonkscreener.com" target="_blank" rel="noopener noreferrer" className="sb-stonk-open" title="Stonk market is always open">
+                    ● STONK OPEN
+                  </a>
+                </span>
                 <span className={`sb-item sb-item-clickable${providerFilter === 'xStocks' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'xStocks' ? null : 'xStocks')} title="Filter xStocks"><span className="sb-label">XSTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'xStocks').length}</span><a href="https://defi.xstocks.fi/points?ref=NEWUSER" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} title="Trade on xStocks" style={{color:'inherit',opacity:0.9,lineHeight:1,display:'flex',alignItems:'center'}}><img src="/partners/xstocks.png" alt="" className="partner-logo partner-logo-sm" style={{marginLeft:4}} /></a></span>
                 <span className={`sb-item sb-item-clickable${providerFilter === 'Ondo' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'Ondo' ? null : 'Ondo')} title="Filter Ondo"><span className="sb-label">ONDO</span><span className="sb-value">{rows.filter(r => r.provider === 'Ondo').length}</span></span>
                 <span className={`sb-item sb-item-clickable${providerFilter === 'PreStocks' ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(p => p === 'PreStocks' ? null : 'PreStocks')} title="Filter PreStocks"><span className="sb-label">PRESTOCKS</span><span className="sb-value">{rows.filter(r => r.provider === 'PreStocks').length}</span></span>

@@ -228,7 +228,7 @@ export async function sendWelcomeEmail(email: string, firstName?: string) {
     to: email,
     subject: "You're on Stocks on Solana",
     html: welcomeHtml(firstName),
-    text: `Hey ${name} — you're on the Stocks on Solana list.\n\nTrack 600+ tokenized stocks in real time: ${SITE_URL}\n\nFollow @StocksOnSolana for listings and volume alerts.\n\nPrivacy: ${SITE_URL}/privacy\nNot financial advice.`,
+    text: `Hey ${name} — you're on the Stocks on Solana list.\n\nTrack 1,700+ tokenized stocks in real time: ${SITE_URL}\n\nFollow @StocksOnSolana for listings and volume alerts.\n\nPrivacy: ${SITE_URL}/privacy\nNot financial advice.`,
     listUnsubscribe: true,
     tags: [
       { name: 'category', value: 'welcome' },

@@ -2328,7 +2328,7 @@ export default function Home() {
       name: 'Stocks on Solana',
       url: 'https://stocksonsolana.com',
       description:
-        'Real-time screener for 250+ tokenized stocks on Solana. Track prices, liquidity, and discount to real-world price.',
+        'Real-time screener for 1,700+ tokenized stocks on Solana — 1,100+ xStocks plus Sunrise, Ondo, PreStocks. Prices, liquidity, discount to the underlying.',
       applicationCategory: 'FinanceApplication',
       operatingSystem: 'Web',
       offers: {
@@ -2340,7 +2340,7 @@ export default function Home() {
         '@type': 'FinancialMarket',
         name: 'Tokenized Stock Market on Solana',
         description:
-          'xStocks, Sunrise (Backpack), Ondo, PreStocks and more tokenized equities on Solana via Jupiter',
+          '1,100+ xStocks plus Sunrise, Ondo, PreStocks and more tokenized equities on Solana via Jupiter',
       },
     },
     {
@@ -2349,7 +2349,7 @@ export default function Home() {
       name: 'Stocks on Solana',
       url: 'https://stocksonsolana.com',
       description:
-        'Real-time screener for tokenized stocks on Solana — xStocks, Sunrise, Ondo, PreStocks.',
+        'Real-time screener for 1,700+ tokenized stocks on Solana — 1,100+ xStocks plus Sunrise, Ondo, PreStocks. Prices, liquidity, discount to the underlying.',
       potentialAction: {
         '@type': 'SearchAction',
         target: {

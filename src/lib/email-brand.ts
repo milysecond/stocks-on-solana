@@ -157,7 +157,7 @@ export function welcomeHtml(firstName?: string): string {
     ${ctaButton(BRAND.site, 'Open screener')}`;
   return emailShell({
     title: 'Welcome to Stocks on Solana',
-    preheader: "You're in. Track 600+ tokenized stocks on Solana in real time.",
+    preheader: "You're in. Track 1,700+ tokenized stocks on Solana in real time.",
     bodyHtml: body,
     footerExtra: `<a href="${BRAND.site}/privacy" style="color:#666;">Privacy</a> · `,
   });

@@ -88,7 +88,7 @@ async function fetchLive() {
       vol: fmtUsd(vol),
     };
   } catch {
-    return { stocks: FALLBACK, count: '600+', liq: '—', vol: '—' };
+    return { stocks: FALLBACK, count: '1,700+', liq: '—', vol: '—' };
   }
 }
 

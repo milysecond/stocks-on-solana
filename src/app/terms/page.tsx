@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Terms of Service',
   description:
-    'Terms of Service for Stocks on Solana (stocksonsolana.com) — eligibility, disclaimers, and acceptable use for the tokenized stock screener.',
+    'Terms of Service for Stocks on Solana (stocksonsolana.com) - eligibility, disclaimers, and acceptable use for the tokenized stock screener.',
   alternates: { canonical: 'https://stocksonsolana.com/terms' },
   openGraph: {
     title: 'Terms of Service | Stocks on Solana',

@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import type { CSSProperties } from 'react';
 
 export const metadata: Metadata = {
-  title: 'Exchanges — Trade Stocks on Solana Worldwide',
+  title: 'Exchanges - Trade Stocks on Solana Worldwide',
   description:
-    'Every venue to trade tokenized stocks on Solana — Jupiter, Backpack, xStocks — plus the world equity exchanges those assets track (NYSE, NASDAQ, LSE, TSE, HKEX and more).',
+    'Every venue to trade tokenized stocks on Solana - Jupiter, Backpack, xStocks - plus the world equity exchanges those assets track (NYSE, NASDAQ, LSE, TSE, HKEX and more).',
   alternates: { canonical: 'https://stocksonsolana.com/exchanges' },
   openGraph: {
-    title: 'Exchanges — Stocks on Solana',
+    title: 'Exchanges - Stocks on Solana',
     description:
       'Solana trading venues and the global stock exchanges behind tokenized equities.',
     url: 'https://stocksonsolana.com/exchanges',
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Exchanges — Stocks on Solana',
+    title: 'Exchanges - Stocks on Solana',
     description: 'Where to trade tokenized stocks on Solana, and the world markets they track.',
     site: '@StocksOnSolana',
   },

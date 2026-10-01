@@ -2096,7 +2096,6 @@ function HomeInner() {
             const items = (
               <>
                 <span className={`sb-item sb-item-clickable${providerFilter === null ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(null)} title="Show all"><span className="sb-label">STOCKS</span><span className="sb-value">{rows.length}</span></span>
-                <span className="sb-item"><a href="https://stonkscreener.com" target="_blank" rel="noopener noreferrer" title="StonkScreener" aria-label="StonkScreener" style={{display:'flex',alignItems:'center',gap:6,color:'inherit'}}><img src="/partners/stonkscreener.png" alt="" className="partner-logo partner-logo-sm" /><span className="sb-label">STONKSCREENER</span></a></span>
                 <span className="sb-item"><span className={isOpen ? 'sb-status-open' : 'sb-status-closed'}>● STOCK {isOpen ? 'OPEN' : 'CLOSED'}</span><span className="sb-label" style={{fontSize:9}}>{timeLabel}</span></span>
                 <span className="sb-item">
                   <a href="https://stonkscreener.com" target="_blank" rel="noopener noreferrer" className="sb-stonk-open" title="Stonk market is always open">

@@ -28,7 +28,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const token = await resolveToken(ticker, sp.mint);
   if (!token) return { title: 'Token Not Found' };
 
-  const title = `${token.name} (${token.symbol}) — Tokenized Stock on Solana`;
+  const title = `${token.name} (${token.symbol}) - Tokenized Stock on Solana`;
   const description = `Trade ${token.name} (${token.symbol}) as a tokenized stock on Solana via ${token.provider}. Live price, chart, CA, liquidity. Buy on Jupiter.`;
   const url = tokenShareUrl(token);
 

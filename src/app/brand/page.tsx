@@ -4,7 +4,7 @@ import { PageShell, Section, Card } from '@/components/DocShell';
 export const metadata: Metadata = {
   title: 'Brand Guide',
   description:
-    'Stocks on Solana brand guide — logo, colours, type, and usage. Design by Gray Sunderland.',
+    'Stocks on Solana brand guide - logo, colours, type, and usage. Design by Gray Sunderland.',
   alternates: { canonical: 'https://stocksonsolana.com/brand' },
   openGraph: {
     title: 'Brand Guide | Stocks on Solana',
@@ -53,7 +53,7 @@ export default function BrandPage() {
               Gray Sunderland
             </a>
             {' '}
-            — product, brand &amp; UI/UX designer (
+            - product, brand &amp; UI/UX designer (
             <a
               href="https://x.com/gray_chromatic"
               target="_blank"
@@ -249,7 +249,7 @@ export default function BrandPage() {
       <Section title="Voice">
         <Card>
           <ul style={{ margin: 0, paddingLeft: 18, color: '#ccc', fontSize: 14, lineHeight: 1.8 }}>
-            <li>Direct. Markets never sleep — neither does the copy.</li>
+            <li>Direct. Markets never sleep - neither does the copy.</li>
             <li>No hashtags on social. Lead with volume, mcap, liquidity.</li>
             <li>Tickers as cash tags: $SKHY, $MU, $NVDAx.</li>
             <li>Australian English where it matters; tickers stay as issued.</li>

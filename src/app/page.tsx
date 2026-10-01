@@ -1068,6 +1068,15 @@ function HomeInner() {
           top: 0;
           z-index: 50;
         }
+        .header-h1 {
+          margin: 0;
+          font-size: inherit;
+          font-weight: inherit;
+          letter-spacing: inherit;
+          font-family: inherit;
+          color: inherit;
+          text-transform: uppercase;
+        }
         .header-brand {
           display: flex;
           align-items: center;
@@ -1080,7 +1089,7 @@ function HomeInner() {
           border-radius: 0;
           display: block;
         }
-        .header-brand span {
+        .header-brand h1, .header-brand span {
           background: var(--brand-gradient);
           -webkit-background-clip: text;
           background-clip: text;
@@ -1753,7 +1762,7 @@ function HomeInner() {
             gap: 8px;
             flex-wrap: wrap;
           }
-          .header-brand span { font-size: 11px; max-width: 42vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .header-brand h1, .header-brand h1, .header-brand span { font-size: 11px; max-width: 42vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
           .header-pbs { display: none; }
           .header-search {
             order: 10;
@@ -1766,7 +1775,16 @@ function HomeInner() {
             margin-left: auto;
             order: 2;
           }
-          .header-brand { order: 1; }
+          .header-h1 {
+          margin: 0;
+          font-size: inherit;
+          font-weight: inherit;
+          letter-spacing: inherit;
+          font-family: inherit;
+          color: inherit;
+          text-transform: uppercase;
+        }
+        .header-brand { order: 1; }
           .header-search input {
             font-size: 16px;
             padding: 12px 40px 12px 40px;
@@ -1869,15 +1887,13 @@ function HomeInner() {
 
       <main style={{ minHeight: '100vh', background: 'var(--bg)', paddingBottom: 44 }}>
         {/* Visually hidden H1 for SEO / heading order */}
-        <h1 style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>
-          Stocks on Solana — Real-time Stock Screener
-        </h1>
+        
         {/* Header */}
         <div className="brand-bar" aria-hidden="true" />
         <header className="header">
           <div className="header-brand">
-            <img src="/logo-mark.png" alt="Stocks on Solana" width={28} height={28} fetchPriority="high" />
-            <span>STOCKS ON SOLANA</span>
+            <img src="/logo-mark.png" alt="" width={28} height={28} fetchPriority="high" />
+            <h1 className="header-h1">Stocks on Solana</h1>
           </div>
           <div className={`header-search${search ? ' has-value' : ''}`}>
             <Search size={16} className="search-icon" aria-hidden />
@@ -2328,7 +2344,7 @@ export default function Home() {
       name: 'Stocks on Solana',
       url: 'https://stocksonsolana.com',
       description:
-        'Real-time screener for 1,700+ tokenized stocks on Solana — 1,100+ xStocks plus Sunrise, Ondo, PreStocks. Prices, liquidity, discount to the underlying.',
+        'Real-time screener for 1,700+ tokenized stocks on Solana - 1,100+ xStocks plus Sunrise, Ondo, PreStocks. Prices, liquidity, discount to the underlying.',
       applicationCategory: 'FinanceApplication',
       operatingSystem: 'Web',
       offers: {
@@ -2349,7 +2365,7 @@ export default function Home() {
       name: 'Stocks on Solana',
       url: 'https://stocksonsolana.com',
       description:
-        'Real-time screener for 1,700+ tokenized stocks on Solana — 1,100+ xStocks plus Sunrise, Ondo, PreStocks. Prices, liquidity, discount to the underlying.',
+        'Real-time screener for 1,700+ tokenized stocks on Solana - 1,100+ xStocks plus Sunrise, Ondo, PreStocks. Prices, liquidity, discount to the underlying.',
       potentialAction: {
         '@type': 'SearchAction',
         target: {

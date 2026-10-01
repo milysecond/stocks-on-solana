@@ -4,7 +4,7 @@ import { PageShell, Section, Card } from '@/components/DocShell';
 export const metadata: Metadata = {
   title: 'Press Kit',
   description:
-    'Stocks on Solana press kit — logos, colours, boilerplate, facts, and contacts. Design by Gray Sunderland.',
+    'Stocks on Solana press kit - logos, colours, boilerplate, facts, and contacts. Design by Gray Sunderland.',
   alternates: { canonical: 'https://stocksonsolana.com/press' },
   openGraph: {
     title: 'Press Kit | Stocks on Solana',

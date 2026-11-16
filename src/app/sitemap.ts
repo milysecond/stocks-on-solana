@@ -2,6 +2,7 @@ import { MetadataRoute } from 'next';
 import { fetchScreenerBundle } from '@/lib/discover-tokens';
 import { ALL_TOKENS } from '@/lib/tokens';
 import { tokenShareUrl } from '@/lib/resolve-token';
+import { XSTOCKS_UK } from '@/lib/xstocks-uk';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -42,6 +43,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: tokenPages.length < 30 ? 0.9 : 0.7,
     });
     if (tokenPages.length >= TOP_N) break;
+  }
+
+  // Every verified LSE xStock, even when 24h volume is too thin for the top 200.
+  for (const t of XSTOCKS_UK) {
+    const slug = t.symbol.toLowerCase();
+    if (seen.has(slug)) continue;
+    seen.add(slug);
+    tokenPages.push({
+      url: tokenShareUrl(t),
+      lastModified: now,
+      changeFrequency: 'hourly',
+      priority: 0.6,
+    });
   }
 
   const staticPages: MetadataRoute.Sitemap = [

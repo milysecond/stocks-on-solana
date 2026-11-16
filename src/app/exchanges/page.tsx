@@ -67,7 +67,7 @@ const SOLANA_VENUES: Venue[] = [
   {
     name: 'xStocks (Backed)',
     kind: 'solana',
-    blurb: 'Trade and redeem xStocks tokenized equities. Instant on-chain settlement.',
+    blurb: 'Trade and redeem xStocks tokenized equities, including LSE listings. Instant on-chain settlement.',
     url: 'https://defi.xstocks.fi/points?ref=NEWUSER',
     logo: '/partners/xstocks.png',
     color: '#00c2ff',

@@ -3,5 +3,5 @@ Allow: /
 Disallow: /api/
 Disallow: /dashboard
 
-Sitemap: https://stocksonsolana.com/sitemap.xml
 Host: https://stocksonsolana.com
+Sitemap: https://stocksonsolana.com/sitemap.xml

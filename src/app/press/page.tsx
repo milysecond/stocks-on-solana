@@ -13,9 +13,9 @@ export const metadata: Metadata = {
   },
 };
 
-const SHORT_BOILERPLATE = `Stocks on Solana (stocksonsolana.com) is a real-time screener for 1,700+ tokenized US equities on Solana (1,100+ xStocks). Track prices, 24h volume, liquidity, and discount to the underlying stock across xStocks, Sunrise (Backpack Securities), Ondo, PreStocks, and other issuers — routed via Jupiter. The stock market never closes here.`;
+const SHORT_BOILERPLATE = `Stocks on Solana (stocksonsolana.com) is a real-time screener for 2,100+ tokenized equities on Solana, including 1,500+ xStocks. One hundred of those xStocks are LSE listings, shown in GBP against an on-chain USD price. Track prices, liquidity, and the discount to the underlying across xStocks, Sunrise (Backpack Securities), Ondo, PreStocks, and other issuers, routed via Jupiter. The stock market never closes here.`;
 
-const LONG_BOILERPLATE = `Stocks on Solana is a live market screener for tokenized stocks on Solana. The product aggregates listings and market data from Jupiter’s stocks datapi so traders can compare on-chain prices against underlying equity marks, filter by issuer (xStocks, Sunrise / Backpack Securities, Ondo Finance, PreStocks, Shift, Tessera, and more), and jump into trade venues including Jupiter and Backpack Exchange.
+const LONG_BOILERPLATE = `Stocks on Solana is a live market screener for tokenized stocks on Solana. The product aggregates listings and market data from Jupiter’s stocks datapi so traders can compare on-chain USD prices against underlying equity marks, filter by issuer (xStocks, Sunrise / Backpack Securities, Ondo Finance, PreStocks, Shift, Tessera, and more), and jump into trade venues including Jupiter and Backpack Exchange. xStocks' LSE listings are included: the London print is shown in pounds, and the discount or premium is calculated against the USD equivalent so it is not a GBP-versus-USD gap. The status bar clocks NYSE and LSE sessions separately.
 
 The brand identity and logo system were designed by Gray Sunderland (graysunderland.com). The product is built and operated with a focus on speed, clarity, and honest liquidity — illiquid marks stay visible, but tradable market cap prefers pools with real depth.
 
@@ -29,7 +29,7 @@ const FACTS: { k: string; v: string }[] = [
   { k: 'X', v: '@StocksOnSolana' },
   { k: 'Category', v: 'Tokenized equities screener · Solana RWA' },
   { k: 'Data', v: 'Jupiter datapi (stocks)' },
-  { k: 'Issuers', v: 'xStocks · Sunrise/Backpack · Ondo · PreStocks · Shift · Tessera' },
+  { k: 'Issuers', v: 'xStocks (US + 100 LSE) · Sunrise/Backpack · Ondo · PreStocks · Shift · Tessera' },
   { k: 'Design', v: 'Gray Sunderland — graysunderland.com' },
   { k: 'Press email', v: 'gm@metasal.xyz' },
   { k: 'Tagline', v: 'The stock market never closes here.' },

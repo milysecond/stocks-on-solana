@@ -35,8 +35,10 @@ function loadTvScript(): Promise<void> {
 }
 
 /** Map underlying equity ticker → TradingView SYMBOL */
-export function toTradingViewSymbol(underlying: string): string {
+export function toTradingViewSymbol(underlying: string, venue?: string): string {
   const u = underlying.toUpperCase().replace(/\s+/g, '');
+  if (u.includes(':')) return u;
+  if (venue === 'LSE') return `LSE:${u}`;
   // Preferred exchange overrides (TV needs venue prefix for reliability)
   const MAP: Record<string, string> = {
     // Mega-cap / common on NASDAQ

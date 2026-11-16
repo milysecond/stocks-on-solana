@@ -3,7 +3,10 @@
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, ExternalLink, Search, X, TrendingUp, TrendingDown, Droplets, BarChart2, ChevronLeft, ChevronRight, Star, LogOut, Shield, FileText, Handshake } from 'lucide-react';
-import { ALL_TOKENS, StockToken, getBackpackTradeUrl, getJupiterTradeUrl, getStonkScreenerUrl, getXStocksTradeUrl, getTokenPagePath, getTokenPageUrl } from '@/lib/tokens';
+import { ALL_TOKENS, StockToken, getBackpackTradeUrl, getJupiterTradeUrl, getStonkScreenerUrl, getXStocksTradeUrl, getTokenPagePath, getTokenPageUrl, type QuoteCurrency } from '@/lib/tokens';
+import { cashSession } from '@/lib/market-hours';
+import { formatMoney } from '@/lib/money';
+import { SITE_DESCRIPTION } from '@/lib/seo';
 import LoadingOrb from '@/components/LoadingOrb';
 
 interface PriceEntry {
@@ -12,6 +15,8 @@ interface PriceEntry {
   volume24h: number | null;
   liquidity: number | null;
   stockPrice: number | null;
+  stockPriceLocal?: number | null;
+  quoteCurrency?: QuoteCurrency;
   mcap: number | null;
   underlyingMcap?: number | null;
 }
@@ -22,6 +27,7 @@ interface StockRow extends StockToken {
   volume24h: number | null;
   liquidity: number | null;
   stockPrice: number | null;
+  stockPriceLocal: number | null;
   mcap: number | null;
   underlyingMcap: number | null;
   createdAt: number | null;
@@ -30,11 +36,6 @@ interface StockRow extends StockToken {
 type SortKey = 'name' | 'price' | 'change24h' | 'volume24h' | 'provider' | 'age';
 type AgeFilter = '7d' | '30d' | '90d' | '1y' | '1y+' | null;
 type SortDir = 'asc' | 'desc';
-
-function fmt(n: number | null, decimals = 2) {
-  if (n === null) return '—';
-  return `$${n.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
-}
 
 function fmtChange(n: number | null) {
   if (n === null) return null;
@@ -71,11 +72,41 @@ function isReliableMark(row: {
 function displayPrice(row: {
   price: number | null;
   stockPrice: number | null;
+  stockPriceLocal?: number | null;
+  quoteCurrency?: QuoteCurrency;
   liquidity: number | null;
-}): { value: number | null; stale: boolean } {
-  if (isReliableMark(row)) return { value: row.price, stale: false };
-  if (row.stockPrice != null) return { value: row.stockPrice, stale: true };
-  return { value: row.price, stale: (row.liquidity ?? 0) < MIN_LIQ_RELIABLE };
+}): { value: number | null; stale: boolean; currency: QuoteCurrency } {
+  if (isReliableMark(row)) return { value: row.price, stale: false, currency: 'USD' };
+  // LSE listings: fall back to the pound print, not the USD equivalent.
+  if (row.quoteCurrency === 'GBP' && row.stockPriceLocal != null) {
+    return { value: row.stockPriceLocal, stale: true, currency: 'GBP' };
+  }
+  if (row.stockPrice != null) return { value: row.stockPrice, stale: true, currency: 'USD' };
+  return { value: row.price, stale: (row.liquidity ?? 0) < MIN_LIQ_RELIABLE, currency: 'USD' };
+}
+
+function formatShown(shown: { value: number | null; currency: QuoteCurrency }): string {
+  if (shown.value == null) return '—';
+  const decimals = shown.currency === 'GBP' ? 2 : shown.value > 100 ? 2 : 4;
+  return formatMoney(shown.value, shown.currency, decimals);
+}
+
+/** Listing-currency mark. GBP rows never present the USD equivalent as if it were the LSE print. */
+function underlyingMark(row: StockRow): string | null {
+  if (row.quoteCurrency === 'GBP') {
+    if (row.stockPriceLocal != null) return formatMoney(row.stockPriceLocal, 'GBP', 2);
+    if (row.stockPrice != null) return `${formatMoney(row.stockPrice, 'USD', 2)} USD`;
+    return null;
+  }
+  if (row.stockPrice != null) return formatMoney(row.stockPrice, 'USD', 2);
+  return null;
+}
+
+/** On-chain USD vs issuer USD reference. Hidden for thin LSE books so a bad pool can't fake a premium. */
+function discountPct(row: StockRow): number | null {
+  if (row.price == null || row.stockPrice == null || row.stockPrice <= 0) return null;
+  if (row.quoteCurrency === 'GBP' && !isReliableMark(row)) return null;
+  return ((row.price - row.stockPrice) / row.stockPrice) * 100;
 }
 
 /** 24h change only trustworthy on liquid books */
@@ -123,59 +154,15 @@ function isNewToken(ts: number | null): boolean {
   return (Date.now() / 1000 - ts) < 7 * 86400;
 }
 
-function getMarketStatus() {
-  const now = new Date();
-  const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-  const day = et.getDay();
-  const h = et.getHours();
-  const m = et.getMinutes();
-  const mins = h * 60 + m;
-  const open = 9 * 60 + 30;
-  const close = 16 * 60;
-  const isWeekday = day >= 1 && day <= 5;
-  const isOpen = isWeekday && mins >= open && mins < close;
-
-  let timeLabel = '';
-  if (isOpen) {
-    const minsLeft = close - mins;
-    timeLabel = `CLZ ${Math.floor(minsLeft / 60)}H${minsLeft % 60}M`;
-  } else {
-    let minsUntil: number;
-    if (isWeekday && mins < open) {
-      minsUntil = open - mins;
-    } else {
-      const daysUntilMon = day === 0 ? 1 : day === 6 ? 2 : (day === 5 && mins >= close) ? 3 : 1;
-      const minsToMidnight = (24 * 60) - mins;
-      minsUntil = minsToMidnight + (daysUntilMon - 1) * 24 * 60 + open;
-    }
-    const daysLeft = Math.floor(minsUntil / (60 * 24));
-    const hLeft = Math.floor((minsUntil % (60 * 24)) / 60);
-    const mLeft = minsUntil % 60;
-    if (daysLeft > 0) {
-      timeLabel = `OPN ${daysLeft}D${hLeft}H`;
-    } else {
-      timeLabel = `OPN ${hLeft}H${mLeft}M`;
-    }
-  }
-  return { isOpen, timeLabel };
-}
-
 function TokenIcon({ symbol, mint, size = 28 }: { symbol: string; mint: string; size?: number }) {
-  const [imgSrc, setImgSrc] = useState<string | null>(null);
+  const [step, setStep] = useState(0);
   const letters = symbol.replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase();
-
-  // Generate stable color from symbol
   const hue = symbol.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
-
-  useEffect(() => {
-    // Local static file for xStocks (instant, no API call)
-    if (symbol.endsWith('x') || symbol.includes('.Bx')) {
-      setImgSrc(`/icons/${symbol}.png`);
-    } else {
-      // Other stocks: hit API route (Helius DAS lookup)
-      setImgSrc(`/api/token-icon?mint=${encodeURIComponent(mint)}&symbol=${encodeURIComponent(symbol)}`);
-    }
-  }, [mint, symbol]);
+  const sources = [
+    symbol.endsWith('x') || symbol.includes('.Bx') ? `/icons/${symbol}.png` : null,
+    `/api/token-icon?mint=${encodeURIComponent(mint)}&symbol=${encodeURIComponent(symbol)}`,
+  ].filter((src): src is string => Boolean(src));
+  const imgSrc = sources[step];
 
   if (imgSrc) {
     return (
@@ -187,7 +174,7 @@ function TokenIcon({ symbol, mint, size = 28 }: { symbol: string; mint: string; 
         loading="lazy"
         decoding="async"
         style={{ borderRadius: 6, flexShrink: 0, background: '#1a1a1a' }}
-        onError={() => setImgSrc(null)}
+        onError={() => setStep((s) => s + 1)}
       />
     );
   }
@@ -278,9 +265,9 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
 }) {
   const shown = displayPrice(row);
   const change = fmtChange(displayChange(row));
-  const disc = isReliableMark(row) && row.price !== null && row.stockPrice !== null
-    ? ((row.price - row.stockPrice) / row.stockPrice) * 100
-    : null;
+  const disc = discountPct(row);
+  const mark = underlyingMark(row);
+  const lseSession = row.venue === 'LSE' ? cashSession('LSE') : null;
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -301,7 +288,7 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
             <TokenIcon symbol={row.symbol} mint={row.mint} size={44} />
             <div>
               <div className="tm-name">{row.name}</div>
-              <div className="tm-symbol">{row.symbol}</div>
+              <div className="tm-symbol">{row.symbol}{row.venue === 'LSE' ? ' · LSE' : ''}{lseSession ? ` · ${lseSession.isOpen ? 'OPEN' : 'CLOSED'}` : ''}</div>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -319,8 +306,8 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
         {/* Price hero */}
         <div className="tm-price-row">
           <div className="tm-price" title={shown.stale ? 'Thin book — showing underlying stock mark' : undefined}>
-            {shown.value !== null ? fmt(shown.value, shown.value > 100 ? 2 : 4) : '—'}
-            {shown.stale ? <span style={{ fontSize: 11, color: 'var(--text-dim)', marginLeft: 8, letterSpacing: 1 }}>STOCK</span> : null}
+            {shown.value !== null ? formatShown(shown) : '—'}
+            {shown.stale ? <span style={{ fontSize: 11, color: 'var(--text-dim)', marginLeft: 8, letterSpacing: 1 }}>{shown.currency === 'GBP' ? 'LSE' : 'STOCK'}</span> : null}
           </div>
           {change && (
             <span className={`tm-change ${change.positive ? 'pos' : 'neg'}`}>
@@ -333,8 +320,13 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
         {/* Stats grid */}
         <div className="tm-stats">
           <div className="tm-stat">
-            <div className="tm-stat-label">REAL STOCK PRICE</div>
-            <div className="tm-stat-value">{fmt(row.stockPrice)}</div>
+            <div className="tm-stat-label">{row.quoteCurrency === 'GBP' ? 'LSE PRICE (GBP)' : 'REAL STOCK PRICE'}</div>
+            <div className="tm-stat-value">{mark ?? '—'}</div>
+            {row.quoteCurrency === 'GBP' && row.stockPrice != null && (
+              <div style={{ fontSize: 9, color: 'var(--text-dim)', marginTop: 4 }}>
+                USD equiv {formatMoney(row.stockPrice, 'USD', 2)}
+              </div>
+            )}
           </div>
           <div className="tm-stat">
             <div className="tm-stat-label">DISCOUNT/PREMIUM</div>
@@ -493,14 +485,14 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
                     <TokenIcon symbol={row.symbol} mint={row.mint} size={26} />
                     <div>
                       <div className="token-name">{row.name}</div>
-                      <div className="token-symbol">{row.symbol}</div>
+                      <div className="token-symbol">{row.symbol}{row.venue === 'LSE' ? ' · LSE' : ''}</div>
                     </div>
                   </div>
                 </td>
                 <td className="text-right price-val">
                   {shown.value !== null ? (
-                    <span title={shown.stale ? 'Thin book — underlying stock mark' : undefined} style={shown.stale ? { color: 'var(--text-dim)' } : undefined}>
-                      {fmt(shown.value, shown.value > 100 ? 2 : 4)}{shown.stale ? ' *' : ''}
+                    <span title={shown.stale ? (shown.currency === 'GBP' ? 'Thin book — LSE price in pounds' : 'Thin book — underlying stock mark') : undefined} style={shown.stale ? { color: 'var(--text-dim)' } : undefined}>
+                      {formatShown(shown)}{shown.stale ? ' *' : ''}
                     </span>
                   ) : <span className="loading-cell" />}
                 </td>
@@ -510,14 +502,16 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
                     : <span className="loading-cell" />}
                 </td>
                 <td className="text-right">
-                  {row.price !== null && row.stockPrice !== null ? (() => {
-                    const disc = ((row.price - row.stockPrice) / row.stockPrice) * 100;
-                    const color = Math.abs(disc) < 0.5 ? 'var(--text-dim)' : disc > 0 ? 'var(--green)' : 'var(--red)';
-                    return <span style={{ color, fontSize: 11 }}>
-                      {disc >= 0 ? '+' : ''}{disc.toFixed(2)}%
-                      <div style={{ fontSize: 9, color: 'var(--text-dim)' }}>{fmt(row.stockPrice, 2)}</div>
+                  {(() => {
+                    const disc = discountPct(row);
+                    const mark = underlyingMark(row);
+                    if (disc == null && mark == null) return <span className="loading-cell" />;
+                    const color = disc == null || Math.abs(disc) < 0.5 ? 'var(--text-dim)' : disc > 0 ? 'var(--green)' : 'var(--red)';
+                    return <span style={{ color, fontSize: 11 }} title={row.quoteCurrency === 'GBP' ? 'Percent is on-chain USD vs the USD equivalent of the LSE print' : undefined}>
+                      {disc != null ? `${disc >= 0 ? '+' : ''}${disc.toFixed(2)}%` : '—'}
+                      {mark ? <div style={{ fontSize: 9, color: 'var(--text-dim)' }}>{mark}</div> : null}
                     </span>;
-                  })() : <span className="loading-cell" />}
+                  })()}
                 </td>
                 <td className="text-right dim">
                   {row.liquidity !== null ? fmtVol(row.liquidity) : <span className="loading-cell" />}
@@ -603,6 +597,7 @@ function HomeInner() {
       volume24h: null,
       liquidity: null,
       stockPrice: null,
+      stockPriceLocal: null,
       mcap: null,
       underlyingMcap: null,
       createdAt: null,
@@ -760,6 +755,8 @@ function HomeInner() {
           volume24h: prices[t.mint]?.volume24h ?? null,
           liquidity: prices[t.mint]?.liquidity ?? null,
           stockPrice: prices[t.mint]?.stockPrice ?? null,
+          stockPriceLocal: prices[t.mint]?.stockPriceLocal ?? null,
+          quoteCurrency: prices[t.mint]?.quoteCurrency ?? t.quoteCurrency,
           mcap: prices[t.mint]?.mcap ?? null,
           underlyingMcap: prices[t.mint]?.underlyingMcap ?? null,
           // Prefer fresh Jupiter ages; keep prior if missing
@@ -780,6 +777,8 @@ function HomeInner() {
           volume24h: prices[row.mint]?.volume24h ?? row.volume24h,
           liquidity: prices[row.mint]?.liquidity ?? row.liquidity,
           stockPrice: prices[row.mint]?.stockPrice ?? row.stockPrice,
+          stockPriceLocal: prices[row.mint]?.stockPriceLocal ?? row.stockPriceLocal,
+          quoteCurrency: prices[row.mint]?.quoteCurrency ?? row.quoteCurrency,
           mcap: prices[row.mint]?.mcap ?? row.mcap,
           underlyingMcap: prices[row.mint]?.underlyingMcap ?? row.underlyingMcap,
         })));
@@ -865,7 +864,8 @@ function HomeInner() {
     window.history.replaceState(window.history.state, '', next);
   }, [search]);
 
-  const { isOpen, timeLabel } = getMarketStatus();
+  const nyse = cashSession('NYSE');
+  const lse = cashSession('LSE');
 
   // Detect if status bar overflows → enable marquee
   useEffect(() => {
@@ -927,8 +927,11 @@ function HomeInner() {
 
   const sorted = [...rows]
     .filter(r => {
-      const matchesSearch = r.name.toLowerCase().includes(search.toLowerCase()) ||
-        r.symbol.toLowerCase().includes(search.toLowerCase());
+      const q = search.toLowerCase();
+      const matchesSearch = r.name.toLowerCase().includes(q) ||
+        r.symbol.toLowerCase().includes(q) ||
+        (r.company || '').toLowerCase().includes(q) ||
+        (r.venue || '').toLowerCase().includes(q);
       const matchesProvider = !providerFilter || (
         r.provider === providerFilter ||
         (providerFilter === 'Sunrise' && r.provider === 'Backpack') ||
@@ -2096,7 +2099,8 @@ function HomeInner() {
             const items = (
               <>
                 <span className={`sb-item sb-item-clickable${providerFilter === null ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(null)} title="Show all"><span className="sb-label">STOCKS</span><span className="sb-value">{rows.length}</span></span>
-                <span className="sb-item"><span className={isOpen ? 'sb-status-open' : 'sb-status-closed'}>● STOCK {isOpen ? 'OPEN' : 'CLOSED'}</span><span className="sb-label" style={{fontSize:9}}>{timeLabel}</span></span>
+                <span className="sb-item" title="New York regular session, 09:30–16:00 America/New_York"><span className={nyse.isOpen ? 'sb-status-open' : 'sb-status-closed'}>● NYSE {nyse.isOpen ? 'OPEN' : 'CLOSED'}</span><span className="sb-label" style={{fontSize:9}}>{nyse.timeLabel}</span></span>
+                <span className="sb-item" title="London regular session, 08:00–16:30 Europe/London"><span className={lse.isOpen ? 'sb-status-open' : 'sb-status-closed'}>● LSE {lse.isOpen ? 'OPEN' : 'CLOSED'}</span><span className="sb-label" style={{fontSize:9}}>{lse.timeLabel}</span></span>
                 <span className="sb-item">
                   <a href="https://stonkscreener.com" target="_blank" rel="noopener noreferrer" className="sb-stonk-open" title="Stonk market is always open">
                     ● STONK OPEN
@@ -2180,12 +2184,12 @@ function HomeInner() {
                     <TokenIcon symbol={row.symbol} mint={row.mint} size={28} />
                     <div>
                       <div className="token-name">{row.name}</div>
-                      <div className="token-symbol">{row.symbol}</div>
+                      <div className="token-symbol">{row.symbol}{row.venue === 'LSE' ? ' · LSE' : ''}</div>
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div className="card-price">
-                      {shown.value !== null ? <span style={shown.stale ? { color: 'var(--text-dim)' } : undefined}>{fmt(shown.value, shown.value > 100 ? 2 : 4)}{shown.stale ? ' *' : ''}</span> : <span className="loading-cell" style={{ width: 70, height: 14 }} />}
+                      {shown.value !== null ? <span style={shown.stale ? { color: 'var(--text-dim)' } : undefined}>{formatShown(shown)}{shown.stale ? ' *' : ''}</span> : <span className="loading-cell" style={{ width: 70, height: 14 }} />}
                     </div>
                     {change ? (
                       <div style={{ fontSize: 11, marginTop: 2 }}>
@@ -2198,10 +2202,12 @@ function HomeInner() {
                 </div>
                 <div className="card-bottom">
                   <div className="card-meta">
-                    {row.price !== null && row.stockPrice !== null && (() => {
-                      const disc = ((row.price - row.stockPrice) / row.stockPrice) * 100;
-                      return <span style={{ fontSize: 10, color: Math.abs(disc) < 0.5 ? 'var(--text-dim)' : disc > 0 ? 'var(--green)' : 'var(--red)' }}>
-                        {disc >= 0 ? '+' : ''}{disc.toFixed(2)}%
+                    {(() => {
+                      const disc = discountPct(row);
+                      const mark = underlyingMark(row);
+                      if (disc == null && mark == null) return null;
+                      return <span style={{ fontSize: 10, color: disc == null || Math.abs(disc) < 0.5 ? 'var(--text-dim)' : disc > 0 ? 'var(--green)' : 'var(--red)' }}>
+                        {disc != null ? `${disc >= 0 ? '+' : ''}${disc.toFixed(2)}%` : mark}
                       </span>;
                     })()}
                     <span className="card-vol">{fmtVol(row.liquidity)} liq</span>
@@ -2343,7 +2349,7 @@ export default function Home() {
       name: 'Stocks on Solana',
       url: 'https://stocksonsolana.com',
       description:
-        'Real-time screener for 1,700+ tokenized stocks on Solana - 1,100+ xStocks plus Sunrise, Ondo, PreStocks. Prices, liquidity, discount to the underlying.',
+        SITE_DESCRIPTION,
       applicationCategory: 'FinanceApplication',
       operatingSystem: 'Web',
       offers: {
@@ -2355,7 +2361,7 @@ export default function Home() {
         '@type': 'FinancialMarket',
         name: 'Tokenized Stock Market on Solana',
         description:
-          '1,100+ xStocks plus Sunrise, Ondo, PreStocks and more tokenized equities on Solana via Jupiter',
+          '1,500+ xStocks, including 100 LSE listings quoted in GBP, plus Sunrise, Ondo, and PreStocks on Solana via Jupiter',
       },
     },
     {
@@ -2364,7 +2370,7 @@ export default function Home() {
       name: 'Stocks on Solana',
       url: 'https://stocksonsolana.com',
       description:
-        'Real-time screener for 1,700+ tokenized stocks on Solana - 1,100+ xStocks plus Sunrise, Ondo, PreStocks. Prices, liquidity, discount to the underlying.',
+        SITE_DESCRIPTION,
       potentialAction: {
         '@type': 'SearchAction',
         target: {

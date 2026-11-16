@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import Script from 'next/script';
+import { SITE_DESCRIPTION, SITE_TITLE, SITE_TWITTER_DESCRIPTION, SITE_URL } from '@/lib/seo';
 import './globals.css';
 
 const spaceGrotesk = localFont({
@@ -25,35 +26,24 @@ const jetbrainsMono = localFont({
 });
 
 const GA_ID = 'G-79CB6BK271';
-const SITE_URL = 'https://stocksonsolana.com';
-const DESCRIPTION =
-  'Real-time screener for 1,700+ tokenized stocks on Solana - 1,100+ xStocks plus Sunrise, Ondo, PreStocks. Prices, liquidity, discount to the underlying.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Stocks on Solana - Tokenized Stock Screener',
+    default: SITE_TITLE,
     template: '%s | Stocks on Solana',
   },
-  description: DESCRIPTION,
+  description: SITE_DESCRIPTION,
   keywords: [
     'tokenized stocks',
     'stocks on solana',
     'xStocks',
+    'LSE tokenized stocks',
     'Ondo Finance',
     'PreStocks',
     'Sunrise',
     'tokenized equity',
-    'solana DeFi',
-    'on-chain stocks',
-    'real world assets',
-    'RWA',
-    'solana screener',
-    'TSLA on solana',
-    'AAPL on solana',
-    'NVDA on solana',
-    'tokenized NASDAQ',
-    'tokenized NYSE',
+    'Solana RWA',
   ],
   authors: [{ name: 'Stocks on Solana', url: SITE_URL }],
   creator: 'Stocks on Solana',
@@ -68,8 +58,8 @@ export const metadata: Metadata = {
     apple: '/apple-touch-icon.png',
   },
   openGraph: {
-    title: 'Stocks on Solana - Tokenized Stock Screener',
-    description: DESCRIPTION,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
     url: SITE_URL,
     siteName: 'Stocks on Solana',
     type: 'website',
@@ -77,8 +67,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Stocks on Solana - Tokenized Stock Screener',
-    description: '1,700+ tokenized stocks on Solana. 1,100+ xStocks. Always on.',
+    title: SITE_TITLE,
+    description: SITE_TWITTER_DESCRIPTION,
     site: '@StocksOnSolana',
     creator: '@StocksOnSolana',
   },

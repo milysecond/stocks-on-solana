@@ -1,3 +1,5 @@
+import { XSTOCKS_UK } from './xstocks-uk';
+
 export type TokenProvider =
   | 'xStocks'
   | 'Sunrise'      // Backpack Securities via Sunrise
@@ -9,6 +11,9 @@ export type TokenProvider =
   | 'Backpack'     // legacy alias — prefer Sunrise
   | 'Other';
 
+export type QuoteCurrency = 'USD' | 'GBP';
+export type ListingVenue = 'LSE' | 'NYSE' | 'NASDAQ';
+
 export interface StockToken {
   symbol: string;
   name: string;
@@ -16,6 +21,12 @@ export interface StockToken {
   provider: TokenProvider;
   sector?: string;
   company?: string; // shared key for bundling same company across providers
+  /** Currency of the underlying exchange print. On-chain marks stay USD. */
+  quoteCurrency?: QuoteCurrency;
+  /** Cash venue for the underlying share. Absent means a US listing. */
+  venue?: ListingVenue;
+  /** IANA zone for that venue's regular session. */
+  timezone?: string;
 }
 
 // ─── xStocks (102 tokens) ──────────────────────────────────────────────────────
@@ -509,5 +520,5 @@ export function getTokenPageUrl(token: { symbol: string; mint?: string }): strin
 
 // ─── Combined ──────────────────────────────────────────────────────────────────
 
-// Remove placeholder tokens with empty mints
-export const ALL_TOKENS = [...XSTOCKS, ...PRESTOCKS, ...ONDO_TOKENS, ...BACKPACK_TOKENS].filter(t => t.mint !== '');
+// Remove placeholder tokens with empty mints. UK xStocks sit with the other xStocks.
+export const ALL_TOKENS = [...XSTOCKS, ...XSTOCKS_UK, ...PRESTOCKS, ...ONDO_TOKENS, ...BACKPACK_TOKENS].filter(t => t.mint !== '');

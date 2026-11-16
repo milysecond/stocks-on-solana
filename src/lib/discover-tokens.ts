@@ -1,4 +1,6 @@
 import { ALL_TOKENS, StockToken, TokenProvider } from './tokens';
+import { gbpFromUsd } from './money';
+import { XSTOCKS_UK } from './xstocks-uk';
 
 const DATAPI_BASE = 'https://datapi.jup.ag/v2/assets/stocks/24h';
 
@@ -28,7 +30,11 @@ export type PriceEntry = {
   change24h: number | null;
   volume24h: number | null;
   liquidity: number | null;
+  /** Issuer/Jupiter reference in USD. UK LSE prints are converted to USD upstream. */
   stockPrice: number | null;
+  /** Underlying print in its listing currency (GBP pounds for LSE). */
+  stockPriceLocal: number | null;
+  quoteCurrency: 'USD' | 'GBP';
   mcap: number | null;
   underlyingMcap: number | null;
 };
@@ -178,31 +184,63 @@ async function fetchScreener(key: string): Promise<ScreenerAsset[]> {
 
 function assetsToTokens(assets: ScreenerAsset[]): StockToken[] {
   const knownMints = new Map<string, StockToken>(ALL_TOKENS.map((t) => [t.mint, t]));
-  return assets.map((asset): StockToken => {
+  const tokens = assets.map((asset): StockToken => {
     const known = knownMints.get(asset.id);
     return {
       mint: asset.id,
-      symbol: asset.symbol,
+      symbol: asset.symbol || known?.symbol || '',
       name: known?.name ?? cleanName(asset.name),
-      provider: providerFromAsset(asset),
+      provider: known?.provider ?? providerFromAsset(asset),
       sector: known?.sector ?? 'Other',
       company: known?.company,
+      quoteCurrency: known?.quoteCurrency,
+      venue: known?.venue,
+      timezone: known?.timezone,
     };
   });
+
+  // Keep verified LSE xStocks on the board even if Jupiter drops them from one crawl.
+  const seen = new Set(tokens.map((t) => t.mint));
+  for (const uk of XSTOCKS_UK) {
+    if (!seen.has(uk.mint)) tokens.push(uk);
+  }
+  return tokens;
 }
 
-function assetsToPrices(assets: ScreenerAsset[]): Record<string, PriceEntry> {
+/** ECB-style GBPUSD (USD per 1 pound). Used only to show the LSE print in pounds. */
+async function fetchGbpUsd(): Promise<number | null> {
+  try {
+    const res = await fetch('https://api.frankfurter.app/latest?from=GBP&to=USD', {
+      headers: { Accept: 'application/json' },
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { rates?: { USD?: number } };
+    const rate = Number(data.rates?.USD);
+    return Number.isFinite(rate) && rate > 0 ? rate : null;
+  } catch {
+    return null;
+  }
+}
+
+function assetsToPrices(assets: ScreenerAsset[], gbpUsd: number | null): Record<string, PriceEntry> {
+  const ukMints = new Set(XSTOCKS_UK.map((t) => t.mint));
   const priceMap: Record<string, PriceEntry> = {};
   for (const asset of assets) {
     const vol24h = asset.stats24h
       ? (asset.stats24h.buyVolume ?? 0) + (asset.stats24h.sellVolume ?? 0)
       : null;
+    const isUk = ukMints.has(asset.id);
+    // Jupiter stockData.price matches the xStocks USD quote, not the LSE pence print.
+    const stockUsd = asset.stockData?.price ?? null;
     priceMap[asset.id] = {
       price: asset.usdPrice ?? null,
       change24h: asset.stats24h?.priceChange ?? null,
       volume24h: vol24h,
       liquidity: asset.liquidity ?? null,
-      stockPrice: asset.stockData?.price ?? null,
+      stockPrice: stockUsd,
+      stockPriceLocal: isUk ? gbpFromUsd(stockUsd, gbpUsd) : null,
+      quoteCurrency: isUk ? 'GBP' : 'USD',
       mcap: asset.mcap ?? null,
       underlyingMcap: asset.stockData?.mcap ?? null,
     };
@@ -223,8 +261,8 @@ export async function discoverTokens(): Promise<StockToken[]> {
 
 export async function fetchScreenerPrices(): Promise<Record<string, PriceEntry>> {
   try {
-    const all = await fetchAllScreenerAssets();
-    return assetsToPrices(all);
+    const [all, gbpUsd] = await Promise.all([fetchAllScreenerAssets(), fetchGbpUsd()]);
+    return assetsToPrices(all, gbpUsd);
   } catch (e) {
     console.error('[discover-tokens] fetchScreenerPrices failed:', e);
     return {};
@@ -234,11 +272,11 @@ export async function fetchScreenerPrices(): Promise<Record<string, PriceEntry>>
 /** One crawl → tokens + prices (preferred bootstrap) */
 export async function fetchScreenerBundle(): Promise<ScreenerBundle> {
   try {
-    const assets = await fetchAllScreenerAssets();
+    const [assets, gbpUsd] = await Promise.all([fetchAllScreenerAssets(), fetchGbpUsd()]);
     const tokens = assetsToTokens(assets);
     return {
       tokens: tokens.length > 0 ? tokens : ALL_TOKENS,
-      prices: assetsToPrices(assets),
+      prices: assetsToPrices(assets, gbpUsd),
       ages: assetsToAges(assets),
       updatedAt: Date.now(),
     };

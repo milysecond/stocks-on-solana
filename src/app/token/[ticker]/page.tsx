@@ -29,7 +29,9 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   if (!token) return { title: 'Token Not Found' };
 
   const title = `${token.name} (${token.symbol}) - Tokenized Stock on Solana`;
-  const description = `Trade ${token.name} (${token.symbol}) as a tokenized stock on Solana via ${token.provider}. Live price, chart, CA, liquidity. Buy on Jupiter.`;
+  const description = token.quoteCurrency === 'GBP'
+    ? `${token.name} (${token.symbol}) is an LSE-listed stock tokenized on Solana by xStocks. On-chain price in USD, London print in GBP, chart, mint, and liquidity.`
+    : `Trade ${token.name} (${token.symbol}) as a tokenized stock on Solana via ${token.provider}. Live price, chart, CA, liquidity. Buy on Jupiter.`;
   const url = tokenShareUrl(token);
 
   return {
@@ -78,6 +80,7 @@ export default async function TokenPage({ params, searchParams }: Props) {
     volume24h: null as number | null,
     liquidity: null as number | null,
     stockPrice: null as number | null,
+    stockPriceLocal: null as number | null,
     mcap: null as number | null,
     underlyingMcap: null as number | null,
     icon: `/api/token-icon?mint=${encodeURIComponent(token.mint)}&symbol=${encodeURIComponent(token.symbol)}` as string | null,
@@ -102,7 +105,9 @@ export default async function TokenPage({ params, searchParams }: Props) {
       '@type': 'FinancialProduct',
       name: `${token.name} (${token.symbol})`,
       alternateName: [token.symbol, underlying],
-      description: `Tokenized version of ${token.name} traded on Solana via ${token.provider}.`,
+      description: token.quoteCurrency === 'GBP'
+        ? `Tokenized LSE listing of ${token.name} on Solana via xStocks. The on-chain price is USD. The London print is GBP.`
+        : `Tokenized version of ${token.name} traded on Solana via ${token.provider}.`,
       url: tokenUrl,
       category: token.sector ?? 'Tokenized Equity',
       brand: { '@type': 'Brand', name: token.provider },
@@ -117,6 +122,8 @@ export default async function TokenPage({ params, searchParams }: Props) {
         { '@type': 'PropertyValue', name: 'blockchain', value: 'Solana' },
         { '@type': 'PropertyValue', name: 'mint', value: token.mint },
         { '@type': 'PropertyValue', name: 'provider', value: token.provider },
+        ...(token.venue ? [{ '@type': 'PropertyValue', name: 'exchange', value: token.venue }] : []),
+        ...(token.quoteCurrency ? [{ '@type': 'PropertyValue', name: 'listingCurrency', value: token.quoteCurrency }] : []),
       ],
     },
   ];
@@ -148,6 +155,8 @@ export default async function TokenPage({ params, searchParams }: Props) {
           sector={token.sector}
           company={token.company}
           underlying={underlying}
+          quoteCurrency={token.quoteCurrency}
+          venue={token.venue}
           jupUrl={jupUrl}
           stonkUrl={stonkUrl}
           xstocksUrl={xstocksUrl}

@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import LoadingOrb from '@/components/LoadingOrb';
 import TradingViewChart, { toTradingViewSymbol } from '@/components/TradingViewChart';
+import { cashSession } from '@/lib/market-hours';
+import { formatMoney } from '@/lib/money';
+import type { ListingVenue, QuoteCurrency } from '@/lib/tokens';
 
 export type TokenDetailProps = {
   symbol: string;
@@ -12,6 +15,8 @@ export type TokenDetailProps = {
   sector?: string;
   company?: string;
   underlying: string;
+  quoteCurrency?: QuoteCurrency;
+  venue?: ListingVenue;
   jupUrl: string;
   stonkUrl: string;
   xstocksUrl: string | null;
@@ -23,6 +28,7 @@ export type TokenDetailProps = {
     volume24h: number | null;
     liquidity: number | null;
     stockPrice: number | null;
+    stockPriceLocal?: number | null;
     mcap: number | null;
     underlyingMcap: number | null;
     icon?: string | null;
@@ -68,6 +74,8 @@ export default function TokenDetailClient(props: TokenDetailProps) {
     provider,
     sector,
     underlying,
+    quoteCurrency,
+    venue,
     jupUrl,
     stonkUrl,
     xstocksUrl,
@@ -81,6 +89,7 @@ export default function TokenDetailClient(props: TokenDetailProps) {
   const [volume24h, setVolume24h] = useState<number | null>(initial?.volume24h ?? null);
   const [liquidity, setLiquidity] = useState<number | null>(initial?.liquidity ?? null);
   const [stockPrice, setStockPrice] = useState<number | null>(initial?.stockPrice ?? null);
+  const [stockPriceLocal, setStockPriceLocal] = useState<number | null>(initial?.stockPriceLocal ?? null);
   const [mcap, setMcap] = useState<number | null>(initial?.mcap ?? null);
   const [underlyingMcap, setUnderlyingMcap] = useState<number | null>(initial?.underlyingMcap ?? null);
   const [icon, setIcon] = useState<string | null>(initial?.icon ?? null);
@@ -105,6 +114,7 @@ export default function TokenDetailClient(props: TokenDetailProps) {
             volume24h: number | null;
             liquidity: number | null;
             stockPrice: number | null;
+            stockPriceLocal?: number | null;
             mcap: number | null;
             underlyingMcap: number | null;
           }
@@ -116,6 +126,7 @@ export default function TokenDetailClient(props: TokenDetailProps) {
         if (row.volume24h != null) setVolume24h(row.volume24h);
         if (row.liquidity != null) setLiquidity(row.liquidity);
         if (row.stockPrice != null) setStockPrice(row.stockPrice);
+        if (row.stockPriceLocal != null) setStockPriceLocal(row.stockPriceLocal);
         if (row.mcap != null) setMcap(row.mcap);
         if (row.underlyingMcap != null) setUnderlyingMcap(row.underlyingMcap);
       } catch {
@@ -162,7 +173,15 @@ export default function TokenDetailClient(props: TokenDetailProps) {
 
   const geckoUrl = `https://www.geckoterminal.com/solana/tokens/${mint}?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=price&resolution=15m&bg_color=0a0a0a`;
   const dexUrl = `https://dexscreener.com/solana/${mint}?embed=1&theme=dark&trades=0&info=0`;
-  const tvSymbol = toTradingViewSymbol(underlying);
+  const tvSymbol = toTradingViewSymbol(underlying, venue);
+  const listingSession = venue === 'LSE' ? cashSession('LSE') : null;
+  const listingMark = quoteCurrency === 'GBP'
+    ? (stockPriceLocal != null
+        ? formatMoney(stockPriceLocal, 'GBP', 2)
+        : stockPrice != null
+          ? `${formatMoney(stockPrice, 'USD', 2)} USD equiv`
+          : null)
+    : (stockPrice != null ? formatMoney(stockPrice, 'USD', 2) : null);
 
   const solscan = `https://solscan.io/token/${mint}`;
   const companySearch = `https://www.google.com/search?q=${encodeURIComponent(name + ' stock ' + underlying)}`;
@@ -276,8 +295,14 @@ export default function TokenDetailClient(props: TokenDetailProps) {
           <div style={{ fontSize: 14, color: '#888' }}>
             Company:{' '}
             <a href={companySearch} target="_blank" rel="noopener noreferrer" style={{ color: '#ccc' }}>
-              {name} · ${underlying}
+              {name} · {quoteCurrency === 'GBP' ? '' : '$'}{underlying}
+              {venue === 'LSE' ? ' · LSE' : ''}
             </a>
+            {listingSession ? (
+              <span style={{ marginLeft: 8, color: listingSession.isOpen ? '#00c864' : '#888' }}>
+                LSE {listingSession.isOpen ? 'open' : 'closed'} · {listingSession.timeLabel}
+              </span>
+            ) : null}
           </div>
         </div>
       </div>
@@ -336,11 +361,13 @@ export default function TokenDetailClient(props: TokenDetailProps) {
           <span style={{ fontSize: 11, color: '#888', marginLeft: 8, letterSpacing: 1 }}>24H</span>
         </div>
 
-        {stockPrice != null && (
+        {listingMark != null && (
           <div style={{ marginBottom: 4 }}>
-            <div style={{ fontSize: 10, color: '#555', letterSpacing: 1 }}>STOCK MARK</div>
+            <div style={{ fontSize: 10, color: '#555', letterSpacing: 1 }}>
+              {quoteCurrency === 'GBP' ? 'LSE PRICE (GBP)' : 'STOCK MARK'}
+            </div>
             <div style={{ fontSize: 18, fontFamily: 'var(--font-mono), monospace', color: '#ccc' }}>
-              {fmt(stockPrice)}
+              {listingMark}
               {premium != null && (
                 <span
                   style={{
@@ -348,12 +375,18 @@ export default function TokenDetailClient(props: TokenDetailProps) {
                     fontSize: 13,
                     color: Math.abs(premium) < 0.5 ? '#666' : premium > 0 ? '#00c864' : '#dc3c3c',
                   }}
+                  title={quoteCurrency === 'GBP' ? 'On-chain USD versus the USD equivalent of the LSE print' : undefined}
                 >
                   ({premium >= 0 ? '+' : ''}
-                  {premium.toFixed(2)}%)
+                  {premium.toFixed(2)}%{quoteCurrency === 'GBP' ? ' vs USD' : ''})
                 </span>
               )}
             </div>
+            {quoteCurrency === 'GBP' && stockPrice != null && (
+              <div style={{ fontSize: 11, color: '#777', marginTop: 4 }}>
+                USD equivalent {fmt(stockPrice)}
+              </div>
+            )}
           </div>
         )}
       </div>

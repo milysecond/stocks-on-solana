@@ -4,7 +4,7 @@ import PartnersClient from './PartnersClient';
 export const metadata: Metadata = {
   title: 'Partners',
   description:
-    'Ecosystem partners powering Stocks on Solana - StonkScreener, Jupiter, Backpack, xStocks, Ondo Finance, and PreStocks.',
+    'Partners of Stocks on Solana: Jupiter, xStocks, Ondo, PreStocks, Backpack, and StonkScreener.',
   alternates: { canonical: 'https://stocksonsolana.com/partners' },
   openGraph: {
     title: 'Partners | Stocks on Solana',

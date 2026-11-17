@@ -1,5 +1,12 @@
 import type { Metadata } from 'next';
 import type { CSSProperties } from 'react';
+import { ListingHoursLine } from '@/components/MarketHours';
+import {
+  formatLondonDate,
+  LSE_CALENDAR_URL,
+  LSE_REGULAR_HOURS,
+  upcomingLseClosures,
+} from '@/lib/market-hours';
 
 export const metadata: Metadata = {
   title: 'Exchanges - Trade Stocks on Solana Worldwide',
@@ -32,6 +39,8 @@ type Venue = {
   region?: string;
   tag?: string;
   referral?: boolean;
+  /** Regular cash-session hours, when published for that market. */
+  hours?: string;
 };
 
 const SOLANA_VENUES: Venue[] = [
@@ -174,7 +183,16 @@ const WORLD_EXCHANGES: Venue[] = [
   { name: 'B3', kind: 'world', region: 'Americas', blurb: 'Brasil Bolsa Balcão — Latin America’s largest exchange group.', url: 'https://www.b3.com.br', tag: 'BR', color: '#00a859' },
   { name: 'BMV', kind: 'world', region: 'Americas', blurb: 'Bolsa Mexicana de Valores — Mexico’s primary stock exchange.', url: 'https://www.bmv.com.mx', tag: 'MX', color: '#006847' },
 
-  { name: 'LSE', kind: 'world', region: 'EMEA', blurb: 'London Stock Exchange — Europe’s leading international equity market.', url: 'https://www.londonstockexchange.com', tag: 'UK', color: '#0033a0' },
+  {
+    name: 'LSE',
+    kind: 'world',
+    region: 'EMEA',
+    blurb: 'London Stock Exchange — Europe’s leading international equity market.',
+    url: 'https://www.londonstockexchange.com',
+    tag: 'UK',
+    color: '#0033a0',
+    hours: '08:00–16:30 Europe/London · Mon–Fri',
+  },
   { name: 'Euronext', kind: 'world', region: 'EMEA', blurb: 'Pan-European exchange (Paris, Amsterdam, Brussels, Lisbon, Dublin, Oslo).', url: 'https://www.euronext.com', tag: 'EU', color: '#e30613' },
   { name: 'Deutsche Börse', kind: 'world', region: 'EMEA', blurb: 'Frankfurt Xetra — Germany’s primary cash equity market.', url: 'https://www.deutsche-boerse.com', tag: 'DE', color: '#0018a8' },
   { name: 'SIX Swiss', kind: 'world', region: 'EMEA', blurb: 'Swiss Exchange — home of Nestlé, Roche, Novartis and the SMI.', url: 'https://www.six-group.com/en/products-services/the-swiss-stock-exchange.html', tag: 'CH', color: '#e30613' },
@@ -264,6 +282,8 @@ export default function ExchangesPage() {
             matter for underlying marks — even when Solana never sleeps.
           </p>
 
+          <LseHours />
+
           {regions.map((region) => {
             const list = WORLD_EXCHANGES.filter((e) => e.region === region);
             return (
@@ -329,6 +349,54 @@ export default function ExchangesPage() {
   );
 }
 
+function LseHours() {
+  const upcoming = upcomingLseClosures();
+  const closed = upcoming.filter((row) => row.closeMins == null);
+  const early = upcoming.filter((row) => row.closeMins != null);
+
+  return (
+    <div style={lsePanel}>
+      <div style={{ fontSize: 11, letterSpacing: 1.6, color: '#ffb000', fontWeight: 800, marginBottom: 8 }}>
+        LSE TRADING HOURS
+      </div>
+      <ListingHoursLine venue="LSE" />
+      <p style={{ ...sectionLead, margin: '10px 0 0' }}>
+        Regular cash session {LSE_REGULAR_HOURS}. The session follows Europe/London, including GMT and
+        British Summer Time. Weekends are closed.
+      </p>
+      {upcoming.length > 0 ? (
+        <>
+          <div style={{ fontSize: 12, color: '#aaa', margin: '14px 0 8px' }}>
+            Upcoming days from the{' '}
+            <a href={LSE_CALENDAR_URL} target="_blank" rel="noopener noreferrer" style={hoursLink}>
+              LSE business-days calendar
+            </a>
+            . The exchange keeps this list under review.
+          </div>
+          <div style={closureGrid}>
+            {closed.map((row) => (
+              <div key={row.date} style={closureRow}>
+                <span style={closureDate}>{formatLondonDate(row.date)}</span>
+                <span>Closed · {row.name}</span>
+              </div>
+            ))}
+            {early.map((row) => (
+              <div key={row.date} style={closureRow}>
+                <span style={closureDate}>{formatLondonDate(row.date)}</span>
+                <span>Closes 12:30 · {row.name}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <p style={{ ...sectionLead, margin: '10px 0 0' }}>
+          No further closure dates are on the published LSE calendar.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function VenueCard({ v, compact }: { v: Venue; compact?: boolean }) {
   return (
     <a
@@ -387,6 +455,7 @@ function VenueCard({ v, compact }: { v: Venue; compact?: boolean }) {
             {v.referral ? <span style={{ ...tagPill, color: '#888', borderColor: '#333' }}>REF</span> : null}
           </div>
           <div style={{ fontSize: 12, color: '#777', lineHeight: 1.55 }}>{v.blurb}</div>
+          {v.hours ? <div style={hoursLine}>{v.hours}</div> : null}
         </div>
       </div>
     </a>
@@ -524,6 +593,47 @@ const cta: CSSProperties = {
   padding: '12px 22px',
   borderRadius: 8,
   display: 'inline-block',
+};
+
+const lsePanel: CSSProperties = {
+  margin: '0 0 28px',
+  padding: '16px 18px',
+  background: '#111',
+  border: '1px solid #1e1e1e',
+  borderRadius: 12,
+};
+
+const hoursLine: CSSProperties = {
+  marginTop: 8,
+  fontSize: 12,
+  fontWeight: 700,
+  letterSpacing: 0.2,
+  color: '#ffb000',
+};
+
+const hoursLink: CSSProperties = {
+  color: '#ffb000',
+  textDecoration: 'none',
+};
+
+const closureGrid: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+  gap: '8px 20px',
+};
+
+const closureRow: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '118px minmax(0, 1fr)',
+  gap: 8,
+  fontSize: 12,
+  color: '#9a9a9a',
+  lineHeight: 1.35,
+  alignItems: 'start',
+};
+
+const closureDate: CSSProperties = {
+  color: '#d2d2d2',
 };
 
 const disclaimer: CSSProperties = {

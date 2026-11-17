@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import LoadingOrb from '@/components/LoadingOrb';
 import TradingViewChart, { toTradingViewSymbol } from '@/components/TradingViewChart';
-import { cashSession } from '@/lib/market-hours';
+import { ListingHoursLine } from '@/components/MarketHours';
 import { formatMoney } from '@/lib/money';
 import type { ListingVenue, QuoteCurrency } from '@/lib/tokens';
 
@@ -174,7 +174,6 @@ export default function TokenDetailClient(props: TokenDetailProps) {
   const geckoUrl = `https://www.geckoterminal.com/solana/tokens/${mint}?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=price&resolution=15m&bg_color=0a0a0a`;
   const dexUrl = `https://dexscreener.com/solana/${mint}?embed=1&theme=dark&trades=0&info=0`;
   const tvSymbol = toTradingViewSymbol(underlying, venue);
-  const listingSession = venue === 'LSE' ? cashSession('LSE') : null;
   const listingMark = quoteCurrency === 'GBP'
     ? (stockPriceLocal != null
         ? formatMoney(stockPriceLocal, 'GBP', 2)
@@ -298,12 +297,12 @@ export default function TokenDetailClient(props: TokenDetailProps) {
               {name} · {quoteCurrency === 'GBP' ? '' : '$'}{underlying}
               {venue === 'LSE' ? ' · LSE' : ''}
             </a>
-            {listingSession ? (
-              <span style={{ marginLeft: 8, color: listingSession.isOpen ? '#00c864' : '#888' }}>
-                LSE {listingSession.isOpen ? 'open' : 'closed'} · {listingSession.timeLabel}
-              </span>
-            ) : null}
           </div>
+          {venue === 'LSE' ? (
+            <div style={{ marginTop: 10 }}>
+              <ListingHoursLine venue="LSE" />
+            </div>
+          ) : null}
         </div>
       </div>
 

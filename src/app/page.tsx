@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, ExternalLink, Search, X, TrendingUp, TrendingDown, Droplets, BarChart2, ChevronLeft, ChevronRight, Star, LogOut, Shield, FileText, Handshake } from 'lucide-react';
 import { ALL_TOKENS, StockToken, getBackpackTradeUrl, getJupiterTradeUrl, getStonkScreenerUrl, getXStocksTradeUrl, getTokenPagePath, getTokenPageUrl, type QuoteCurrency } from '@/lib/tokens';
-import { cashSession } from '@/lib/market-hours';
+import { ListingHoursLine, MarketStatusItem } from '@/components/MarketHours';
 import { formatMoney } from '@/lib/money';
 import { SITE_DESCRIPTION } from '@/lib/seo';
 import LoadingOrb from '@/components/LoadingOrb';
@@ -267,7 +267,6 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
   const change = fmtChange(displayChange(row));
   const disc = discountPct(row);
   const mark = underlyingMark(row);
-  const lseSession = row.venue === 'LSE' ? cashSession('LSE') : null;
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -288,7 +287,7 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
             <TokenIcon symbol={row.symbol} mint={row.mint} size={44} />
             <div>
               <div className="tm-name">{row.name}</div>
-              <div className="tm-symbol">{row.symbol}{row.venue === 'LSE' ? ' · LSE' : ''}{lseSession ? ` · ${lseSession.isOpen ? 'OPEN' : 'CLOSED'}` : ''}</div>
+              <div className="tm-symbol">{row.symbol}{row.venue === 'LSE' ? ' · LSE' : ''}</div>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -302,6 +301,12 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
             <button className="tm-close" onClick={onClose}><X size={16} /></button>
           </div>
         </div>
+
+        {row.venue === 'LSE' ? (
+          <div style={{ margin: '-6px 0 14px' }}>
+            <ListingHoursLine venue="LSE" />
+          </div>
+        ) : null}
 
         {/* Price hero */}
         <div className="tm-price-row">
@@ -864,9 +869,6 @@ function HomeInner() {
     window.history.replaceState(window.history.state, '', next);
   }, [search]);
 
-  const nyse = cashSession('NYSE');
-  const lse = cashSession('LSE');
-
   // Detect if status bar overflows → enable marquee
   useEffect(() => {
     const check = () => {
@@ -1218,6 +1220,12 @@ function HomeInner() {
         .sb-value { color: var(--amber); font-weight: 600; }
         .sb-status-open { color: var(--green); }
         .sb-status-closed { color: var(--red); }
+        .sb-market { gap: 0; }
+        .sb-market-detail { color: #d2d2d2; font-size: 10px; }
+        .sb-market-local { color: #8d8d8d; font-size: 10px; }
+        @media (max-width: 640px) {
+          .sb-market { padding-left: 10px; padding-right: 10px; }
+        }
         .sb-stonk-open {
           color: #ccff00;
           text-decoration: none;
@@ -2099,8 +2107,8 @@ function HomeInner() {
             const items = (
               <>
                 <span className={`sb-item sb-item-clickable${providerFilter === null ? ' sb-item-active' : ''}`} onClick={() => setProviderFilter(null)} title="Show all"><span className="sb-label">STOCKS</span><span className="sb-value">{rows.length}</span></span>
-                <span className="sb-item" title="New York regular session, 09:30–16:00 America/New_York"><span className={nyse.isOpen ? 'sb-status-open' : 'sb-status-closed'}>● NYSE {nyse.isOpen ? 'OPEN' : 'CLOSED'}</span><span className="sb-label" style={{fontSize:9}}>{nyse.timeLabel}</span></span>
-                <span className="sb-item" title="London regular session, 08:00–16:30 Europe/London"><span className={lse.isOpen ? 'sb-status-open' : 'sb-status-closed'}>● LSE {lse.isOpen ? 'OPEN' : 'CLOSED'}</span><span className="sb-label" style={{fontSize:9}}>{lse.timeLabel}</span></span>
+                <MarketStatusItem venue="NYSE" />
+                <MarketStatusItem venue="LSE" />
                 <span className="sb-item">
                   <a href="https://stonkscreener.com" target="_blank" rel="noopener noreferrer" className="sb-stonk-open" title="Stonk market is always open">
                     ● STONK OPEN

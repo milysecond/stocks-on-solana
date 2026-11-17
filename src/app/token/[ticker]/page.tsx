@@ -8,6 +8,7 @@ import {
   getStonkScreenerUrl,
   getXStocksTradeUrl,
 } from '@/lib/tokens';
+import { getSunriseTradeUrl } from '@/lib/sunrise';
 import { resolveToken, tokenShareUrl } from '@/lib/resolve-token';
 import { fetchScreenerPrices } from '@/lib/discover-tokens';
 import TokenDetailClient from '@/components/TokenDetailClient';
@@ -70,6 +71,7 @@ export default async function TokenPage({ params, searchParams }: Props) {
   const stonkUrl = getStonkScreenerUrl(token);
   const xstocksUrl = getXStocksTradeUrl(token);
   const backpackUrl = getBackpackTradeUrl(token);
+  const sunriseUrl = getSunriseTradeUrl(token);
   const underlying =
     token.company || token.symbol.replace(/pre$/i, '').replace(/on$/i, '').replace(/x$/i, '').toUpperCase();
 
@@ -161,6 +163,7 @@ export default async function TokenPage({ params, searchParams }: Props) {
           stonkUrl={stonkUrl}
           xstocksUrl={xstocksUrl}
           backpackUrl={backpackUrl}
+          sunriseUrl={sunriseUrl}
           screenerUrl={screenerUrl}
           initial={initial}
         />

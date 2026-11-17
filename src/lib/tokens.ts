@@ -453,7 +453,13 @@ export const ONDO_TOKENS: StockToken[] = [
 // ─── Trade deep links (always include referral + stock target) ────────────────
 
 export const JUP_REFERRER = 'yfgv2ibxy07v';
-export const XSTOCKS_REF = 'NEWUSER';
+/**
+ * xStocks referral code. Query parameter name is `ref`.
+ * TODO(Sal): replace this placeholder with your real code. Do not invent one.
+ * defi.xstocks.fi reads `ref` on any path (`useReferralParam`) and stores it as
+ * localStorage `airdropReferralCode`, then strips it from the address bar.
+ */
+export const XSTOCKS_REF = 'TODO';
 export const BACKPACK_REFERRAL = 'downunder';
 
 /** Underlying ticker used by Backpack pair names */
@@ -477,10 +483,23 @@ export function getStonkScreenerUrl(token: StockToken): string {
   return `https://stonkscreener.com/token/${token.mint}`;
 }
 
-/** xStocks app deep link to this token + referral */
-export function getXStocksTradeUrl(token: StockToken): string | null {
+/** Points / referral landing page. This is where `ref` is bound. */
+export function getXStocksPointsUrl(): string {
+  return `https://defi.xstocks.fi/points?ref=${encodeURIComponent(XSTOCKS_REF)}`;
+}
+
+/**
+ * xStocks product deep link.
+ * defi.xstocks.fi has no /trade route (unknown paths render the SPA 404, and
+ * the US edge 302s the whole host to /geoblock). The catalog the app itself
+ * links to is https://xstocks.fi/products#<symbol>, matched exactly — including
+ * dotted LSE symbols such as TSCO.GBx, SHELx, and RR.GBx.
+ * `ref` is included so the code travels with the link. The catalog keeps the
+ * query; the points program registers it on defi.xstocks.fi.
+ */
+export function getXStocksTradeUrl(token: Pick<StockToken, 'symbol' | 'provider'>): string | null {
   if (token.provider !== 'xStocks') return null;
-  return `https://defi.xstocks.fi/trade/${encodeURIComponent(token.symbol)}?ref=${XSTOCKS_REF}`;
+  return `https://xstocks.fi/products?ref=${encodeURIComponent(XSTOCKS_REF)}#${token.symbol}`;
 }
 
 // Backpack / Sunrise spot pairs

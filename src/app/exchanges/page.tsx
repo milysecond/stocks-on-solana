@@ -7,6 +7,8 @@ import {
   LSE_REGULAR_HOURS,
   upcomingLseClosures,
 } from '@/lib/market-hours';
+import { getXStocksPointsUrl } from '@/lib/tokens';
+import { getSunriseHomeUrl, getSunriseTokensUrl } from '@/lib/sunrise';
 
 export const metadata: Metadata = {
   title: 'Exchanges - Trade Stocks on Solana Worldwide',
@@ -74,10 +76,19 @@ const SOLANA_VENUES: Venue[] = [
     referral: true,
   },
   {
+    name: 'Sunrise',
+    kind: 'solana',
+    blurb: 'Trading app for Backpack Securities tokenized stocks. Each listing has a mint deep link with buy and sell.',
+    url: getSunriseHomeUrl(),
+    logo: '/partners/sunrise.png',
+    color: '#e44710',
+    tag: 'TOKENIZED STOCKS',
+  },
+  {
     name: 'xStocks (Backed)',
     kind: 'solana',
     blurb: 'Trade and redeem xStocks tokenized equities, including LSE listings. Instant on-chain settlement.',
-    url: 'https://defi.xstocks.fi/points?ref=NEWUSER',
+    url: getXStocksPointsUrl(),
     logo: '/partners/xstocks.png',
     color: '#00c2ff',
     tag: 'xSTOCKS APP',
@@ -121,18 +132,17 @@ const ISSUERS: Venue[] = [
   {
     name: 'Sunrise (Backpack Securities)',
     kind: 'issuer',
-    blurb: 'Tokenized US equities issued via Backpack Securities — redeemable 1:1 path.',
-    url: 'https://backpack.exchange/signup?referral=downunder',
-    logo: '/partners/backpack.png',
-    color: '#e33e3e',
+    blurb: 'Tokenized US equities issued via Backpack Securities and listed on the Sunrise app.',
+    url: getSunriseTokensUrl(),
+    logo: '/partners/sunrise.png',
+    color: '#e44710',
     tag: 'ISSUER',
-    referral: true,
   },
   {
     name: 'xStocks',
     kind: 'issuer',
     blurb: 'Broad suite of tokenized blue-chips and ETFs as Solana SPL tokens.',
-    url: 'https://defi.xstocks.fi/points?ref=NEWUSER',
+    url: getXStocksPointsUrl(),
     logo: '/partners/xstocks.png',
     color: '#00c2ff',
     tag: 'ISSUER',

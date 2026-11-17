@@ -21,6 +21,7 @@ export type TokenDetailProps = {
   stonkUrl: string;
   xstocksUrl: string | null;
   backpackUrl: string | null;
+  sunriseUrl: string | null;
   screenerUrl: string;
   initial?: {
     price: number | null;
@@ -36,7 +37,7 @@ export type TokenDetailProps = {
 };
 
 const PROVIDER_LOGO: Record<string, string> = {
-  Sunrise: '/partners/backpack.png',
+  Sunrise: '/partners/sunrise.png',
   Backpack: '/partners/backpack.png',
   xStocks: '/partners/xstocks.png',
   Ondo: '/partners/ondo.png',
@@ -44,7 +45,7 @@ const PROVIDER_LOGO: Record<string, string> = {
 };
 
 const PROVIDER_COLOR: Record<string, string> = {
-  Sunrise: '#e33e3e',
+  Sunrise: '#e44710',
   Backpack: '#e33e3e',
   xStocks: '#00c2ff',
   Ondo: '#6c5ce7',
@@ -80,6 +81,7 @@ export default function TokenDetailClient(props: TokenDetailProps) {
     stonkUrl,
     xstocksUrl,
     backpackUrl,
+    sunriseUrl,
     screenerUrl,
     initial,
   } = props;
@@ -610,6 +612,13 @@ export default function TokenDetailClient(props: TokenDetailProps) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/partners/backpack.png" alt="" width={20} height={20} />
               Backpack
+            </a>
+          )}
+          {sunriseUrl && (
+            <a href={sunriseUrl} target="_blank" rel="noopener noreferrer" style={tradeBtn('#e44710')}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/partners/sunrise.png" alt="" width={20} height={20} />
+              Sunrise
             </a>
           )}
           

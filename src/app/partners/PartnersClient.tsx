@@ -1,5 +1,8 @@
 'use client';
 
+import { getXStocksPointsUrl } from '@/lib/tokens';
+import { getSunriseHomeUrl } from '@/lib/sunrise';
+
 const partners = [
   {
     name: 'StonkScreener',
@@ -17,7 +20,7 @@ const partners = [
   {
     name: 'xStocks',
     description: 'Tokenized equities on Solana — trade stocks including Apple, Tesla, NVIDIA and more with instant settlement.',
-    url: 'https://defi.xstocks.fi/points?ref=NEWUSER',
+    url: getXStocksPointsUrl(),
     logo: '/partners/xstocks.png',
     color: '#00c2ff',
   },
@@ -27,6 +30,13 @@ const partners = [
     url: 'https://backpack.exchange/signup?referral=downunder',
     logo: '/partners/backpack.png',
     color: '#e33e3e',
+  },
+  {
+    name: 'Sunrise',
+    description: 'Trading app for Backpack Securities tokenized stocks on Solana. Canonical mints, buy and sell from the token page.',
+    url: getSunriseHomeUrl(),
+    logo: '/partners/sunrise.png',
+    color: '#e44710',
   },
   {
     name: 'Ondo',

@@ -18,7 +18,7 @@ Issuers on the board: **xStocks**, **Ondo**, **PreStocks**, **Sunrise** (Backpac
 - 100 LSE-listed xStocks (GBP reference, London session, Solana mints)
 - Discount / premium versus the underlying quote
 - Token icons (local, issuer CDN, then a letter fallback)
-- `/token/[ticker]` pages with a CoinGecko chart (GeckoTerminal pool fallback), mint, and JSON-LD. Short `/TICKER` URLs 301 there
+- `/token/[ticker]` pages with a CoinGecko chart (GeckoTerminal pool, then TradingView fallback), mint, and JSON-LD. Short `/TICKER` URLs 301 there
 - NYSE and LSE regular-session clocks
 - SOL price in the status bar
 - Starred names in localStorage

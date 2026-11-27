@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import LoadingOrb from '@/components/LoadingOrb';
 import CoinGeckoChart, { coinGeckoCoinUrl } from '@/components/CoinGeckoChart';
+import TradingViewChart, { toTradingViewSymbol } from '@/components/TradingViewChart';
 import { geckoTerminalPoolEmbed, geckoTerminalPoolUrl, geckoTerminalTokenUrl } from '@/lib/coingecko-urls';
 import { ListingHoursLine } from '@/components/MarketHours';
 import { formatMoney } from '@/lib/money';
@@ -101,15 +102,19 @@ export default function TokenDetailClient(props: TokenDetailProps) {
   const [copied, setCopied] = useState(false);
   const coingeckoId = props.coingeckoId ?? null;
   const geckoPool = props.geckoPool ?? null;
+  // TradingView is the fallback when CoinGecko/GeckoTerminal have no listing.
+  const tvSymbol = underlying ? toTradingViewSymbol(underlying, venue) : null;
+  const hasGecko = !!(coingeckoId || geckoPool);
   const chartTabs = (
     [
       ['coingecko', 'COINGECKO', !!coingeckoId],
       ['pool', 'GECKOTERMINAL', !!geckoPool],
-      ['dex', 'DEX', !!(coingeckoId || geckoPool)],
+      ['tv', 'TRADINGVIEW', !hasGecko && !!tvSymbol],
+      ['dex', 'DEX', hasGecko],
     ] as const
   ).filter(([, , ok]) => ok);
-  const [chartSrc, setChartSrc] = useState<'coingecko' | 'pool' | 'dex' | null>(
-    coingeckoId ? 'coingecko' : geckoPool ? 'pool' : null,
+  const [chartSrc, setChartSrc] = useState<'coingecko' | 'pool' | 'tv' | 'dex' | null>(
+    coingeckoId ? 'coingecko' : geckoPool ? 'pool' : tvSymbol ? 'tv' : null,
   );
 
   const providerLogo = PROVIDER_LOGO[provider] || null;
@@ -192,8 +197,16 @@ export default function TokenDetailClient(props: TokenDetailProps) {
     ? coinGeckoCoinUrl(coingeckoId)
     : geckoPool
       ? geckoTerminalPoolUrl(geckoPool)
-      : geckoTerminalTokenUrl(mint);
-  const geckoLinkLabel = coingeckoId ? 'Open on CoinGecko ↗' : 'Open on GeckoTerminal ↗';
+      : tvSymbol
+        ? `https://www.tradingview.com/chart/?symbol=${encodeURIComponent(tvSymbol)}`
+        : geckoTerminalTokenUrl(mint);
+  const geckoLinkLabel = coingeckoId
+    ? 'Open on CoinGecko ↗'
+    : geckoPool
+      ? 'Open on GeckoTerminal ↗'
+      : tvSymbol
+        ? 'Open in TradingView ↗'
+        : 'Open on GeckoTerminal ↗';
   const listingMark = quoteCurrency === 'GBP'
     ? (stockPriceLocal != null
         ? formatMoney(stockPriceLocal, 'GBP', 2)
@@ -518,7 +531,7 @@ export default function TokenDetailClient(props: TokenDetailProps) {
         </div>
       </div>
 
-      {/* Chart — CoinGecko widget · GeckoTerminal pool · DEX. Hidden when CoinGecko has neither. */}
+      {/* Chart — CoinGecko widget · GeckoTerminal pool · TradingView fallback · DEX. Hidden only when none apply. */}
       <div style={{ marginBottom: 28 }}>
         <div
           style={{
@@ -569,6 +582,8 @@ export default function TokenDetailClient(props: TokenDetailProps) {
           >
             {chartSrc === 'coingecko' && coingeckoId ? (
               <CoinGeckoChart coinId={coingeckoId} height={420} />
+            ) : chartSrc === 'tv' && tvSymbol ? (
+              <TradingViewChart symbol={tvSymbol} height={420} />
             ) : (
               <iframe
                 title={`${symbol} on-chain chart`}
@@ -602,7 +617,9 @@ export default function TokenDetailClient(props: TokenDetailProps) {
               ? `CoinGecko · ${symbol}`
               : chartSrc === 'pool'
                 ? 'GeckoTerminal by CoinGecko · on-chain pool'
-                : chartSrc === 'dex'
+                : chartSrc === 'tv'
+                  ? `TradingView · ${tvSymbol} (underlying)`
+                  : chartSrc === 'dex'
                   ? 'DexScreener · on-chain pool'
                   : 'CoinGecko'}
             {' '}· not affiliated

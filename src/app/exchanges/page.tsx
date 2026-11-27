@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { CSSProperties } from 'react';
 import { ListingHoursLine } from '@/components/MarketHours';
+import { LEAP_REFERRAL_URL } from '@/lib/tokens';
 import {
   formatLondonDate,
   LSE_CALENDAR_URL,
@@ -39,6 +40,8 @@ type Venue = {
   region?: string;
   tag?: string;
   referral?: boolean;
+  /** Paid/affiliate link → rel=sponsored */
+  sponsored?: boolean;
   /** Regular cash-session hours, when published for that market. */
   hours?: string;
 };
@@ -82,6 +85,17 @@ const SOLANA_VENUES: Venue[] = [
     color: '#00c2ff',
     tag: 'xSTOCKS APP',
     referral: true,
+  },
+  {
+    name: 'Leap',
+    kind: 'solana',
+    blurb: 'Solana Labs trading app built for high performance. Join with the Stocks on Solana invite.',
+    url: LEAP_REFERRAL_URL,
+    logo: '/partners/leap.png',
+    color: '#fffe95',
+    tag: 'TRADING APP',
+    referral: true,
+    sponsored: true,
   },
   {
     name: 'Raydium',
@@ -402,7 +416,7 @@ function VenueCard({ v, compact }: { v: Venue; compact?: boolean }) {
     <a
       href={v.url}
       target="_blank"
-      rel="noopener noreferrer"
+      rel={v.sponsored ? 'noopener sponsored' : 'noopener noreferrer'}
       style={{
         ...card,
         padding: compact ? '14px 16px' : '18px 18px',

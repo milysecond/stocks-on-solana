@@ -7,6 +7,7 @@ import TradingViewChart, { toTradingViewSymbol } from '@/components/TradingViewC
 import { geckoTerminalPoolEmbed, geckoTerminalPoolUrl, geckoTerminalTokenUrl } from '@/lib/coingecko-urls';
 import { ListingHoursLine } from '@/components/MarketHours';
 import { formatMoney } from '@/lib/money';
+import { LEAP_REFERRAL_URL } from '@/lib/tokens';
 import type { ListingVenue, QuoteCurrency } from '@/lib/tokens';
 
 export type TokenDetailProps = {
@@ -658,6 +659,11 @@ export default function TokenDetailClient(props: TokenDetailProps) {
               Backpack
             </a>
           )}
+          <a href={LEAP_REFERRAL_URL} target="_blank" rel="noopener sponsored" style={tradeBtn('#fffe95')}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/partners/leap.png" alt="" width={20} height={20} style={{ borderRadius: 5 }} />
+            Leap
+          </a>
           
           <a href={screenerUrl} style={tradeBtn('#ffb000')}>
             Screener

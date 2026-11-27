@@ -455,6 +455,8 @@ export const ONDO_TOKENS: StockToken[] = [
 export const JUP_REFERRER = 'yfgv2ibxy07v';
 export const XSTOCKS_REF = 'NEWUSER';
 export const BACKPACK_REFERRAL = 'downunder';
+/** Leap (Solana Labs trading app) referral. No per-token deep link exists, so every button uses this. */
+export const LEAP_REFERRAL_URL = 'https://leap.xyz/r/4A33W';
 
 /** Underlying ticker used by Backpack pair names */
 export function underlyingTicker(token: StockToken): string {

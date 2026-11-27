@@ -1,5 +1,7 @@
 'use client';
 
+import { LEAP_REFERRAL_URL } from '@/lib/tokens';
+
 const partners = [
   {
     name: 'StonkScreener',
@@ -27,6 +29,14 @@ const partners = [
     url: 'https://backpack.exchange/signup?referral=downunder',
     logo: '/partners/backpack.png',
     color: '#e33e3e',
+  },
+  {
+    name: 'Leap',
+    description: 'The Solana Labs trading app built for high performance. Join with the Stocks on Solana invite link.',
+    url: LEAP_REFERRAL_URL,
+    logo: '/partners/leap.png',
+    color: '#fffe95',
+    sponsored: true,
   },
   {
     name: 'Ondo',
@@ -74,7 +84,7 @@ export default function PartnersClient() {
               key={p.name}
               href={p.url}
               target="_blank"
-              rel="noopener noreferrer"
+              rel={'sponsored' in p && p.sponsored ? 'noopener sponsored' : 'noopener noreferrer'}
               style={{ display: 'flex', gap: 16, alignItems: 'flex-start', background: '#111', border: '1px solid #1e1e1e', borderRadius: 10, padding: '20px 22px', textDecoration: 'none', transition: 'border-color 0.15s' }}
               onMouseEnter={e => (e.currentTarget.style.borderColor = '#ffb000')}
               onMouseLeave={e => (e.currentTarget.style.borderColor = '#1e1e1e')}

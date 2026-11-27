@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, ExternalLink, Search, X, TrendingUp, TrendingDown, Droplets, BarChart2, ChevronLeft, ChevronRight, Star, LogOut, Shield, FileText, Handshake } from 'lucide-react';
-import { ALL_TOKENS, StockToken, getBackpackTradeUrl, getJupiterTradeUrl, getStonkScreenerUrl, getXStocksTradeUrl, getTokenPagePath, getTokenPageUrl, type QuoteCurrency } from '@/lib/tokens';
+import { ALL_TOKENS, StockToken, getBackpackTradeUrl, getJupiterTradeUrl, getStonkScreenerUrl, getXStocksTradeUrl, getTokenPagePath, getTokenPageUrl, LEAP_REFERRAL_URL, type QuoteCurrency } from '@/lib/tokens';
 import { ListingHoursLine, MarketStatusItem } from '@/components/MarketHours';
 import { formatMoney } from '@/lib/money';
 import { SITE_DESCRIPTION } from '@/lib/seo';
@@ -298,6 +299,7 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
             >
               <Star size={16} />
             </button>
+            <a href={getTokenPagePath(row)} className="tm-fullpage" title="Open the full token page">FULL PAGE →</a>
             <button className="tm-close" onClick={onClose}><X size={16} /></button>
           </div>
         </div>
@@ -420,6 +422,16 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
               <img src="/partners/backpack.png" alt="" className="partner-logo" />
             </a>
           )}
+          <a
+            href={LEAP_REFERRAL_URL}
+            target="_blank"
+            rel="noopener sponsored"
+            className="tm-buy-btn tm-buy-btn-leap tm-buy-btn-icon"
+            title="Trade on Leap"
+            aria-label="Trade on Leap"
+          >
+            <img src="/partners/leap.png" alt="" className="partner-logo" />
+          </a>
         </div>
 
         {/* Share */}
@@ -442,14 +454,29 @@ function TokenModal({ row, onClose, onPrev, onNext, index, total, starred, toggl
   );
 }
 
-function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred, toggleStar }: {
+/** Row/card click → token page. Inner links and buttons handle themselves. */
+function useOpenTokenPage() {
+  const router = useRouter();
+  return useCallback((e: React.MouseEvent, row: StockRow) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('a, button, input, label')) return;
+    const href = getTokenPagePath(row);
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) {
+      window.open(href, '_blank', 'noopener');
+      return;
+    }
+    router.push(href);
+  }, [router]);
+}
+
+function DesktopTable({ sorted, SortIcon, toggleSort, starred, toggleStar }: {
   sorted: StockRow[];
-  setSelectedToken: (r: StockRow) => void;
   SortIcon: ({ col }: { col: SortKey }) => React.ReactElement;
   toggleSort: (k: SortKey) => void;
   starred: Set<string>;
   toggleStar: (mint: string) => void;
 }) {
+  const openTokenPage = useOpenTokenPage();
   return (
     <div className="desktop-table">
       <table>
@@ -481,18 +508,18 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
             return (
               <tr
                 key={row.mint}
-                className={i % 2 !== 0 ? 'even' : ''}
-                onClick={() => setSelectedToken(row)}
+                className={`token-row${i % 2 !== 0 ? ' even' : ''}`}
+                onClick={e => openTokenPage(e, row)}
                 style={{ contentVisibility: 'auto', containIntrinsicSize: '0 46px' } as React.CSSProperties}
               >
                 <td style={{ paddingLeft: 14 }}>
-                  <div className="name-cell">
+                  <Link href={getTokenPagePath(row)} prefetch={false} className="name-cell token-link" title={`${row.name} (${row.symbol}) token page`}>
                     <TokenIcon symbol={row.symbol} mint={row.mint} size={26} />
                     <div>
                       <div className="token-name">{row.name}</div>
                       <div className="token-symbol">{row.symbol}{row.venue === 'LSE' ? ' · LSE' : ''}</div>
                     </div>
-                  </div>
+                  </Link>
                 </td>
                 <td className="text-right price-val">
                   {shown.value !== null ? (
@@ -581,6 +608,16 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
                       <img src="/partners/backpack.png" alt="" className="partner-logo" />
                     </a>
                   )}
+                  <a
+                    href={LEAP_REFERRAL_URL}
+                    target="_blank"
+                    rel="noopener sponsored"
+                    className="buy-btn buy-btn-leap buy-btn-icon"
+                    title="Trade on Leap"
+                    aria-label="Trade on Leap"
+                  >
+                    <img src="/partners/leap.png" alt="" className="partner-logo" />
+                  </a>
                 </td>
               </tr>
             );
@@ -591,8 +628,24 @@ function DesktopTable({ sorted, setSelectedToken, SortIcon, toggleSort, starred,
   );
 }
 
+/**
+ * URL params read after mount instead of useSearchParams, so the screener
+ * (and its token links) prerenders into the HTML rather than bailing out to
+ * client-only rendering.
+ */
+function useClientSearchParams(): URLSearchParams {
+  const [params, setParams] = useState<URLSearchParams>(() => new URLSearchParams());
+  useEffect(() => {
+    const sync = () => setParams(new URLSearchParams(window.location.search));
+    sync();
+    window.addEventListener('popstate', sync);
+    return () => window.removeEventListener('popstate', sync);
+  }, []);
+  return params;
+}
+
 function HomeInner() {
-  const searchParams = useSearchParams();
+  const searchParams = useClientSearchParams();
 
   const [rows, setRows] = useState<StockRow[]>(() =>
     ALL_TOKENS.filter(t => t.mint).map(t => ({
@@ -620,6 +673,7 @@ function HomeInner() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedToken, setSelectedToken] = useState<StockRow | null>(null);
+  const openTokenPage = useOpenTokenPage();
   const openToken = (row: StockRow | null) => {
     setSelectedToken(row);
     if (row) {
@@ -1300,8 +1354,15 @@ function HomeInner() {
         th:first-child { text-align: left; }
         .th-inner { display: inline-flex; align-items: center; gap: 3px; }
         td { padding: 7px 10px; }
-        tr { border-bottom: 1px solid #131313; transition: background 0.1s; cursor: pointer; }
-        tr:hover { background: #161616 !important; }
+        tr { border-bottom: 1px solid #131313; transition: background 0.1s, box-shadow 0.1s; }
+        tr.token-row { cursor: pointer; }
+        tr.token-row:hover { background: rgba(255,176,0,0.06) !important; box-shadow: inset 2px 0 0 var(--amber); }
+        tr.token-row:hover .token-name, .card:hover .token-name { color: var(--amber); }
+        .token-link { color: inherit; text-decoration: none; }
+        .token-link:hover .token-name, .token-link:focus-visible .token-name { text-decoration: underline; text-underline-offset: 2px; }
+        .token-link:focus-visible { outline: 1px solid var(--amber); outline-offset: 2px; border-radius: 3px; }
+        .tm-fullpage { font-size: 9px; letter-spacing: 2px; color: var(--amber); text-decoration: none; border: 1px solid rgba(255,176,0,0.4); border-radius: 4px; padding: 5px 8px; white-space: nowrap; }
+        .tm-fullpage:hover { background: rgba(255,176,0,0.12); }
         tr.even { background: #0c0c0c; }
         .name-cell { display: flex; align-items: center; gap: 8px; }
         .token-name { font-weight: 600; color: var(--text); font-size: 12px; line-height: 1.2; }
@@ -1382,6 +1443,10 @@ function HomeInner() {
         .tm-buy-btn-jup { /* primary stays brand */ }
         .tm-buy-btn-backpack { background: transparent; border: 1px solid rgba(227,62,62,0.45); color: #e33e3e; flex: none; padding: 10px 14px; }
         .tm-buy-btn-backpack:hover { background: rgba(227,62,62,0.08); opacity: 1; }
+        .buy-btn-leap { color: #fffe95; }
+        .buy-btn-leap:hover { background: rgba(255,254,149,0.08); border-color: rgba(255,254,149,0.35); }
+        .tm-buy-btn-leap { background: transparent; border: 1px solid rgba(255,254,149,0.4); color: #fffe95; flex: none; padding: 10px 14px; }
+        .tm-buy-btn-leap:hover { background: rgba(255,254,149,0.08); opacity: 1; }
 
 
         /* ── Mobile cards ── */
@@ -1394,7 +1459,7 @@ function HomeInner() {
           cursor: pointer;
           transition: border-color 0.1s;
         }
-        .card:hover { border-color: rgba(255,153,0,0.3); }
+        .card:hover { border-color: rgba(255,176,0,0.45); }
         .card:active { background: #161616; }
         .card-top {
           display: flex;
@@ -2043,11 +2108,12 @@ function HomeInner() {
                 { name: 'Jupiter', desc: 'The leading DEX aggregator on Solana. All buy orders route through Jupiter for best execution.', url: 'https://jup.ag/?ref=yfgv2ibxy07v', logo: '/partners/jupiter.png' },
                 { name: 'xStocks', desc: 'Tokenized equities on Solana — trade stocks including Apple, Tesla, NVIDIA and more with instant settlement.', url: 'https://defi.xstocks.fi/points?ref=NEWUSER', color: '#00c2ff', logo: '/partners/xstocks.png' },
                 { name: 'Backpack', desc: 'Regulated exchange + Sunrise tokenized equities — redeemable 1:1 shares on Solana.', url: 'https://backpack.exchange/signup?referral=downunder', color: '#e33e3e', logo: '/partners/backpack.png' },
+                { name: 'Leap', desc: 'The Solana Labs trading app for high performance. Join with our invite link.', url: LEAP_REFERRAL_URL, color: '#fffe95', logo: '/partners/leap.png', sponsored: true },
                 { name: 'Ondo', desc: 'Tokenized stocks and funds on Solana via Ondo Global Markets.', url: 'https://ondo.finance', color: '#6c5ce7', logo: '/partners/ondo.png' },
                 { name: 'PreStocks', desc: 'Pre-IPO tokenized equity exposure on Solana.', url: 'https://prestocks.com', color: '#a855f7', logo: '/partners/prestocks.png' },
                 { name: 'Solana', desc: 'The high-performance blockchain powering tokenized equities with sub-second finality and near-zero fees.', url: 'https://solana.com' },
               ].map(p => (
-                <a key={p.name} href={p.url} target="_blank" rel="noopener noreferrer"
+                <a key={p.name} href={p.url} target="_blank" rel={'sponsored' in p && p.sponsored ? 'noopener sponsored' : 'noopener noreferrer'}
                   style={{ display: 'flex', gap: 14, alignItems: 'flex-start', background: '#0d0d0d', border: '1px solid #1e1e1e', borderRadius: 8, padding: '16px 20px', textDecoration: 'none', marginBottom: 10, transition: 'border-color 0.15s' }}
                   onMouseEnter={e => (e.currentTarget.style.borderColor = '#ffb000')}
                   onMouseLeave={e => (e.currentTarget.style.borderColor = '#1e1e1e')}
@@ -2178,7 +2244,7 @@ function HomeInner() {
         </div>
 
         {/* Desktop table */}
-        <DesktopTable sorted={paged} setSelectedToken={openToken} SortIcon={SortIcon} toggleSort={toggleSort} starred={starred} toggleStar={toggleStar} />
+        <DesktopTable sorted={paged} SortIcon={SortIcon} toggleSort={toggleSort} starred={starred} toggleStar={toggleStar} />
 
         {/* Mobile cards */}
         <div className="mobile-cards">
@@ -2186,15 +2252,15 @@ function HomeInner() {
             const shown = displayPrice(row);
             const change = fmtChange(displayChange(row));
             return (
-              <div key={row.mint} className="card" onClick={() => openToken(row)}>
+              <div key={row.mint} className="card" onClick={e => openTokenPage(e, row)}>
                 <div className="card-top">
-                  <div className="card-left">
+                  <Link href={getTokenPagePath(row)} prefetch={false} className="card-left token-link" title={`${row.name} (${row.symbol}) token page`}>
                     <TokenIcon symbol={row.symbol} mint={row.mint} size={28} />
                     <div>
                       <div className="token-name">{row.name}</div>
                       <div className="token-symbol">{row.symbol}{row.venue === 'LSE' ? ' · LSE' : ''}</div>
                     </div>
-                  </div>
+                  </Link>
                   <div style={{ textAlign: 'right' }}>
                     <div className="card-price">
                       {shown.value !== null ? <span style={shown.stale ? { color: 'var(--text-dim)' } : undefined}>{formatShown(shown)}{shown.stale ? ' *' : ''}</span> : <span className="loading-cell" style={{ width: 70, height: 14 }} />}
@@ -2265,6 +2331,16 @@ function HomeInner() {
                         <img src="/partners/backpack.png" alt="" className="partner-logo" />
                       </a>
                     )}
+                    <a
+                      href={LEAP_REFERRAL_URL}
+                      target="_blank"
+                      rel="noopener sponsored"
+                      className="buy-btn buy-btn-leap buy-btn-icon"
+                      title="Trade on Leap"
+                      aria-label="Trade on Leap"
+                    >
+                      <img src="/partners/leap.png" alt="" className="partner-logo" />
+                    </a>
                   </span>
                 </div>
               </div>

@@ -11,6 +11,7 @@ import {
 import { resolveToken, tokenShareUrl } from '@/lib/resolve-token';
 import { fetchScreenerPrices } from '@/lib/discover-tokens';
 import TokenDetailClient from '@/components/TokenDetailClient';
+import { getCoinGeckoRef } from '@/lib/coingecko';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -70,6 +71,7 @@ export default async function TokenPage({ params, searchParams }: Props) {
   const stonkUrl = getStonkScreenerUrl(token);
   const xstocksUrl = getXStocksTradeUrl(token);
   const backpackUrl = getBackpackTradeUrl(token);
+  const gecko = getCoinGeckoRef(token.mint);
   const underlying =
     token.company || token.symbol.replace(/pre$/i, '').replace(/on$/i, '').replace(/x$/i, '').toUpperCase();
 
@@ -162,6 +164,8 @@ export default async function TokenPage({ params, searchParams }: Props) {
           xstocksUrl={xstocksUrl}
           backpackUrl={backpackUrl}
           screenerUrl={screenerUrl}
+          coingeckoId={gecko.coinId}
+          geckoPool={gecko.pool}
           initial={initial}
         />
 

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "gen:coingecko": "node scripts/gen-coingecko-ids.mjs"
   },
   "dependencies": {
     "@cloudflare/next-on-pages": "^1.13.16",

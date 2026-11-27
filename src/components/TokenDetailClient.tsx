@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import LoadingOrb from '@/components/LoadingOrb';
-import TradingViewChart, { toTradingViewSymbol } from '@/components/TradingViewChart';
+import CoinGeckoChart, { coinGeckoCoinUrl } from '@/components/CoinGeckoChart';
+import { geckoTerminalPoolEmbed, geckoTerminalPoolUrl, geckoTerminalTokenUrl } from '@/lib/coingecko-urls';
 import { ListingHoursLine } from '@/components/MarketHours';
 import { formatMoney } from '@/lib/money';
 import type { ListingVenue, QuoteCurrency } from '@/lib/tokens';
@@ -22,6 +23,10 @@ export type TokenDetailProps = {
   xstocksUrl: string | null;
   backpackUrl: string | null;
   screenerUrl: string;
+  /** CoinGecko coin id from the static build map, if listed */
+  coingeckoId?: string | null;
+  /** Top GeckoTerminal Solana pool from the static build map */
+  geckoPool?: string | null;
   initial?: {
     price: number | null;
     change24h: number | null;
@@ -94,7 +99,18 @@ export default function TokenDetailClient(props: TokenDetailProps) {
   const [underlyingMcap, setUnderlyingMcap] = useState<number | null>(initial?.underlyingMcap ?? null);
   const [icon, setIcon] = useState<string | null>(initial?.icon ?? null);
   const [copied, setCopied] = useState(false);
-  const [chartSrc, setChartSrc] = useState<'stock' | 'token' | 'dex'>('stock');
+  const coingeckoId = props.coingeckoId ?? null;
+  const geckoPool = props.geckoPool ?? null;
+  const chartTabs = (
+    [
+      ['coingecko', 'COINGECKO', !!coingeckoId],
+      ['pool', 'GECKOTERMINAL', !!geckoPool],
+      ['dex', 'DEX', !!(coingeckoId || geckoPool)],
+    ] as const
+  ).filter(([, , ok]) => ok);
+  const [chartSrc, setChartSrc] = useState<'coingecko' | 'pool' | 'dex' | null>(
+    coingeckoId ? 'coingecko' : geckoPool ? 'pool' : null,
+  );
 
   const providerLogo = PROVIDER_LOGO[provider] || null;
   const providerColor = PROVIDER_COLOR[provider] || '#ffb000';
@@ -171,9 +187,13 @@ export default function TokenDetailClient(props: TokenDetailProps) {
     return ((price - stockPrice) / stockPrice) * 100;
   }, [price, stockPrice]);
 
-  const geckoUrl = `https://www.geckoterminal.com/solana/tokens/${mint}?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=price&resolution=15m&bg_color=0a0a0a`;
   const dexUrl = `https://dexscreener.com/solana/${mint}?embed=1&theme=dark&trades=0&info=0`;
-  const tvSymbol = toTradingViewSymbol(underlying, venue);
+  const geckoLink = coingeckoId
+    ? coinGeckoCoinUrl(coingeckoId)
+    : geckoPool
+      ? geckoTerminalPoolUrl(geckoPool)
+      : geckoTerminalTokenUrl(mint);
+  const geckoLinkLabel = coingeckoId ? 'Open on CoinGecko ↗' : 'Open on GeckoTerminal ↗';
   const listingMark = quoteCurrency === 'GBP'
     ? (stockPriceLocal != null
         ? formatMoney(stockPriceLocal, 'GBP', 2)
@@ -498,7 +518,7 @@ export default function TokenDetailClient(props: TokenDetailProps) {
         </div>
       </div>
 
-      {/* Chart — STOCK (TradingView) default · TOKEN (Gecko) · DEX */}
+      {/* Chart — CoinGecko widget · GeckoTerminal pool · DEX. Hidden when CoinGecko has neither. */}
       <div style={{ marginBottom: 28 }}>
         <div
           style={{
@@ -511,76 +531,85 @@ export default function TokenDetailClient(props: TokenDetailProps) {
           }}
         >
           <h2 style={{ fontSize: 13, letterSpacing: 2, color: '#ffb000', margin: 0 }}>CHART</h2>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {(
-              [
-                ['stock', 'STOCK'],
-                ['token', 'TOKEN'],
-                ['dex', 'DEX'],
-              ] as const
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setChartSrc(key)}
-                style={{
-                  background: chartSrc === key ? 'rgba(255,176,0,0.12)' : 'transparent',
-                  border: `1px solid ${chartSrc === key ? '#ffb000' : '#333'}`,
-                  color: chartSrc === key ? '#ffb000' : '#888',
-                  borderRadius: 6,
-                  padding: '6px 10px',
-                  fontSize: 11,
-                  letterSpacing: 1,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  fontWeight: 700,
-                }}
-              >
-                {label}
-              </button>
-            ))}
+          {chartTabs.length > 1 ? (
+            <div style={{ display: 'flex', gap: 6 }}>
+              {chartTabs.map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setChartSrc(key)}
+                  style={{
+                    background: chartSrc === key ? 'rgba(255,176,0,0.12)' : 'transparent',
+                    border: `1px solid ${chartSrc === key ? '#ffb000' : '#333'}`,
+                    color: chartSrc === key ? '#ffb000' : '#888',
+                    borderRadius: 6,
+                    padding: '6px 10px',
+                    fontSize: 11,
+                    letterSpacing: 1,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontWeight: 700,
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+        {chartSrc ? (
+          <div
+            style={{
+              borderRadius: 14,
+              overflow: 'hidden',
+              border: '1px solid #1e1e1e',
+              background: '#0d0d0d',
+              height: 420,
+            }}
+          >
+            {chartSrc === 'coingecko' && coingeckoId ? (
+              <CoinGeckoChart coinId={coingeckoId} height={420} />
+            ) : (
+              <iframe
+                title={`${symbol} on-chain chart`}
+                src={chartSrc === 'pool' && geckoPool ? geckoTerminalPoolEmbed(geckoPool) : dexUrl}
+                style={{ width: '100%', height: '100%', border: 0 }}
+                allow="clipboard-write"
+                loading="lazy"
+              />
+            )}
           </div>
-        </div>
-        <div
-          style={{
-            borderRadius: 14,
-            overflow: 'hidden',
-            border: '1px solid #1e1e1e',
-            background: '#0d0d0d',
-            height: 420,
-          }}
-        >
-          {chartSrc === 'stock' ? (
-            <TradingViewChart symbol={tvSymbol} height={420} />
-          ) : (
-            <iframe
-              title={`${symbol} on-chain chart`}
-              src={chartSrc === 'token' ? geckoUrl : dexUrl}
-              style={{ width: '100%', height: '100%', border: 0 }}
-              allow="clipboard-write"
-              loading="lazy"
-            />
-          )}
-        </div>
+        ) : (
+          <div
+            style={{
+              borderRadius: 14,
+              border: '1px dashed #2a2a2a',
+              background: '#0d0d0d',
+              padding: '22px 18px',
+              color: '#888',
+              fontSize: 13,
+            }}
+          >
+            No CoinGecko chart for this token yet.{' '}
+            <a href={geckoLink} target="_blank" rel="noopener noreferrer" style={{ color: '#ffb000', textDecoration: 'none' }}>
+              {geckoLinkLabel}
+            </a>
+          </div>
+        )}
         <div style={{ marginTop: 8, fontSize: 11, color: '#555', display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <span>
-            {chartSrc === 'stock'
-              ? `TradingView · ${tvSymbol} (underlying)`
-              : chartSrc === 'token'
-                ? 'GeckoTerminal · on-chain token'
-                : 'DexScreener · on-chain pool'}
+            {chartSrc === 'coingecko'
+              ? `CoinGecko · ${symbol}`
+              : chartSrc === 'pool'
+                ? 'GeckoTerminal by CoinGecko · on-chain pool'
+                : chartSrc === 'dex'
+                  ? 'DexScreener · on-chain pool'
+                  : 'CoinGecko'}
             {' '}· not affiliated
           </span>
-          {chartSrc === 'stock' ? (
-            <a
-              href={`https://www.tradingview.com/chart/?symbol=${encodeURIComponent(tvSymbol)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: '#888', textDecoration: 'none' }}
-            >
-              Open in TradingView ↗
-            </a>
-          ) : null}
+          <a href={geckoLink} target="_blank" rel="noopener noreferrer" style={{ color: '#888', textDecoration: 'none' }}>
+            {geckoLinkLabel}
+          </a>
         </div>
       </div>
 
